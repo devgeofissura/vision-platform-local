@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-20T03:42:44Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "docker-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "git-workflow",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "ci-cd-pipeline",
+  "version": "0.1.0",
+  "category": "devops",
+  "description": "Best practices for CI/CD pipeline design and implementation"
+}

@@ -1,0 +1,37 @@
+{
+  "name": "test-strategy",
+  "description": "Design a comprehensive test strategy that balances coverage and effort",
+  "category": "testing",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "testing",
+    "strategy",
+    "coverage",
+    "quality"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "project",
+      "description": "Project, stack, and testing constraints",
+      "required": true
+    },
+    {
+      "name": "testing_goals",
+      "description": "Quality goals and risk areas to cover",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "unit-testing",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

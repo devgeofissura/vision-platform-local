@@ -1,0 +1,42 @@
+{
+  "name": "ui-designer",
+  "description": "UI Designer with expertise in user interface design and design systems",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "ui",
+    "design",
+    "ux",
+    "figma"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "react-patterns",
+    "css-best-practices",
+    "accessibility"
+  ],
+  "personas": [
+    "UI Designer",
+    "UX Designer",
+    "Design System Engineer"
+  ],
+  "dependencies": [
+    {
+      "name": "react-patterns",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "css-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "accessibility",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

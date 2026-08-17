@@ -1,0 +1,22 @@
+{
+  "name": "makeup-artistry",
+  "description": "Professional makeup artistry covering skin analysis, the color wheel, techniques for base, contour, eyes and lips, and hygiene",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["makeup", "skin", "color-theory", "beauty", "techniques"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "category": "arts",
+  "requires": [
+    "A client interview covering skin type, undertone and allergies",
+    "Real cosmetics available in the market with manufacturer instructions",
+    "Clean brushes, sponges and a patch-test routine"
+  ],
+  "provides": [
+    "A step-by-step skin analysis method",
+    "A color wheel approach for correcting and neutralizing",
+    "Techniques for base, contour, eyes and lips",
+    "A hygiene and safety checklist for makeup sessions"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

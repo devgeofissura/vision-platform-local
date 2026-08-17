@@ -1,0 +1,36 @@
+{
+  "name": "code-review-checklist",
+  "description": "Prompt for code review using comprehensive checklist",
+  "category": "code-review",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "code-review",
+    "quality",
+    "checklist"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "code",
+      "description": "Code to be reviewed",
+      "required": true
+    },
+    {
+      "name": "language",
+      "description": "Programming language",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "code-review-checklist",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

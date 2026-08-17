@@ -1,0 +1,12 @@
+{
+  "name": "estilista",
+  "description": "Estilista de moda especializado em planejamento de coleção, fichas técnicas, comportamento dos tecidos e pesquisa de tendências",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["moda", "estilismo", "colecao", "tecidos", "tendencias"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Estilista de Moda"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

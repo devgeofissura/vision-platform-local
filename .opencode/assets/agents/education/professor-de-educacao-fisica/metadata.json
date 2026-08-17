@@ -1,0 +1,12 @@
+{
+  "name": "professor-de-educacao-fisica",
+  "description": "Professor(a) de Educação Física que planeja aulas inclusivas, seguras e lúdicas alinhadas à BNCC",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["educacao-fisica", "bncc", "esporte", "saude", "inclusao"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Professor(a) de Educação Física"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

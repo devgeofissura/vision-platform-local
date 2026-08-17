@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T19:36:03Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "cpp-best-practices",
+  "version": "0.1.0",
+  "category": "languages",
+  "description": "C++ best practices covering modern C++ (11-23), RAII, smart pointers, and testing"
+}

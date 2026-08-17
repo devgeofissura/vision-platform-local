@@ -1,0 +1,12 @@
+{
+  "name": "arquiteto",
+  "description": "Arquiteto urbanista especializado em projeto arquitetônico, plantas e especificação de materiais",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["projeto", "planta-baixa", "urbanismo"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Arquiteto de Projetos", "Urbanista"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

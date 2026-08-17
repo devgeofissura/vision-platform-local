@@ -1,0 +1,37 @@
+{
+  "name": "api-documentation",
+  "description": "Generate clear, complete, and accurate documentation for an API",
+  "category": "documentation",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "documentation",
+    "api",
+    "openapi",
+    "reference"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "api_spec",
+      "description": "API definition, OpenAPI spec, or endpoint list",
+      "required": true
+    },
+    {
+      "name": "audience",
+      "description": "Target audience for the documentation",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "rest-api-design",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

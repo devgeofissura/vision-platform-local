@@ -1,0 +1,16 @@
+{
+  "name": "equipe-comercial-ecommerce",
+  "description": "Equipe comercial de e-commerce: catálogo, SKUs, precificação, canais e operação de loja",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["comercial", "ecommerce", "marketplace", "sku", "precificação", "logística", "omnichannel"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": [
+    "Equipe Comercial de E-commerce",
+    "Analista de Catálogo e SKUs",
+    "Gestor de Canais e Marketplaces"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

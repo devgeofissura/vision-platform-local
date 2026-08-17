@@ -1,0 +1,13 @@
+{
+  "name": "platform-team",
+  "description": "Platform team for infrastructure, reliability, and security",
+  "version": "0.1.0",
+  "agents": [
+    "devops-engineer",
+    "site-reliability-engineer",
+    "security-engineer"
+  ],
+  "lead": "devops-engineer",
+  "workflow": "plan -> build -> secure -> operate",
+  "dependencies_resolved": true
+}

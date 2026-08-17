@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-06T12:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "git-workflow",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "project-setup",
+  "version": "0.1.0",
+  "category": "projects",
+  "description": "New project setup covering repository layout, configuration, and tooling"
+}

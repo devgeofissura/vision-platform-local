@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T13:23:55Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "git-worktrees",
+  "version": "0.1.0",
+  "category": "methodology",
+  "description": "Isolate parallel tasks in git worktrees so execution never blocks on a dirty working directory"
+}

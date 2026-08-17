@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-08T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "geopolitics",
+  "version": "0.1.0",
+  "category": "humanities",
+  "description": "Frameworks for analyzing global power, regions, resources and alliances in an evidence-based way."
+}

@@ -1,0 +1,12 @@
+{
+  "name": "especialista-google-workspace",
+  "description": "Especialista em Google Workspace com Apps Script, Google Sheets, Gmail, Drive e Analytics para automação de escritório",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["google-workspace", "apps-script", "sheets", "gmail", "automacao"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["google-workspace-analytics"],
+  "personas": ["Automatizador de Processos de Escritório", "Analista de Dados Google Workspace"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

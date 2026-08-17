@@ -1,0 +1,12 @@
+{
+  "name": "preparador-vestibular",
+  "description": "Preparador(a) para vestibular com FUVEST, VUNESP e ENEM, planejamento de estudos, banco de questões e redação ENEM",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["vestibular", "enem", "fuvest", "vunesp", "redação", "plano-de-estudos", "questões"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Preparador(a) para Vestibular", "Orientador(a) de Redação ENEM", "Gestor(a) de Cronograma de Estudos"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "designer-digital",
+  "description": "Designer digital especializado em interfaces, identidade visual e design systems",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["design", "identidade-visual", "ui"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Designer de UI", "Designer de Marca"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

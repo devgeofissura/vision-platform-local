@@ -1,0 +1,37 @@
+{
+  "name": "security-audit",
+  "description": "Perform a structured security audit of an application and its codebase",
+  "category": "security",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "security",
+    "audit",
+    "vulnerabilities",
+    "owasp"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "application",
+      "description": "Application, stack, or codebase to audit",
+      "required": true
+    },
+    {
+      "name": "scope",
+      "description": "Scope of the audit, threat model, and focus areas",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "owasp-top-10",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

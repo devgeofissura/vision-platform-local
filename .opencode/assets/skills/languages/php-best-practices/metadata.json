@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T19:36:03Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "php-best-practices",
+  "version": "0.1.0",
+  "category": "languages",
+  "description": "PHP best practices covering modern PHP 8 features, PSR standards, PDO database access, and testing"
+}

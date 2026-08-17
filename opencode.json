@@ -1,0 +1,27 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  },
+  "instructions": [
+    ".opencode/context/AUTO_USAGE.md",
+    ".opencode/context/HISTORY.md",
+    ".opencode/context/architecture.md",
+    ".opencode/context/coding_rules.md",
+    ".opencode/context/conventions.md",
+    ".opencode/context/decisions.md",
+    ".opencode/context/documentation.md",
+    ".opencode/context/git.md",
+    ".opencode/context/glossary.md",
+    ".opencode/context/naming.md",
+    ".opencode/context/performance.md",
+    ".opencode/context/personas.md",
+    ".opencode/context/project.md",
+    ".opencode/context/provenance.md",
+    ".opencode/context/security.md",
+    ".opencode/context/stack.md",
+    ".opencode/context/style_guide.md"
+  ]
+}

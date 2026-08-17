@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T19:36:03Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "nextjs-development",
+  "version": "0.1.0",
+  "category": "frontend",
+  "description": "Next.js development best practices covering App Router, server components, data fetching, and deployment"
+}

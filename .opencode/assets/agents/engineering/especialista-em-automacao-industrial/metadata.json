@@ -1,0 +1,12 @@
+{
+  "name": "especialista-em-automacao-industrial",
+  "description": "Especialista em automação industrial com CLP, IHMs, redes de campo (PROFINET, Modbus), supervisório e integração com MES",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["automacao", "clp", "modbus", "profinet", "scada"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["industrial-automation"],
+  "personas": ["Engenheiro de Automação de Processos", "Especialista em CLP e SCADA"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

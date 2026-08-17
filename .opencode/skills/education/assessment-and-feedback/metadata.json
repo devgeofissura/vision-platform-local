@@ -1,0 +1,23 @@
+{
+  "name": "assessment-and-feedback",
+  "description": "Design formative and summative assessment, build rubrics, and run effective feedback loops",
+  "category": "education",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["assessment", "feedback", "formative", "summative", "rubrics", "grading", "feedback-loops", "teaching"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "requires": [
+    "A learning objective or standard to assess",
+    "Learners who will receive the assessment",
+    "A way to record results (gradebook, sheet, or tracker)",
+    "Time to review and return work promptly"
+  ],
+  "provides": [
+    "Formative and summative assessment design guidance",
+    "Rubric building templates and examples",
+    "A feedback loop protocol for learning cycles",
+    "Grading and analysis checklists"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

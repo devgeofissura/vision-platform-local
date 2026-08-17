@@ -1,0 +1,23 @@
+{
+  "name": "teaching-methods",
+  "description": "Apply core pedagogical methods from direct instruction to flipped classrooms and spaced practice",
+  "category": "education",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["teaching-methods", "pedagogy", "direct-instruction", "cooperative-learning", "inquiry-based", "flipped-classroom", "spaced-practice"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "requires": [
+    "A topic or content unit to teach",
+    "A sense of the learners' prior knowledge",
+    "Class time and available technology",
+    "Willingness to match method to learning goal"
+  ],
+  "provides": [
+    "A decision guide for choosing a teaching method",
+    "Protocols for five core pedagogical methods",
+    "Classroom sequences for each method",
+    "Common pitfalls and how to avoid them"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

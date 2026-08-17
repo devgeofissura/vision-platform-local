@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T17:00:31Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "session-memory",
+  "version": "0.1.0",
+  "category": "tools",
+  "description": "Persistent local-first memory across sessions using context/memory/memory.py (SQLite FTS + optional vector recall)"
+}

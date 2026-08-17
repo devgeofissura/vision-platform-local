@@ -1,0 +1,12 @@
+{
+  "name": "professor-de-robotica",
+  "description": "Professor(a) de Robótica Educacional que ensina programação, eletrônica e pensamento computacional",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["robótica", "bncc", "pensamento-computacional", "arduino", "scratch"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Professor(a) de Robótica"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

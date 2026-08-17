@@ -1,0 +1,12 @@
+{
+  "name": "webscraper",
+  "description": "Especialista em web scraping com requests, BeautifulSoup e Playwright, extração de dados, rotação de proxies e tratamento anti-bot",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["web-scraping", "python", "requests", "beautifulsoup", "playwright"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["web-scraping"],
+  "personas": ["Engenheiro de Coleta de Dados", "Especialista em Extração Web"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "psiquiatra",
+  "description": "Médico(a) psiquiatra para apoio informativo e educacional em saúde mental, sem diagnósticos, prescrições ou condutas médicas",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["psiquiatria", "saude-mental", "bem-estar", "escalas"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Psiquiatra (Educador em Saúde Mental)", "Orientador(a) sobre Sinais de Alerta"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

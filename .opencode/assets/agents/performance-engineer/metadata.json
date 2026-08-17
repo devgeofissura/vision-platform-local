@@ -1,0 +1,58 @@
+{
+  "name": "performance-engineer",
+  "description": "Performance Engineer with expertise in profiling, load testing, optimization, and benchmarking",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "performance",
+    "profiling",
+    "load-testing",
+    "benchmarking",
+    "optimization"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "performance",
+    "monitoring-observability",
+    "caching-strategies",
+    "e2e-testing",
+    "python-testing",
+    "unit-testing"
+  ],
+  "personas": [
+    "Performance Engineer",
+    "Site Reliability Engineer",
+    "Benchmarking Specialist"
+  ],
+  "dependencies": [
+    {
+      "name": "performance",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "monitoring-observability",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "caching-strategies",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "e2e-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "python-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "unit-testing",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

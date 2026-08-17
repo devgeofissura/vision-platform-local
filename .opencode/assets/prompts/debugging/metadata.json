@@ -1,0 +1,36 @@
+{
+  "name": "debug-analysis",
+  "description": "Prompt for bug analysis and diagnosis",
+  "category": "debugging",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "debugging",
+    "error-analysis",
+    "troubleshooting"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "error_message",
+      "description": "Error message",
+      "required": true
+    },
+    {
+      "name": "code_context",
+      "description": "Code where the error occurs",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "unit-testing",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

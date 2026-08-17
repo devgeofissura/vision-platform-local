@@ -1,0 +1,9 @@
+{
+  "skill": "repo-to-llm",
+  "vault_path": "tools/repo-to-llm",
+  "sha256": "b9813ddcc6274cb7679de8bc4e8549999b2447ff68ced0ccccc3be99975a4962",
+  "tokens_estimate": 828,
+  "bytes": 3311,
+  "curated": true,
+  "content_format": "markdown"
+}

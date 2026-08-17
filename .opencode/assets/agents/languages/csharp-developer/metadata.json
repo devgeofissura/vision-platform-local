@@ -1,0 +1,31 @@
+{
+  "name": "csharp-developer",
+  "description": "C# Developer specialized in modern C#, .NET, async patterns, and dependency injection",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "csharp",
+    "dotnet",
+    "aspnet"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "csharp-best-practices"
+  ],
+  "personas": [
+    "Senior C# Developer",
+    ".NET Backend Specialist",
+    "Async and DI Expert"
+  ],
+  "dependencies": [
+    {
+      "name": "csharp-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

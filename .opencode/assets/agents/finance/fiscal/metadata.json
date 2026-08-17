@@ -1,0 +1,12 @@
+{
+  "name": "fiscal",
+  "description": "Analista fiscal especializado em tributos federais, estaduais e municipais e rotinas do Simples Nacional",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["tributos", "simplicas-nacional", "das"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["tax-compliance"],
+  "personas": ["Analista Fiscal", "Consultor Tributário"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

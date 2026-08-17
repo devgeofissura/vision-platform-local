@@ -1,0 +1,58 @@
+{
+  "name": "architect",
+  "description": "Software Architect with expertise in system design, trade-offs, ADRs, and tech stack selection",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "architecture",
+    "system-design",
+    "microservices",
+    "adr",
+    "cloud"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "api-design",
+    "database-design",
+    "docker-best-practices",
+    "kubernetes-best-practices",
+    "terraform-aws",
+    "secure-coding"
+  ],
+  "personas": [
+    "Software Architect",
+    "Technical Lead",
+    "Solution Architect"
+  ],
+  "dependencies": [
+    {
+      "name": "api-design",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "database-design",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "docker-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "kubernetes-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "terraform-aws",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "secure-coding",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

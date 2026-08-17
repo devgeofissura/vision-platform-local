@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T20:30:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "prisma-orm",
+  "version": "0.1.0",
+  "category": "backend",
+  "description": "Model, migrate and query PostgreSQL with Prisma ORM — schema design, relations, enums, soft delete, tenant scoping, and connection management for serverless"
+}

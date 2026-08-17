@@ -1,0 +1,12 @@
+{
+  "name": "filosofo",
+  "description": "Filósofo especializado em lógica, ética e análise de argumentos",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["filosofia", "lógica", "ética", "argumentação", "pensamento-crítico"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Lógico", "Especialista em Ética Aplicada", "Analista de Argumentos"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

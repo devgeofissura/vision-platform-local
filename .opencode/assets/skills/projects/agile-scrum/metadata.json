@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-06T12:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "agile-scrum",
+  "version": "0.1.0",
+  "category": "projects",
+  "description": "Agile and Scrum ceremonies, roles, and practices for effective team delivery"
+}

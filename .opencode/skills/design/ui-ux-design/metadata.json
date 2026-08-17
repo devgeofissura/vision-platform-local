@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "css-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "ui-ux-design",
+  "version": "0.1.0",
+  "category": "design",
+  "description": "UI/UX and interface design principles for web apps"
+}

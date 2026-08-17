@@ -1,0 +1,41 @@
+{
+  "name": "open-source-contributing",
+  "description": "Guide for contributing effectively to open source projects",
+  "category": "community",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "open-source",
+    "contributing",
+    "community",
+    "github"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "requires": [
+    "git",
+    "github"
+  ],
+  "dependencies": [
+    {
+      "name": "git-workflow",
+      "version": ">=0.1.0"
+    }
+  ],
+  "provides": [
+    "contribution-checklist",
+    "pr-template",
+    "issue-triage"
+  ],
+  "difficulty": "beginner",
+  "frameworks": [
+    "github-actions"
+  ],
+  "languages": [
+    "markdown"
+  ],
+  "dependencies_resolved": true
+}

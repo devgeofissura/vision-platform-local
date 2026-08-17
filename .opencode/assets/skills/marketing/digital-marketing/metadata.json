@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-08T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "digital-marketing",
+  "version": "0.1.0",
+  "category": "marketing",
+  "description": "Campaign structure, marketing funnel and core metrics like ROAS and CAC"
+}

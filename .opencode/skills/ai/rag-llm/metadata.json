@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "llm-multi-provider",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "python-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "rag-llm",
+  "version": "0.1.0",
+  "category": "ai",
+  "description": "Design and build Retrieval-Augmented Generation (RAG) systems over private documents"
+}

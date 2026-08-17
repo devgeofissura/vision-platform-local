@@ -1,0 +1,12 @@
+{
+  "name": "especialista-em-logistica",
+  "description": "Especialista em logística e supply chain com foco em custo logístico, roteirização, gestão de estoque e transporte",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["logistica", "supply-chain", "transporte", "estoque", "custos"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["supply-chain-management"],
+  "personas": ["Analista de Transportes e Roteirização", "Especialista em Planejamento Logístico"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

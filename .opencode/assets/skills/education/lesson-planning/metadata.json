@@ -1,0 +1,23 @@
+{
+  "name": "lesson-planning",
+  "description": "Plan lessons with backward design, measurable objectives, aligned assessments, and differentiation",
+  "category": "education",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["lesson-planning", "backward-design", "objectives", "assessment", "differentiation", "curriculum", "pedagogy", "planning"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "requires": [
+    "A defined topic, standard, or unit of study",
+    "Knowledge of the learners' current level",
+    "The class schedule (minutes per session, days per week)",
+    "Access to curriculum or standards documents"
+  ],
+  "provides": [
+    "A backward design planning template",
+    "Measurable objective writing guidance",
+    "Assessment alignment checklists",
+    "Differentiation strategies for diverse learners"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

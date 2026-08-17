@@ -1,0 +1,37 @@
+{
+  "name": "ml-engineer",
+  "description": "ML Engineer with expertise in ML model development and deployment",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "ml",
+    "machine-learning",
+    "ai",
+    "deep-learning"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "python-testing",
+    "database-design"
+  ],
+  "personas": [
+    "ML Engineer",
+    "Data Scientist",
+    "AI Engineer"
+  ],
+  "dependencies": [
+    {
+      "name": "python-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "database-design",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

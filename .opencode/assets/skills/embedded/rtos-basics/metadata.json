@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-06T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "rtos-basics",
+  "version": "0.1.0",
+  "category": "embedded",
+  "description": "Learn real-time operating system fundamentals with tasks, scheduling, and semaphores"
+}

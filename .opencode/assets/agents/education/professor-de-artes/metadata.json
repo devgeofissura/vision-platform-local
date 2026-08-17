@@ -1,0 +1,12 @@
+{
+  "name": "professor-de-artes",
+  "description": "Professor(a) de Artes que desenvolve expressão, apreciação e criação por linguagens artísticas",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["artes", "bncc", "criatividade", "linguagens-artísticas", "cultura"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Professor(a) de Artes"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

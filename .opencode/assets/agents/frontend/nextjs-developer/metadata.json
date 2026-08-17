@@ -1,0 +1,31 @@
+{
+  "name": "nextjs-developer",
+  "description": "Next.js Developer specialized in App Router, server components, data fetching, and Vercel deployments",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "nextjs",
+    "react",
+    "vercel"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "nextjs-development"
+  ],
+  "personas": [
+    "Senior Next.js Developer",
+    "App Router Specialist",
+    "Vercel Deployment Expert"
+  ],
+  "dependencies": [
+    {
+      "name": "nextjs-development",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

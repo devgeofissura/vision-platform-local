@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-06T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "mqtt-protocol",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "esp32-development",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "sensor-integration",
+  "version": "0.1.0",
+  "category": "iot",
+  "description": "Integrate sensors over I2C and SPI and build an end-to-end telemetry pipeline"
+}

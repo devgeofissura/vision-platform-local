@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T20:30:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "form-validation",
+  "version": "0.1.0",
+  "category": "frontend",
+  "description": "Schema-first form validation with Zod and React Hook Form — shared schemas across API and UI, resolvers, error messages, and reusable form patterns"
+}

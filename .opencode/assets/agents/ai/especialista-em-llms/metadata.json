@@ -1,0 +1,16 @@
+{
+  "name": "especialista-em-llms",
+  "description": "Especialista em modelos de IA para orientar o uso de LLMs gratuitos online",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["llm", "ia", "deepseek", "qwen", "gemini", "mistral", "groq", "modelos-gratuitos", "privacidade"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": [
+    "Orientador de LLMs Gratuitos",
+    "Avaliador de Modelos de IA",
+    "Consultor de Privacidade de Dados"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

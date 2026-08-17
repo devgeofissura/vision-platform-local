@@ -1,0 +1,12 @@
+{
+  "name": "especialista-em-autismo",
+  "description": "Especialista em TEA com apoio educacional em comunicação alternativa e estruturação visual de rotina, sem diagnóstico",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["autismo", "tea", "acessibilidade", "neurodiversidade"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["neurodiversity-support"],
+  "personas": ["Especialista em Transtorno do Espectro Autista (TEA)", "Facilitador(a) de Comunicação Alternativa"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

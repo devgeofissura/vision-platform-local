@@ -1,0 +1,12 @@
+{
+  "name": "fisico",
+  "description": "Físico com domínio de mecânica, termodinâmica e análise de sistemas",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["física", "mecânica", "energia", "modelagem", "simulação"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["physics-applied"],
+  "personas": ["Físico Teórico", "Especialista em Simulação", "Analista de Sistemas Físicos"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,23 @@
+{
+  "name": "feature-delivery",
+  "description": "Deliver a feature from planning through review and testing",
+  "version": "0.1.0",
+  "steps": [
+    {
+      "step": 1,
+      "prompt": "feature-planning",
+      "description": "Plan the feature"
+    },
+    {
+      "step": 2,
+      "prompt": "code-review-checklist",
+      "description": "Review implementation"
+    },
+    {
+      "step": 3,
+      "prompt": "test-strategy",
+      "description": "Define test coverage"
+    }
+  ],
+  "dependencies_resolved": true
+}

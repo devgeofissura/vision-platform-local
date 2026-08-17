@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T20:30:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "tanstack-query",
+  "version": "0.1.0",
+  "category": "frontend",
+  "description": "Manage server state in React with TanStack Query — queries, mutations, cache invalidation, optimistic updates, and infinite lists for data-heavy SaaS screens"
+}

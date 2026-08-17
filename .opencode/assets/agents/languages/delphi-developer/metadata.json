@@ -1,0 +1,31 @@
+{
+  "name": "delphi-developer",
+  "description": "Delphi Developer specialized in Object Pascal, VCL/FireMonkey, and FireDAC database access",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "delphi",
+    "pascal",
+    "vcl"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "delphi-best-practices"
+  ],
+  "personas": [
+    "Senior Delphi Developer",
+    "VCL/FireMonkey Specialist",
+    "Database Applications Expert"
+  ],
+  "dependencies": [
+    {
+      "name": "delphi-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

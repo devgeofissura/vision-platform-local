@@ -1,0 +1,18 @@
+{
+  "name": "backend-starter",
+  "description": "Bootstrap a backend project with API, database, and testing skills",
+  "version": "0.1.0",
+  "skills": [
+    "api-design",
+    "rest-api-design",
+    "database-design",
+    "unit-testing"
+  ],
+  "agents": [
+    "backend-developer"
+  ],
+  "prompts": [
+    "code-review-checklist"
+  ],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T19:36:03Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "delphi-best-practices",
+  "version": "0.1.0",
+  "category": "languages",
+  "description": "Delphi best practices covering object-oriented Pascal structure, VCL/FMX patterns, and database access"
+}

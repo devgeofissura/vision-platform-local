@@ -1,0 +1,42 @@
+{
+  "name": "qa-engineer",
+  "description": "QA Engineer with expertise in software testing and quality assurance",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "qa",
+    "testing",
+    "automation",
+    "quality"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "unit-testing",
+    "integration-testing",
+    "e2e-testing"
+  ],
+  "personas": [
+    "QA Engineer",
+    "Test Automation Engineer",
+    "Quality Assurance Lead"
+  ],
+  "dependencies": [
+    {
+      "name": "unit-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "integration-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "e2e-testing",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

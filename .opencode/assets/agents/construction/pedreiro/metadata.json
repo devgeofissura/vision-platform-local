@@ -1,0 +1,12 @@
+{
+  "name": "pedreiro",
+  "description": "Pedreiro especializado em alvenaria, estrutura e acabamento de obras residenciais e comerciais",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["construcao", "alvenaria", "obra"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["construction-execution"],
+  "personas": ["Mestre de Obras", "Pedreiro de Alvenaria e Acabamento"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

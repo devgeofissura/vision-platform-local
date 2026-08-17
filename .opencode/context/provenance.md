@@ -1,0 +1,239 @@
+---
+name: provenance
+description: Registro de procedência (origem/licença) de todas as skills e personas do kit
+type: registry
+version: 0.1.0
+author: devtiagoabreu
+---
+
+# Procedência (Provenance)
+
+Registro de origem de **cada** skill e persona do projeto. Gerado por
+`./scripts/add-provenance.sh`. Toda asset nova deve declarar `provenance` no
+frontmatter. Fontes citadas são públicas e verificadas na data indicada.
+
+## Skills
+
+| Asset | Procedência | URL | Licença | Verificado |
+|-------|-------------|-----|---------|------------|
+| `deep-learning` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `evolution-api` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `free-llm-models` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `llm-multi-provider` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `rag-llm` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `business-intelligence` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `clean-architecture` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `microservices-design` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `dance-and-choreography` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `fashion-design` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `hairdressing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `makeup-artistry` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `screenwriting` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `n8n-workflow-automation` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `aircraft-mechanics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `vehicle-mechanics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `api-design` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `authentication` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `caching-strategies` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `database-design` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `graphql-api` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `rest-api-design` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `aws-cloud-architecture` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `google-cloud-architecture` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `code-review-checklist` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `customer-relationship` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `ecommerce-commerce` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `fabric-mill-sales` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `plastics-industry-sales` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `open-source-contributing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `civil-structures` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `construction-execution` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `nosql-modeling` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `sql-optimization` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `design-system` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `ui-ux-design` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `ci-cd-pipeline` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `docker-best-practices` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `incident-response` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `kubernetes-best-practices` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `monitoring-observability` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `terraform-aws` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `doc-to-markdown` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `assessment-and-feedback` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `classroom-management` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `evidence-based-teaching` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `lesson-planning` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `literacy-teaching` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `teaching-methods` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `vestibular-prep` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `arduino-development` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `esp32-development` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `esp8266-development` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `raspberry-pi` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `rtos-basics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `home-automation` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `industrial-automation` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `mechatronics-systems` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `production-planning` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `accounting-basics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `tax-compliance` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `accessibility` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `css-best-practices` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `performance` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `react-patterns` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `state-management` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `git-workflow` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `neurodiversity-support` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `nutrition` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `criminal-law` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `geopolitics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `labor-law` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `political-analysis` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `mqtt-protocol` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `sensor-integration` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `language-learning` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `python-best-practices` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `typescript-best-practices` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `supply-chain-management` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `lean-methodology` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `digital-marketing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `political-campaign-marketing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `traffic-management` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `brainstorming` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `executing-plans` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `git-worktrees` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `tdd` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `two-stage-code-review` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `verification-before-completion` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `writing-plans` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `brass` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `drums` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `flute` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `guitar` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `music-theory` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `piano` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `political-jingle-writing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `suzuki-method` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `agile-scrum` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `project-setup` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `code-review-best-practices` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `context-optimization` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `refactoring-techniques` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `robotics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `applied-mathematics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `chemistry-basics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `physics-applied` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `owasp-top-10` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `secure-coding` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `skill-spector` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `personal-training` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `e2e-testing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `integration-testing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `python-testing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `unit-testing` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `code-knowledge-graph` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `git-advanced` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `repo-to-llm` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `session-memory` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-15 |
+| `terminal-productivity` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `opencv-basics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `google-workspace-analytics` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `web-scraping` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+
+## Personas (Agents)
+
+| Asset | Procedência | URL | Licença | Verificado |
+|-------|-------------|-----|---------|------------|
+| `ai-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `data-scientist` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-em-llms` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `bi-analyst` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `architect` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `bailarina` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `cabeleireiro` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `coreografo` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `estilista` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `maquiador` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `roteirista` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `automation-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `mecanico-de-aviao` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `mecanico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `backend-developer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `ml-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `arquiteto-aws-cloud` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `arquiteto-google-cloud` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `equipe-comercial-ecommerce` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `equipe-comercial-tecelagem` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-comercial-plasticos` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `relacoes-com-o-cliente` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `arquiteto` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `desenhista-tecnico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `engenheiro-civil` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `pedreiro` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `pintor` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `data-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `designer-de-interiores` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `designer-de-tecidos` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `designer-digital` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `devops-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `site-reliability-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `technical-writer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-em-alfabetizacao` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `preparador-vestibular` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-artes` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-educacao-fisica` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-etica` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-filosofia` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-fisica` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-geografia` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-historia` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-matematica` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-quimica` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-robotica` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-sociologia` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `embedded-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `engenheiro-de-producao` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `engenheiro-mecatronico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-em-automacao-industrial` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-em-automacao-residencial` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `contador` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `fiscal` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `frontend-developer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `fullstack-developer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `mobile-developer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `ui-designer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-em-autismo` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-em-tdah` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `nutricionista` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `podologo` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `psicologo` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `psiquiatra` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `advogado-trabalhista` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `analista-geopolitico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `analista-politico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `criminalista` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `filosofo` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `historiador` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `professor-de-idiomas` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-em-logistica` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `metodologia-lean` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `criador-de-jingles-politicos` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `gestor-de-trafego` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `marketeiro-politico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `marketing-digital` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-metodo-suzuki` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `musico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `performance-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `orquestrador` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `product-manager` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `qa-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `code-reviewer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `robotics-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `fisico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `matematico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `quimico` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `security-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `personal-trainer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `vision-engineer` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `especialista-google-workspace` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |
+| `webscraper` | OpenCode Engineering Kit (community) | https://github.com/devtiagoabreu/opencode-engineering-kit | MIT | 2026-08-08 |

@@ -1,0 +1,12 @@
+{
+  "name": "especialista-em-automacao-residencial",
+  "description": "Especialista em automação residencial com Home Assistant, ESPHome, Zigbee/Z-Wave, Alexa e Google Home",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["domotica", "home-assistant", "esphome", "zigbee", "integracao"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["home-automation"],
+  "personas": ["Integrador de Automação Residencial", "Especialista em Home Assistant"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

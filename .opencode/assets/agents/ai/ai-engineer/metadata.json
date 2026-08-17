@@ -1,0 +1,49 @@
+{
+  "name": "ai-engineer",
+  "description": "AI Engineer specialized in RAG systems, LLM integration and AI features for products",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "ai",
+    "rag",
+    "llm",
+    "embeddings",
+    "vector-database",
+    "chatbots"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "rag-llm",
+    "llm-multi-provider",
+    "evolution-api",
+    "deep-learning"
+  ],
+  "personas": [
+    "RAG Specialist",
+    "LLM Integration Engineer",
+    "AI Product Engineer"
+  ],
+  "dependencies": [
+    {
+      "name": "rag-llm",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "llm-multi-provider",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "evolution-api",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "deep-learning",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

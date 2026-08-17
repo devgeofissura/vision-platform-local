@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-06T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "rtos-basics",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "esp32-development",
+  "version": "0.1.0",
+  "category": "embedded",
+  "description": "Develop firmware for ESP32 with ESP-IDF, GPIO, WiFi, and FreeRTOS"
+}

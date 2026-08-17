@@ -1,0 +1,23 @@
+{
+  "name": "classroom-management",
+  "description": "Build routines, positive reinforcement, engagement, and proactive behavior support in the classroom",
+  "category": "education",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["classroom-management", "routines", "positive-reinforcement", "engagement", "behavior-support", "PBIS", "teaching"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "requires": [
+    "A class or group of learners you teach regularly",
+    "A defined set of classroom expectations",
+    "Willingness to be consistent across lessons",
+    "Time to teach and rehearse routines"
+  ],
+  "provides": [
+    "A routines and procedures bank",
+    "A positive reinforcement system template",
+    "Engagement check strategies",
+    "A tiered behavior support framework"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

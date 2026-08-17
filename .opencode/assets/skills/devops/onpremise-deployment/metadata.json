@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T12:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "docker-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "onpremise-deployment",
+  "version": "0.1.0",
+  "category": "devops",
+  "description": "Deploy multi-service Python stacks on customer hardware with Docker Compose, CPU-first sizing, resource limits, persistence, and backup"
+}

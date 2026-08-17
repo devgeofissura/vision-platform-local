@@ -1,0 +1,37 @@
+{
+  "name": "devops-engineer",
+  "description": "DevOps Engineer specialized in infrastructure, CI/CD, and automation",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "devops",
+    "infrastructure",
+    "cicd",
+    "automation"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "docker-best-practices",
+    "git-workflow"
+  ],
+  "personas": [
+    "Senior DevOps Engineer",
+    "Infrastructure Specialist",
+    "Process Automator"
+  ],
+  "dependencies": [
+    {
+      "name": "docker-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "git-workflow",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

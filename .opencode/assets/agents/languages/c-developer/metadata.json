@@ -1,0 +1,31 @@
+{
+  "name": "c-developer",
+  "description": "C Developer specialized in memory safety, pointer discipline, and embedded systems",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "c",
+    "memory",
+    "embedded"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "c-best-practices"
+  ],
+  "personas": [
+    "Senior C Developer",
+    "Embedded Systems Engineer",
+    "Systems Programmer"
+  ],
+  "dependencies": [
+    {
+      "name": "c-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "analista-geopolitico",
+  "description": "Analista de geopolítica com foco em poder global, corredores de energia, blocos comerciais e análise de conflitos",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["geopolítica", "relações-internacionais", "energia", "comércio-global", "conflitos", "estabilidade-regional"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Analista de Geopolítica"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

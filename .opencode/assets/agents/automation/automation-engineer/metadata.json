@@ -1,0 +1,44 @@
+{
+  "name": "automation-engineer",
+  "description": "Automation Engineer specialized in n8n workflows, WhatsApp bots, Evolution API and system integrations",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "automation",
+    "n8n",
+    "whatsapp",
+    "integration",
+    "webhooks",
+    "workflows"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "n8n-workflow-automation",
+    "evolution-api",
+    "rag-llm"
+  ],
+  "personas": [
+    "Workflow Automation Specialist",
+    "Integration Engineer",
+    "Bot Builder"
+  ],
+  "dependencies": [
+    {
+      "name": "n8n-workflow-automation",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "evolution-api",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "rag-llm",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

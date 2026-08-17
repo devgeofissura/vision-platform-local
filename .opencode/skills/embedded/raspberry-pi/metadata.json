@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "python-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "mqtt-protocol",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "raspberry-pi",
+  "version": "0.1.0",
+  "category": "embedded",
+  "description": "Set up and program Raspberry Pi projects (GPIO, cameras, edge AI, servers, robots)"
+}

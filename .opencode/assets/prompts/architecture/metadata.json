@@ -1,0 +1,36 @@
+{
+  "name": "system-design",
+  "description": "Prompt for system design and architecture",
+  "category": "architecture",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "architecture",
+    "system-design",
+    "scalability"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "requirements",
+      "description": "System requirements",
+      "required": true
+    },
+    {
+      "name": "constraints",
+      "description": "Constraints and limitations",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "clean-architecture",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

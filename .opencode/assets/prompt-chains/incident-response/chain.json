@@ -1,0 +1,18 @@
+{
+  "name": "incident-response",
+  "description": "Respond to an incident from diagnosis through security assessment",
+  "version": "0.1.0",
+  "steps": [
+    {
+      "step": 1,
+      "prompt": "debug-analysis",
+      "description": "Diagnose the root cause"
+    },
+    {
+      "step": 2,
+      "prompt": "security-audit",
+      "description": "Assess security impact"
+    }
+  ],
+  "dependencies_resolved": true
+}

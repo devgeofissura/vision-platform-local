@@ -1,0 +1,22 @@
+{
+  "name": "hairdressing",
+  "description": "Hairdressing covering hair structure, coloring chemistry, cutting techniques and treatments",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["hair", "coloring", "cutting", "treatments", "chemistry"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "category": "arts",
+  "requires": [
+    "A consultation on hair history, habits and expectations",
+    "Real products with manufacturer instructions",
+    "Patch test and strand test routines before chemical work"
+  ],
+  "provides": [
+    "A consultation and analysis method",
+    "Color chemistry knowledge including developers and tones",
+    "Cutting technique guidance by hair type",
+    "A treatment and maintenance framework"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

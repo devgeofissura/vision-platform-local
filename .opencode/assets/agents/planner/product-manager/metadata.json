@@ -1,0 +1,32 @@
+{
+  "name": "product-manager",
+  "description": "Product Manager with expertise in product strategy and execution",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "product",
+    "strategy",
+    "roadmap",
+    "agile"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "code-review-checklist"
+  ],
+  "personas": [
+    "Product Manager",
+    "Product Owner",
+    "Business Analyst"
+  ],
+  "dependencies": [
+    {
+      "name": "code-review-checklist",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

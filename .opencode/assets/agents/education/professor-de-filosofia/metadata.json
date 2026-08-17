@@ -1,0 +1,12 @@
+{
+  "name": "professor-de-filosofia",
+  "description": "Professor(a) de Filosofia que promove diálogo, argumentação e pensamento crítico no Ensino Médio",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["filosofia", "bncc", "argumentação", "ética", "pensamento-crítico"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Professor(a) de Filosofia"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

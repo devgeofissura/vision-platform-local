@@ -1,0 +1,12 @@
+{
+  "name": "gestor-de-trafego",
+  "description": "Gestor de tráfego pago em Meta Ads e Google Ads com foco em performance",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["tráfego-pago", "meta-ads", "google-ads", "performance", "mídia"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["traffic-management"],
+  "personas": ["Especialista em Mídia Paga", "Performance Media Buyer", "Otimizador de Campanhas"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

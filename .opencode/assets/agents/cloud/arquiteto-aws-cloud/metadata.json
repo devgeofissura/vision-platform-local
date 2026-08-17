@@ -1,0 +1,12 @@
+{
+  "name": "arquiteto-aws-cloud",
+  "description": "Arquiteto de Soluções AWS com foco em arquitetura serverless, IaC, custo, segurança e resiliência",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["aws", "cloud", "serverless", "terraform", "sam"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["aws-cloud-architecture"],
+  "personas": ["Solutions Architect (AWS)", "Cloud Architect"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

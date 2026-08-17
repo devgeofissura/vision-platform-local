@@ -1,0 +1,31 @@
+{
+  "name": "sql-server-dba",
+  "description": "SQL Server Database Administrator specialized in T-SQL, indexing, and query performance",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "sqlserver",
+    "tsql",
+    "dba"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "sql-server-database"
+  ],
+  "personas": [
+    "Senior SQL Server DBA",
+    "T-SQL Performance Specialist",
+    "Azure SQL Expert"
+  ],
+  "dependencies": [
+    {
+      "name": "sql-server-database",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

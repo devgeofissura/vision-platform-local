@@ -1,0 +1,22 @@
+{
+  "name": "screenwriting",
+  "description": "Screenwriting covering three-act structure, the Save the Cat beat sheet, character arcs and dialogue",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["screenwriting", "structure", "dialogue", "character", "story"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "category": "arts",
+  "requires": [
+    "A story idea with a protagonist and a clear conflict",
+    "Knowledge of the target format and runtime",
+    "A consistent file format for scripts and documents"
+  ],
+  "provides": [
+    "A three-act structure method with turning points",
+    "A Save the Cat beat sheet mapped to the story",
+    "A character arc framework with desire and flaw",
+    "Dialogue and scene-writing guidelines"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

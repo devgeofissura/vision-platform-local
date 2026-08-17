@@ -1,0 +1,37 @@
+{
+  "name": "backend-developer",
+  "description": "Backend Developer specialized in APIs and distributed systems",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "backend",
+    "api",
+    "database",
+    "microservices"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "api-design",
+    "python-testing"
+  ],
+  "personas": [
+    "Senior Backend Developer",
+    "Systems Architect",
+    "API Specialist"
+  ],
+  "dependencies": [
+    {
+      "name": "api-design",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "python-testing",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

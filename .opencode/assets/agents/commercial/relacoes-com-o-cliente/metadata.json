@@ -1,0 +1,16 @@
+{
+  "name": "relacoes-com-o-cliente",
+  "description": "Equipe de relacionamento com o cliente: pré-venda, onboarding, suporte, NPS e retenção",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["comercial", "relacionamento", "crm", "suporte", "nps", "retenção", "omnichannel"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": [
+    "Equipe de Relacionamento com o Cliente",
+    "Analista de Sucesso do Cliente",
+    "Analista de Suporte N1/N2"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

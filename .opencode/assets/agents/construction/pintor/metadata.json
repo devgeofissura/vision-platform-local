@@ -1,0 +1,12 @@
+{
+  "name": "pintor",
+  "description": "Pintor especializado em acabamento, texturas e pintura predial residencial e industrial",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["acabamento", "textura", "pintura"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Pintor de Acabamento", "Pintor Industrial"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

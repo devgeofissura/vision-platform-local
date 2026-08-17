@@ -1,0 +1,38 @@
+{
+  "name": "mobile-developer",
+  "description": "Mobile Developer with expertise in native and cross-platform development",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "mobile",
+    "ios",
+    "android",
+    "react-native",
+    "flutter"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "react-patterns",
+    "performance"
+  ],
+  "personas": [
+    "Mobile Developer",
+    "iOS Specialist",
+    "Android Specialist"
+  ],
+  "dependencies": [
+    {
+      "name": "react-patterns",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "performance",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

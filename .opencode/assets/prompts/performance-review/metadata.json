@@ -1,0 +1,37 @@
+{
+  "name": "performance-review",
+  "description": "Analyze and improve the performance of a codebase or running system",
+  "category": "performance",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "performance",
+    "optimization",
+    "profiling",
+    "benchmarks"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "codebase",
+      "description": "Codebase or system under review",
+      "required": true
+    },
+    {
+      "name": "performance_concerns",
+      "description": "Known bottlenecks and performance requirements",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "performance",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

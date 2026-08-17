@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-06T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "clean-architecture",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "microservices-design",
+  "version": "0.1.0",
+  "category": "architecture",
+  "description": "Design scalable microservices with bounded contexts, events, and saga orchestration"
+}

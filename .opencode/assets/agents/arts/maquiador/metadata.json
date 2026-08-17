@@ -1,0 +1,12 @@
+{
+  "name": "maquiador",
+  "description": "Maquiador(a) profissional especializado em preparação de pele, colorimetria e looks social, editorial e noiva",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["maquiagem", "beleza", "colorimetria", "noiva"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Maquiador(a) Profissional"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

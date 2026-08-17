@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "arduino-development",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "esp32-development",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "raspberry-pi",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "robotics",
+  "version": "0.1.0",
+  "category": "robotics",
+  "description": "Robotics development with ROS 2, embedded control and simulation"
+}

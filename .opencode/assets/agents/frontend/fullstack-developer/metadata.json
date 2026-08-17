@@ -1,0 +1,43 @@
+{
+  "name": "fullstack-developer",
+  "description": "Fullstack Developer with expertise in both frontend and backend technologies",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "fullstack",
+    "frontend",
+    "backend",
+    "javascript",
+    "python"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "react-patterns",
+    "rest-api-design",
+    "database-design"
+  ],
+  "personas": [
+    "Fullstack Developer",
+    "Technical Lead",
+    "Solution Architect"
+  ],
+  "dependencies": [
+    {
+      "name": "react-patterns",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "rest-api-design",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "database-design",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

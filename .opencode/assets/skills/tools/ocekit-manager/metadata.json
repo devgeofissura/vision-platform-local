@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T20:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "ocekit-manager",
+  "version": "0.1.0",
+  "category": "tools",
+  "description": "Manage the OpenCode Engineering Kit (ocekit): install globally or in the project from a repository link, and check/start/stop afterwards"
+}

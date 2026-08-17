@@ -1,0 +1,53 @@
+{
+  "name": "frontend-developer",
+  "description": "Frontend Developer specialized in UI/UX and modern frameworks",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "frontend",
+    "ui",
+    "ux",
+    "react",
+    "javascript"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "react-patterns",
+    "css-best-practices",
+    "performance",
+    "accessibility",
+    "state-management"
+  ],
+  "personas": [
+    "Senior Frontend Developer",
+    "UI/UX Specialist",
+    "Performance Enthusiast"
+  ],
+  "dependencies": [
+    {
+      "name": "react-patterns",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "css-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "performance",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "accessibility",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "state-management",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

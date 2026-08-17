@@ -1,0 +1,12 @@
+{
+  "name": "designer-de-interiores",
+  "description": "Designer de interiores especializado em layout, paleta de cores e especificação de ambientes residenciais e comerciais",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["interiores", "layout", "decoracao"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Designer de Interiores", "Consultor de Ambientes"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

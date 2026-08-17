@@ -1,0 +1,12 @@
+{
+  "name": "professor-de-matematica",
+  "description": "Professor(a) de Matemática que planeja aulas práticas, modelagem e resolução de problemas alinhadas à BNCC",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["matemática", "bncc", "resolução-de-problemas", "modelagem", "geometria"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Professor(a) de Matemática"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

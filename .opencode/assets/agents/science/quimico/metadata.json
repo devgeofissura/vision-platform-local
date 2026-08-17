@@ -1,0 +1,12 @@
+{
+  "name": "quimico",
+  "description": "Químico com domínio de reações, estequiometria e análise laboratorial",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["química", "reações", "estequiometria", "laboratório", "análise"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["chemistry-basics"],
+  "personas": ["Químico Analítico", "Especialista em Processos Químicos", "Pesquisador de Laboratório"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

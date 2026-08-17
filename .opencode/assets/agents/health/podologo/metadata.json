@@ -1,0 +1,12 @@
+{
+  "name": "podologo",
+  "description": "Podólogo(a) para cuidados educacionais com os pés, higiene, biomecânica e prevenção, com encaminhamento para pé diabético",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["podologia", "pes", "saude", "cuidados", "prevencao"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Podólogo(a) Educacional", "Orientador(a) de Cuidados com os Pés"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,31 @@
+{
+  "name": "cpp-developer",
+  "description": "C++ Developer specialized in modern C++, RAII, smart pointers, and performance engineering",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "cpp",
+    "c++",
+    "raii"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "cpp-best-practices"
+  ],
+  "personas": [
+    "Senior C++ Developer",
+    "Systems Performance Specialist",
+    "Modern C++ Advocate"
+  ],
+  "dependencies": [
+    {
+      "name": "cpp-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

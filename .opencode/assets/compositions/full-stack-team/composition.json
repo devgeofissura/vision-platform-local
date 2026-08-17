@@ -1,0 +1,13 @@
+{
+  "name": "full-stack-team",
+  "description": "Full-stack delivery team covering backend, frontend, and QA",
+  "version": "0.1.0",
+  "agents": [
+    "backend-developer",
+    "frontend-developer",
+    "qa-engineer"
+  ],
+  "lead": "backend-developer",
+  "workflow": "plan -> implement -> review -> test",
+  "dependencies_resolved": true
+}

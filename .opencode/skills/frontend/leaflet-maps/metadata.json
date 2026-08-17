@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T20:30:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "leaflet-maps",
+  "version": "0.1.0",
+  "category": "frontend",
+  "description": "Render interactive maps with Leaflet + React Leaflet and OpenStreetMap — markers, polylines, custom icons, tile handling, and map state synced to app state"
+}

@@ -1,0 +1,49 @@
+{
+  "name": "robotics-engineer",
+  "description": "Robotics Engineer specialized in ROS 2, embedded control, sensors, motors and robot software",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "robotics",
+    "ros2",
+    "embedded",
+    "motors",
+    "sensors",
+    "control"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "robotics",
+    "arduino-development",
+    "esp32-development",
+    "raspberry-pi"
+  ],
+  "personas": [
+    "Robotics Software Engineer",
+    "Embedded Systems Engineer",
+    "Control Engineer"
+  ],
+  "dependencies": [
+    {
+      "name": "robotics",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "arduino-development",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "esp32-development",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "raspberry-pi",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

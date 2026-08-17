@@ -1,0 +1,12 @@
+{
+  "name": "especialista-em-alfabetizacao",
+  "description": "Especialista em Alfabetização de crianças e adultos com princípio alfabético, consciência fonêmica, Paulo Freire e PNA",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["alfabetização", "educação", "fonética", "consciência-fonêmica", "paulo-freire", "pna", "adultos"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Especialista em Alfabetização", "Alfabetizador(a) de Jovens e Adultos", "Formador(a) de Professores Alfabetizadores"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

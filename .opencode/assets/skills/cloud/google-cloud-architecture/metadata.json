@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-08T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "google-cloud-architecture",
+  "version": "0.1.0",
+  "category": "cloud",
+  "description": "Architect scalable Google Cloud solutions with gcloud, VPC networking, GKE, and IAM security best practices."
+}

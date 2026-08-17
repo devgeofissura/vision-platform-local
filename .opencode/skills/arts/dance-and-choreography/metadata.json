@@ -1,0 +1,22 @@
+{
+  "name": "dance-and-choreography",
+  "description": "Choreographic composition, staging for stage and video, and a structured rehearsal process",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["dance", "choreography", "staging", "composition", "rehearsal"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "category": "arts",
+  "requires": [
+    "A concept and a dramatic intention for the piece",
+    "Music with a clear meter and phrase structure",
+    "Rehearsal space, time and performers at a known level"
+  ],
+  "provides": [
+    "A composition method from concept to phrase",
+    "A framework for space and music relationship",
+    "Staging guidance for stage and camera",
+    "A rehearsal process with milestones and checks"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

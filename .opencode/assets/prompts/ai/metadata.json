@@ -1,0 +1,44 @@
+{
+  "name": "rag-system-design",
+  "description": "Prompt for end-to-end RAG system design (ingestion, chunking, embeddings, retrieval, generation, evaluation)",
+  "category": "ai",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "rag",
+    "llm",
+    "embeddings",
+    "vector-database",
+    "retrieval",
+    "system-design"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "documents",
+      "description": "Document types and volume (PDFs, DOCX, HTML, DB rows, scale)",
+      "required": true
+    },
+    {
+      "name": "use_case",
+      "description": "Question-answering, chatbot, support copilot, internal search",
+      "required": true
+    },
+    {
+      "name": "stack",
+      "description": "Preferred stack (Python/TS, pgvector/Qdrant, providers)",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "rag-llm",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

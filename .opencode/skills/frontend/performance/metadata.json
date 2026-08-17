@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-20T03:42:44Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "react-patterns",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "performance",
+  "version": "0.1.0",
+  "category": "frontend",
+  "description": "Best practices for frontend performance optimization"
+}

@@ -1,0 +1,31 @@
+{
+  "name": "php-developer",
+  "description": "PHP Developer specialized in modern PHP 8, PSR standards, PDO, and secure web applications",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "php",
+    "psr",
+    "pdo"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "php-best-practices"
+  ],
+  "personas": [
+    "Senior PHP Developer",
+    "PSR Standards Advocate",
+    "Web Security Specialist"
+  ],
+  "dependencies": [
+    {
+      "name": "php-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

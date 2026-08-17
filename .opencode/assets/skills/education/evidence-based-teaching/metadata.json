@@ -1,0 +1,23 @@
+{
+  "name": "evidence-based-teaching",
+  "description": "Apply research-backed teaching practices and interpret effect sizes to decide what to do in class",
+  "category": "education",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["evidence-based-teaching", "research", "effect-sizes", "teaching", "retrieval-practice", "education-science", "hattie"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "requires": [
+    "A willingness to compare your current practice with research findings",
+    "Access to research summaries (The Learning Scientists, Meta-Analysis)",
+    "A class where you can try one practice at a time",
+    "A simple way to measure outcomes before and after"
+  ],
+  "provides": [
+    "A ranked guide to high-impact teaching practices",
+    "Effect size interpretation guidance",
+    "A single-practice trial protocol",
+    "Research literacy tools for reading studies"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

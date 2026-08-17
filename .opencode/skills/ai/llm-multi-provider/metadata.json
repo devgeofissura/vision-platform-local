@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "llm-multi-provider",
+  "version": "0.1.0",
+  "category": "ai",
+  "description": "Integrate multiple LLM providers (OpenAI, Anthropic, Groq, Gemini, DeepSeek) with automatic fallback, priority and key management"
+}

@@ -1,0 +1,9 @@
+{
+  "skill": "skill-spector",
+  "vault_path": "security/skill-spector",
+  "sha256": "7bce1e1cb06badba7d5ec36c62c4343156d56abd0d72cc3b48ae73e2e4176f9b",
+  "tokens_estimate": 779,
+  "bytes": 3122,
+  "curated": true,
+  "content_format": "markdown"
+}

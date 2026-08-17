@@ -1,0 +1,23 @@
+{
+  "name": "vestibular-prep",
+  "description": "Prepare students for Brazilian university entrance exams with ENEM, FUVEST, and VUNESP structures and study plans",
+  "category": "education",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["vestibular", "ENEM", "FUVEST", "VUNESP", "redacao", "study-planning", "brazil", "ensino-medio", "college-prep"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "requires": [
+    "A student in the last years of ensino médio or a pre-vestibular course",
+    "The target exam (ENEM, FUVEST, VUNESP, or a mix)",
+    "Realistic study time (usually 1-4 hours per day)",
+    "Official documents and past exams from the exam boards"
+  ],
+  "provides": [
+    "Exam structure breakdowns for ENEM, FUVEST, and VUNESP",
+    "A redação (essay) writing protocol aligned with ENEM's 5 competências",
+    "A weekly study plan template with time blocks",
+    "Simulado (mock exam) strategy and analysis guidance"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

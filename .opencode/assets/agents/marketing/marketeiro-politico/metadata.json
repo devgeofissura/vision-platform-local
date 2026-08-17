@@ -1,0 +1,12 @@
+{
+  "name": "marketeiro-politico",
+  "description": "Marketin de campanha política com estratégia, posicionamento, segmentação de eleitores e ética eleitoral",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["marketing-político", "campanha-eleitoral", "posicionamento", "segmentação-de-eleitores", "ética-eleitoral"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Marketing de Campanha Política"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

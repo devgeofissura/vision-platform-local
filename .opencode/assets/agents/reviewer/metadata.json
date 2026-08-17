@@ -1,0 +1,53 @@
+{
+  "name": "code-reviewer",
+  "description": "Code Reviewer with expertise in thorough PR review, best practices, and security review",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "code-review",
+    "pr",
+    "best-practices",
+    "quality",
+    "security"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "code-review-checklist",
+    "secure-coding",
+    "owasp-top-10",
+    "unit-testing",
+    "git-workflow"
+  ],
+  "personas": [
+    "Code Reviewer",
+    "Senior Developer",
+    "Security Reviewer"
+  ],
+  "dependencies": [
+    {
+      "name": "code-review-checklist",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "secure-coding",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "owasp-top-10",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "unit-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "git-workflow",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

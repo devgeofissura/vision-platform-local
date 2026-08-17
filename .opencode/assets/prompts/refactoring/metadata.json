@@ -1,0 +1,37 @@
+{
+  "name": "refactoring-plan",
+  "description": "Create a structured, risk-aware refactoring plan for existing code",
+  "category": "refactoring",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "refactoring",
+    "technical-debt",
+    "code-quality",
+    "maintenance"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "variables": [
+    {
+      "name": "codebase_area",
+      "description": "Module or area of the codebase to refactor",
+      "required": true
+    },
+    {
+      "name": "goals",
+      "description": "Refactoring goals and success criteria",
+      "required": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "refactoring-techniques",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

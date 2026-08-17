@@ -1,0 +1,22 @@
+{
+  "name": "fashion-design",
+  "description": "Fashion design covering fabric types, flat sketches, pattern basics and collection structure",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["fashion", "design", "fabrics", "pattern", "collection"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "category": "arts",
+  "requires": [
+    "A collection concept with target market and season",
+    "Real fabric references with composition and width",
+    "A size range with base measurements"
+  ],
+  "provides": [
+    "A method for planning a collection",
+    "Guidance for flat sketches and technical sheets",
+    "Fabric behavior knowledge for design choices",
+    "Pattern and grading basics for production"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

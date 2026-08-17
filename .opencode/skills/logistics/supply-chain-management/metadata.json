@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-08T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "supply-chain-management",
+  "version": "0.1.0",
+  "category": "logistics",
+  "description": "Optimize supply chains with EOQ, safety stock, ABC classification, and WMS-driven warehouse flows."
+}

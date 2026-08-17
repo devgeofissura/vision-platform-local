@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-08T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "aircraft-mechanics",
+  "version": "0.1.0",
+  "category": "automotive",
+  "description": "Understand airworthiness, inspection processes, maintenance records, and FAA-H-8083 references."
+}

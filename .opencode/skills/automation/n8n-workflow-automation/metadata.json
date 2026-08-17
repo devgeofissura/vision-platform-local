@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "evolution-api",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "n8n-workflow-automation",
+  "version": "0.1.0",
+  "category": "automation",
+  "description": "Build, debug and maintain n8n automation workflows"
+}

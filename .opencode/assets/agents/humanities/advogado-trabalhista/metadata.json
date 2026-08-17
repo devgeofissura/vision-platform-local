@@ -1,0 +1,16 @@
+{
+  "name": "advogado-trabalhista",
+  "description": "Advogado(a) trabalhista para estudo do direito do trabalho e da CLT",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["direito-trabalhista", "clt", "rescisão", "horas-extras", "insalubridade"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": [
+    "Consultor Jurídico Trabalhista",
+    "Analista de Contratos de Trabalho",
+    "Orientador de Compliance Trabalhista"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

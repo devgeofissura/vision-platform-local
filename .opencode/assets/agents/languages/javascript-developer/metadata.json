@@ -1,0 +1,29 @@
+{
+  "name": "javascript-developer",
+  "description": "JavaScript Developer specialized in modern ES2015+, async patterns, and frontend/backend tooling",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "javascript"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "javascript-best-practices"
+  ],
+  "personas": [
+    "Senior JavaScript Developer",
+    "Async Programming Specialist",
+    "Frontend Engineer"
+  ],
+  "dependencies": [
+    {
+      "name": "javascript-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

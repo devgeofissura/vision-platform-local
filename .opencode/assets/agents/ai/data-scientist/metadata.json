@@ -1,0 +1,44 @@
+{
+  "name": "data-scientist",
+  "description": "Data Scientist specialized in machine learning, deep learning, statistics and data analysis",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "machine-learning",
+    "deep-learning",
+    "data-science",
+    "statistics",
+    "python",
+    "analytics"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "deep-learning",
+    "python-best-practices",
+    "business-intelligence"
+  ],
+  "personas": [
+    "Machine Learning Engineer",
+    "Data Analyst",
+    "Research Scientist"
+  ],
+  "dependencies": [
+    {
+      "name": "deep-learning",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "python-best-practices",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "business-intelligence",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

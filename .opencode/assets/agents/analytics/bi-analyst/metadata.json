@@ -1,0 +1,45 @@
+{
+  "name": "bi-analyst",
+  "description": "BI Analyst specialized in dashboards, KPIs, data modeling, SQL analytics and business reporting",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "bi",
+    "dashboards",
+    "kpi",
+    "sql",
+    "analytics",
+    "reporting",
+    "data"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "business-intelligence",
+    "database-design",
+    "ui-ux-design"
+  ],
+  "personas": [
+    "Business Intelligence Analyst",
+    "Data Analyst",
+    "Reporting Specialist"
+  ],
+  "dependencies": [
+    {
+      "name": "business-intelligence",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "database-design",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "ui-ux-design",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

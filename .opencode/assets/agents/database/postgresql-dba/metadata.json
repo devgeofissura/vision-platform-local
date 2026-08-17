@@ -1,0 +1,31 @@
+{
+  "name": "postgresql-dba",
+  "description": "PostgreSQL Database Administrator specialized in schema design, indexing, and query performance",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "postgresql",
+    "postgres",
+    "dba"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "postgresql-database"
+  ],
+  "personas": [
+    "Senior PostgreSQL DBA",
+    "Query Performance Specialist",
+    "Data Modeling Expert"
+  ],
+  "dependencies": [
+    {
+      "name": "postgresql-database",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

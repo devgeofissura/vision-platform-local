@@ -1,0 +1,13 @@
+{
+  "name": "nutrition",
+  "description": "Evidence-based nutrition education: food groups, dietary planning basics, macro/micronutrients and population adaptations",
+  "category": "health",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["nutrition", "diet", "food-groups", "macronutrients", "micronutrients", "health"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "requires": ["Healthy eating concepts", "Food composition reference", "Dietary restrictions info"],
+  "provides": ["Food group framework", "Macro/micronutrient basics", "Meal planning structure", "Population adaptations", "Educational disclaimers"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

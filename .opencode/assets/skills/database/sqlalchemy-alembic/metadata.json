@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T12:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "postgresql-database",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "sqlalchemy-alembic",
+  "version": "0.1.0",
+  "category": "database",
+  "description": "Model PostgreSQL schemas with SQLAlchemy 2.0 (async) and Alembic migrations, including multi-tenant scoping, audit columns, and UUID public ids"
+}

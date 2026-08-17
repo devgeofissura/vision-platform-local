@@ -1,0 +1,12 @@
+{
+  "name": "engenheiro-de-producao",
+  "description": "Engenheiro de produção especializado em planejamento, capacidade produtiva, takt time, lean manufacturing e melhoria contínua",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["producao", "lean", "takt", "capacidade", "operacoes"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["production-planning"],
+  "personas": ["Analista de Planejamento e Controle da Produção", "Especialista em Lean Manufacturing"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

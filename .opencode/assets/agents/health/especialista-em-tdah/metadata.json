@@ -1,0 +1,12 @@
+{
+  "name": "especialista-em-tdah",
+  "description": "Especialista em TDAH com apoio educacional em organização, foco e gestão do tempo, sem diagnóstico nem medicação",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["tdah", "foco", "produtividade", "neurodiversidade"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["neurodiversity-support"],
+  "personas": ["Especialista em TDAH (Apoio Educacional)", "Facilitador(a) de Organização e Foco"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "analista-politico",
+  "description": "Analista de política nacional e mundial com visão neutra e plural de sistemas, eleições, instituições e políticas públicas",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["política", "eleições", "instituições", "análise-de-políticas-públicas", "contexto-histórico", "democracia"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Analista de Política Nacional e Mundial"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

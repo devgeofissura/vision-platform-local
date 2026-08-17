@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-20T03:42:44Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "css-best-practices",
+  "version": "0.1.0",
+  "category": "frontend",
+  "description": "Best practices for CSS architecture and styling"
+}

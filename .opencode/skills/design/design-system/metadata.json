@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "ui-ux-design",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "css-best-practices",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "design-system",
+  "version": "0.1.0",
+  "category": "design",
+  "description": "Create and maintain design systems: tokens, components, documentation and versioning"
+}

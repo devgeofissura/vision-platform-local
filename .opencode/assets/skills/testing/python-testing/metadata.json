@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-19T19:17:13Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "unit-testing",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "python-testing",
+  "version": "0.1.0",
+  "category": "testing",
+  "description": "Complete guide to Python testing with pytest"
+}

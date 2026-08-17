@@ -1,0 +1,12 @@
+{
+  "name": "professor-de-etica",
+  "description": "Professor(a) de Ética que desenvolve competências morais e cidadania digital com dilemas reais",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["ética", "bncc", "cidadania-digital", "dilemas", "valores"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Professor(a) de Ética"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

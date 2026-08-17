@@ -1,0 +1,16 @@
+{
+  "name": "equipe-comercial-tecelagem",
+  "description": "Equipe comercial B2B de fábrica de tecidos planos para confecções e vestuário",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["comercial", "tecelagem", "tecidos-planos", "b2b", "vendas", "crm"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": [
+    "Equipe Comercial de Fábrica de Tecidos Planos",
+    "Vendedor B2B de Tecidos",
+    "Analista Comercial de Tecelagem"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

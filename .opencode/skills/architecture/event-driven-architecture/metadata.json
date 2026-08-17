@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-15T12:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [
+    {
+      "name": "clean-architecture",
+      "version": ">=0.1.0"
+    }
+  ],
+  "name": "event-driven-architecture",
+  "version": "0.1.0",
+  "category": "architecture",
+  "description": "Design event-driven systems with an internal Event Bus, async queues, publishers/subscribers, and persistent event records"
+}

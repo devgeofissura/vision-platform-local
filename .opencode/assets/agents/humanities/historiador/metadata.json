@@ -1,0 +1,12 @@
+{
+  "name": "historiador",
+  "description": "Historiador com método de análise de fontes, narrativa e preservação",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["história", "fontes", "arquivo", "pesquisa", "narrativa"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Pesquisador Histórico", "Analista de Fontes Primárias", "Arquivista"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "mecanico",
+  "description": "Mecânico de automóveis para diagnóstico, manutenção programada, sistemas do veículo, torque e segurança",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["mecanica", "automoveis", "manutencao", "diagnostico", "seguranca"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Mecânico de Automóveis", "Consultor(a) de Manutenção Veicular"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

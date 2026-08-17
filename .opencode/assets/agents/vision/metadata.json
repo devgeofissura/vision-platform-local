@@ -1,0 +1,48 @@
+{
+  "name": "vision-engineer",
+  "description": "Computer Vision Engineer with expertise in OpenCV, image processing, and ML for vision",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "computer-vision",
+    "opencv",
+    "image-processing",
+    "deep-learning",
+    "ml"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "python-testing",
+    "unit-testing",
+    "secure-coding",
+    "performance"
+  ],
+  "personas": [
+    "Computer Vision Engineer",
+    "ML Vision Specialist",
+    "Image Processing Engineer"
+  ],
+  "dependencies": [
+    {
+      "name": "python-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "unit-testing",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "secure-coding",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "performance",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

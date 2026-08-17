@@ -1,0 +1,37 @@
+{
+  "name": "security-engineer",
+  "description": "Security Engineer with expertise in application and infrastructure security",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "security",
+    "owasp",
+    "penetration-testing",
+    "compliance"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "owasp-top-10",
+    "secure-coding"
+  ],
+  "personas": [
+    "Security Engineer",
+    "Penetration Tester",
+    "Security Architect"
+  ],
+  "dependencies": [
+    {
+      "name": "owasp-top-10",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "secure-coding",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

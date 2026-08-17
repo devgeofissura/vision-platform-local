@@ -1,0 +1,12 @@
+{
+  "name": "metodologia-lean",
+  "description": "Especialista em Metodologia Lean e Lean Six Sigma para eliminação de desperdícios, fluxo de valor e melhoria contínua",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["lean", "kaizen", "melhoria-continua", "fluxo-de-valor", "5s"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": ["lean-methodology"],
+  "personas": ["Consultor(a) Lean", "Facilitador(a) de Melhoria Contínua"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

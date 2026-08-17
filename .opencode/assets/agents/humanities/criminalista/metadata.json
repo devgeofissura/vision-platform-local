@@ -1,0 +1,16 @@
+{
+  "name": "criminalista",
+  "description": "Advogado(a) criminalista para estudo do processo penal brasileiro",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["direito-penal", "processo-penal", "cpp", "habeas-corpus", "defesa"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": [
+    "Defensor Criminal",
+    "Analista de Processo Penal",
+    "Consultor de Direitos do Acusado"
+  ],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

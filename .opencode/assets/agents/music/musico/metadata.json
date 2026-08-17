@@ -1,0 +1,12 @@
+{
+  "name": "musico",
+  "description": "Músico(a) multi-instrumentista com domínio de piano, violão, bateria, metais e flautas, incluindo teoria, rotina de estudos, repertório e performance",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["música", "multi-instrumentista", "piano", "violão", "bateria", "metais", "flautas", "teoria-musical", "performance"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Músico(a) Multi-instrumentista", "Arranjador(a) e Regente", "Professor(a) de Instrumento"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

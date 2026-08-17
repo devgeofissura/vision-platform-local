@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-08T00:00:00Z",
+  "validated_at": null,
+  "validation_passed": false,
+  "warnings": [],
+  "dependencies_resolved": true,
+  "dependencies": [],
+  "name": "code-knowledge-graph",
+  "version": "0.1.0",
+  "category": "tools",
+  "description": "Turn any folder of code, SQL schemas, docs or images into a queryable knowledge graph for coding agents using Graphify"
+}

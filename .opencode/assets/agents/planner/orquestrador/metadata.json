@@ -1,0 +1,12 @@
+{
+  "name": "orquestrador",
+  "description": "Agente orquestrador que planeja tarefas, escolhe os agentes certos, mostra a procedência das ferramentas e pergunta ao usuário o que ele deseja",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["planejamento", "orquestracao", "delegacao", "proveniencia", "coordenacao"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Orquestrador(a) de Agentes", "Planejador(a) Estratégico(a)"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

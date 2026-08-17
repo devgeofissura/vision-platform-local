@@ -1,0 +1,9 @@
+{
+  "skill": "code-knowledge-graph",
+  "vault_path": "tools/code-knowledge-graph",
+  "sha256": "e00c17b68950c2b06e945c1033f10ed945fa6284867fb41a95e025b68487074f",
+  "tokens_estimate": 767,
+  "bytes": 3077,
+  "curated": true,
+  "content_format": "markdown"
+}

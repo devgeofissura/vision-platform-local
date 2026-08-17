@@ -1,0 +1,37 @@
+{
+  "name": "data-engineer",
+  "description": "Data Engineer with expertise in data pipelines and analytics infrastructure",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": [
+    "data",
+    "pipelines",
+    "etl",
+    "analytics"
+  ],
+  "compatible": [
+    "opencode",
+    "claude-code",
+    "cursor"
+  ],
+  "skills": [
+    "database-design",
+    "python-testing"
+  ],
+  "personas": [
+    "Data Engineer",
+    "Analytics Engineer",
+    "ETL Developer"
+  ],
+  "dependencies": [
+    {
+      "name": "database-design",
+      "version": ">=0.1.0"
+    },
+    {
+      "name": "python-testing",
+      "version": ">=0.1.0"
+    }
+  ],
+  "dependencies_resolved": true
+}

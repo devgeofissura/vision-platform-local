@@ -1,0 +1,12 @@
+{
+  "name": "cabeleireiro",
+  "description": "Cabeleireiro(a) profissional especializado em cortes, coloração, química capilar, tratamentos e consulta ao cliente",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["cabelo", "coloracao", "cortes", "tratamento", "quimica"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Cabeleireiro(a) Profissional"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}

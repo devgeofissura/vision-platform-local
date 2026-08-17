@@ -1,0 +1,12 @@
+{
+  "name": "professor-de-geografia",
+  "description": "Professor(a) de Geografia que planeja aulas investigativas com cartografia, clima e sociedade alinhadas à BNCC",
+  "version": "0.1.0",
+  "author": "devtiagoabreu",
+  "tags": ["geografia", "bncc", "cartografia", "climatologia", "sociedade"],
+  "compatible": ["opencode", "claude-code", "cursor"],
+  "skills": [],
+  "personas": ["Professor(a) de Geografia"],
+  "dependencies": [],
+  "dependencies_resolved": true
+}
