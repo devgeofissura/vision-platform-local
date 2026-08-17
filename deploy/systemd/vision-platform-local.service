@@ -1,0 +1,20 @@
+[Unit]
+Description=Vision Platform Local - Capture Service
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+user=vision
+group=vision
+WorkingDirectory=/opt/vision-platform-local
+EnvironmentFile=/opt/vision-platform-local/.env
+ExecStart=/opt/vision-platform-local/venv/bin/uvicorn src.main:app --host 0.0.0.0 --port 8080
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vision-platform-local
+
+[Install]
+WantedBy=multi-user.target

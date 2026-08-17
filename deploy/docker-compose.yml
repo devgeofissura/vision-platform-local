@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  vision-platform-local:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: always
+    env_file: ../.env
+    ports:
+      - "8080:8080"
+    volumes:
+      - evidence:/var/lib/vision-platform-local/evidence
+    devices:
+      - /dev/video0:/dev/video0
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: vision_local
+      POSTGRES_USER: vision
+      POSTGRES_PASSWORD: change-me
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  evidence:
+  pgdata:
