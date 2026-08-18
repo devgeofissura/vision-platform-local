@@ -58,7 +58,7 @@ class TestCamerasEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert len(data["cameras"]) == 1
-        assert data["cameras"][0]["camera_id"] == "CAM-001"
+        assert data["cameras"][0]["camera_id"] == "GeoFissura_CAM_000001"
 
 
 class TestListObservations:

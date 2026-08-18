@@ -7,6 +7,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from src.camera.discovery import OnvifDiscovery, StreamType
 from src.camera.frame_validator import FrameValidator
 from src.camera.rtsp_client import RTSPClient
 from src.config.settings import settings
@@ -18,17 +19,67 @@ logger = logging.getLogger(__name__)
 
 class CaptureWorker:
     def __init__(self):
-        self.client = RTSPClient(
-            rtsp_url=settings.camera_rtsp_url,
-            transport=settings.camera_rtsp_transport,
-            connect_timeout_ms=settings.camera_connect_timeout_ms,
-            reconnect_interval_ms=settings.camera_reconnect_interval_ms,
-        )
+        self.client = self._build_client()
         self.validator = FrameValidator()
         self._prev_frame: np.ndarray | None = None
         self._last_capture_at: datetime | None = None
         self._capture_count: int = 0
         self._error_count: int = 0
+
+    def _build_client(self) -> RTSPClient:
+        rtsp_url = self._resolve_rtsp_url()
+        return RTSPClient(
+            rtsp_url=rtsp_url,
+            transport=settings.camera_rtsp_transport,
+            connect_timeout_ms=settings.camera_connect_timeout_ms,
+            reconnect_interval_ms=settings.camera_reconnect_interval_ms,
+        )
+
+    def _resolve_rtsp_url(self) -> str:
+        if not settings.camera_auto_discover:
+            return settings.camera_rtsp_url
+
+        discovery = OnvifDiscovery(onvif_port=80)
+        cam = discovery.find_camera(
+            hostname_prefix="GeoFissura_CAM_",
+            mac=None,
+        )
+        if cam:
+            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
+            url = discovery.build_rtsp_url(
+                ip=cam.ip,
+                username=settings.camera_username,
+                password=settings.camera_password,
+                channel=settings.camera_channel,
+                stream=stream,
+            )
+            logger.info(
+                "Discovered camera %s at %s (mac=%s, model=%s)",
+                cam.full_name,
+                cam.ip,
+                cam.mac,
+                cam.model,
+            )
+            return url
+
+        ip = discovery.fallback_resolve(settings.camera_hostname)
+        if ip:
+            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
+            url = discovery.build_rtsp_url(
+                ip=ip,
+                username=settings.camera_username,
+                password=settings.camera_password,
+                channel=settings.camera_channel,
+                stream=stream,
+            )
+            logger.info("Fallback DNS resolved %s -> %s", settings.camera_hostname, ip)
+            return url
+
+        logger.warning(
+            "Discovery and DNS failed, using configured URL: %s",
+            settings.camera_rtsp_url,
+        )
+        return settings.camera_rtsp_url
 
     def capture(self) -> dict | None:
         if not self.client.is_connected:

@@ -8,9 +8,15 @@ class Settings(BaseSettings):
     local_name: str = "Central Orange Pi 001"
     timezone: str = "America/Sao_Paulo"
 
-    camera_id: str = "CAM-001"
-    camera_name: str = "Camera fissura 001"
-    camera_rtsp_url: str = "rtsp://user:password@192.168.1.100:554/cam/realmonitor?channel=1&subtype=0"
+    camera_id: str = "GeoFissura_CAM_000001"
+    camera_name: str = "VIPC-1230-B-G2 geofissura"
+    camera_hostname: str = "geofissuracam01"
+    camera_username: str = "admin"
+    camera_password: str = ""
+    camera_auto_discover: bool = True
+    camera_stream_type: str = "main"
+    camera_channel: int = 1
+    camera_rtsp_url: str = "rtsp://admin:@geofissuracam01:554/cam/realmonitor?channel=1&subtype=0"
     camera_rtsp_transport: str = "tcp"
     camera_connect_timeout_ms: int = 10000
     camera_reconnect_interval_ms: int = 5000

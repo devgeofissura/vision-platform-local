@@ -23,6 +23,7 @@ dependencies = [
     "pydantic-settings>=2.7.0",
     "httpx>=0.28.0",
     "psutil>=6.1.0",
+    "onvif-zeep>=0.2.12",
 ]
 
 [project.optional-dependencies]

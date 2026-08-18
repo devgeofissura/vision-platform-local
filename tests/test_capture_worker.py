@@ -19,6 +19,7 @@ def worker():
         mock_settings.camera_reconnect_interval_ms = 3000
         mock_settings.local_id = "LOCAL-001"
         mock_settings.camera_id = "CAM-001"
+        mock_settings.camera_auto_discover = False
         mock_settings.local_evidence_dir = "/tmp/test_evidence"
         mock_settings.camera_capture_jpeg_quality = 95
         w = CaptureWorker()
