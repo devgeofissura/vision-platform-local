@@ -4,23 +4,10 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from src.camera.capture_worker import CaptureWorker
-from src.storage.database import Base
 from src.storage.models import Observation
-
-TEST_DB_URL = "sqlite:///test_capture.db"
-test_engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
-TestSession = sessionmaker(bind=test_engine)
-
-
-@pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=test_engine)
-    yield
-    Base.metadata.drop_all(bind=test_engine)
+from tests.conftest import TestSession
 
 
 @pytest.fixture
@@ -55,7 +42,6 @@ class TestCaptureWorkerConnect:
 
 
 class TestCaptureWorkerCapture:
-    @patch("src.camera.capture_worker.SessionLocal", TestSession)
     def test_capture_success(self, worker, tmp_path):
         frame = _fake_frame()
         worker.client.connect = MagicMock(return_value=True)
@@ -105,7 +91,6 @@ class TestCaptureWorkerCapture:
 
 
 class TestCaptureWorkerSaveObservation:
-    @patch("src.camera.capture_worker.SessionLocal", TestSession)
     def test_save_observation(self, worker):
         data = {
             "observation_id": "obs_test_001",
@@ -119,7 +104,8 @@ class TestCaptureWorkerSaveObservation:
             "quality": {"score": 0.9, "issues": ["low_sharpness"]},
             "algorithm_version": "capture-0.1.0",
         }
-        worker._save_observation(data)
+        with patch("src.camera.capture_worker.SessionLocal", TestSession):
+            worker._save_observation(data)
 
         db = TestSession()
         obs = db.query(Observation).filter_by(observation_id="obs_test_001").first()

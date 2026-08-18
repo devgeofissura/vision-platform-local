@@ -1,28 +1,13 @@
 from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from src.storage.database import Base
 from src.storage.delivery_queue import (
     deliver_observation,
     get_pending_observations,
     process_delivery_queue,
 )
 from src.storage.models import Observation
-
-TEST_DB_URL = "sqlite:///test_delivery.db"
-test_engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
-TestSession = sessionmaker(bind=test_engine)
-
-
-@pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=test_engine)
-    yield
-    Base.metadata.drop_all(bind=test_engine)
+from tests.conftest import TestSession
 
 
 def _create_observation(db, obs_id, status="pending", attempts=0):
