@@ -26,5 +26,9 @@ class Settings(BaseSettings):
     local_api_port: int = 8080
     local_api_token: str = "change-me"
 
+    central_api_base_url: str = "http://192.168.1.20:8081"
+    central_api_token: str = "change-me"
+    central_delivery_interval_ms: int = 60000
+
 
 settings = Settings()

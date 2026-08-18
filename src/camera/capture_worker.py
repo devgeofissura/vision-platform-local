@@ -1,4 +1,5 @@
 import hashlib
+import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -9,6 +10,8 @@ import numpy as np
 from src.camera.frame_validator import FrameValidator
 from src.camera.rtsp_client import RTSPClient
 from src.config.settings import settings
+from src.storage.database import SessionLocal
+from src.storage.models import Observation
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +67,7 @@ class CaptureWorker:
         self._last_capture_at = now
         self._capture_count += 1
 
-        return {
+        result = {
             "observation_id": observation_id,
             "camera_id": settings.camera_id,
             "local_id": settings.local_id,
@@ -77,9 +80,37 @@ class CaptureWorker:
             "algorithm_version": "capture-0.1.0",
         }
 
+        self._save_observation(result)
+        return result
+
+    def _save_observation(self, data: dict) -> None:
+        db = SessionLocal()
+        try:
+            record = Observation(
+                observation_id=data["observation_id"],
+                camera_id=data["camera_id"],
+                local_id=data["local_id"],
+                captured_at=datetime.fromisoformat(data["captured_at"]),
+                file_path=data["file_path"],
+                sha256=data["sha256"],
+                width=data["width"],
+                height=data["height"],
+                quality_score=data["quality"]["score"],
+                quality_issues=json.dumps(data["quality"]["issues"]),
+                algorithm_version=data["algorithm_version"],
+                delivery_status="pending",
+            )
+            db.add(record)
+            db.commit()
+            logger.info("Saved observation %s to database", data["observation_id"])
+        except Exception as e:
+            db.rollback()
+            logger.error("Failed to save observation %s: %s", data["observation_id"], e)
+        finally:
+            db.close()
+
     @staticmethod
     def _get_roi() -> dict | None:
-        # TODO: load from database/config
         return None
 
     def connect(self) -> bool:
