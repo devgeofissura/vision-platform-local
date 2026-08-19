@@ -406,3 +406,94 @@ async def api_stats(db: Session = Depends(get_db)):
         "cpu_percent": psutil.cpu_percent(),
         "memory_percent": psutil.virtual_memory().percent,
     }
+
+
+# ── Camera ───────────────────────────────────────────────────
+
+@router.get("/camera", response_class=HTMLResponse)
+async def camera_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    latest = (
+        db.query(Observation)
+        .order_by(Observation.captured_at.desc())
+        .first()
+    )
+
+    total_obs = db.query(Observation).count()
+
+    latest_image_url = None
+    if latest and latest.file_path:
+        p = Path(latest.file_path)
+        evidence_root = Path(settings.local_evidence_dir)
+        try:
+            rel = p.relative_to(evidence_root)
+            latest_image_url = f"/evidence/{rel.as_posix()}"
+        except ValueError:
+            pass
+
+    return _tmpl().TemplateResponse(request, "camera.html", {
+        "user": user,
+        "page": "camera",
+        "camera_id": settings.camera_id,
+        "camera_name": settings.camera_name,
+        "camera_hostname": settings.camera_hostname,
+        "rtsp_url": settings.camera_rtsp_url.split("@")[-1] if "@" in settings.camera_rtsp_url else settings.camera_rtsp_url,
+        "latest": latest,
+        "latest_image_url": latest_image_url,
+        "total_obs": total_obs,
+    })
+
+
+@router.post("/camera/capture", response_class=HTMLResponse)
+async def camera_capture(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    from src.camera.capture_worker import CaptureWorker
+
+    error = None
+    result = None
+    worker = CaptureWorker()
+    try:
+        result = worker.capture()
+        if result is None:
+            error = "Câmera não disponível ou falha na captura"
+    except Exception as e:
+        error = str(e)
+    finally:
+        worker.disconnect()
+
+    latest = (
+        db.query(Observation)
+        .order_by(Observation.captured_at.desc())
+        .first()
+    )
+    total_obs = db.query(Observation).count()
+
+    latest_image_url = None
+    if latest and latest.file_path:
+        p = Path(latest.file_path)
+        evidence_root = Path(settings.local_evidence_dir)
+        try:
+            rel = p.relative_to(evidence_root)
+            latest_image_url = f"/evidence/{rel.as_posix()}"
+        except ValueError:
+            pass
+
+    return _tmpl().TemplateResponse(request, "camera.html", {
+        "user": user,
+        "page": "camera",
+        "camera_id": settings.camera_id,
+        "camera_name": settings.camera_name,
+        "camera_hostname": settings.camera_hostname,
+        "rtsp_url": settings.camera_rtsp_url.split("@")[-1] if "@" in settings.camera_rtsp_url else settings.camera_rtsp_url,
+        "latest": latest,
+        "latest_image_url": latest_image_url,
+        "total_obs": total_obs,
+        "capture_result": result,
+        "capture_error": error,
+    })

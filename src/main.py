@@ -1,8 +1,10 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from src.api.dashboard_routes import router as dashboard_router
 from src.api.routes import router
@@ -110,3 +112,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(router)
+
+evidence_dir = Path(settings.local_evidence_dir)
+evidence_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/evidence", StaticFiles(directory=str(evidence_dir)), name="evidence")

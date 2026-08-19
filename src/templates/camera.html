@@ -1,0 +1,85 @@
+{% extends "base_local.html" %}
+{% block title %}Câmera{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <h2 class="text-2xl font-bold mb-6">Câmera</h2>
+
+    <!-- Camera info -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-gray-400 text-sm">Device ID</p>
+            <p class="text-white font-mono">{{ camera_id }}</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-gray-400 text-sm">Nome</p>
+            <p class="text-white">{{ camera_name }}</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-gray-400 text-sm">RTSP</p>
+            <p class="text-white font-mono text-xs">{{ rtsp_url }}</p>
+        </div>
+    </div>
+
+    <!-- Capture button -->
+    <div class="mb-6">
+        <form method="POST" action="/dashboard/camera/capture" id="capture-form">
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition"
+                    onclick="this.disabled=true; this.textContent='Capturando...'; document.getElementById('capture-form').submit();">
+                📸 Capturar Foto
+            </button>
+        </form>
+    </div>
+
+    <!-- Capture result/error -->
+    {% if capture_error %}
+    <div class="bg-red-900 border border-red-600 text-red-200 p-4 rounded-lg mb-6">
+        <p class="font-semibold">Erro na captura:</p>
+        <p>{{ capture_error }}</p>
+    </div>
+    {% endif %}
+
+    {% if capture_result %}
+    <div class="bg-green-900 border border-green-600 text-green-200 p-4 rounded-lg mb-6">
+        <p class="font-semibold">Captura realizada com sucesso!</p>
+        <p class="text-sm">ID: {{ capture_result.observation_id }}</p>
+        <p class="text-sm">Resolução: {{ capture_result.width }}x{{ capture_result.height }}</p>
+        <p class="text-sm">Qualidade: {{ capture_result.quality.score }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Latest image -->
+    <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h3 class="font-semibold mb-4">Última Imagem Capturada</h3>
+        {% if latest_image_url %}
+        <div class="flex justify-center">
+            <img src="{{ latest_image_url }}"
+                 alt="Última captura"
+                 class="max-w-full rounded-lg border border-gray-600"
+                 style="max-height: 600px;">
+        </div>
+        {% if latest %}
+        <div class="mt-4 text-sm text-gray-400 text-center">
+            <p>
+                Capturada em: <span class="text-white">{{ latest.captured_at.strftime('%d/%m/%Y %H:%M:%S') if latest.captured_at else 'N/A' }}</span>
+                — Resolução: <span class="text-white">{{ latest.width }}x{{ latest.height }}</span>
+                — Score: <span class="text-white">{{ latest.quality_score }}</span>
+                — Status: <span class="text-blue-400">{{ latest.delivery_status }}</span>
+            </p>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center text-gray-500 py-12">
+            <p class="text-lg">Nenhuma imagem capturada ainda</p>
+            <p class="text-sm mt-2">Clique em "Capturar Foto" para testar a câmera</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Stats -->
+    <div class="bg-gray-800 p-4 rounded-lg">
+        <h3 class="font-semibold mb-2">Estatísticas</h3>
+        <p class="text-sm text-gray-400">Total de observações: <span class="text-white">{{ total_obs }}</span></p>
+    </div>
+</div>
+{% endblock %}

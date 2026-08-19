@@ -1,5 +1,6 @@
 import shutil
 from datetime import UTC, datetime
+from pathlib import Path
 
 import psutil
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -157,3 +158,35 @@ async def ack_observation(
 async def flush_delivery(token: str = Depends(verify_token), db: Session = Depends(get_db)):
     result = process_delivery_queue(db=db)
     return result
+
+
+@router.post("/api/v1/capture")
+async def manual_capture(token: str = Depends(verify_token)):
+    from src.camera.capture_worker import CaptureWorker
+
+    worker = CaptureWorker()
+    try:
+        result = worker.capture()
+        if result is None:
+            raise HTTPException(status_code=503, detail="Camera not available or capture failed")
+        return result
+    finally:
+        worker.disconnect()
+
+
+@router.get("/api/v1/capture/latest-image")
+async def latest_capture_image(token: str = Depends(verify_token)):
+    evidence_dir = Path(settings.local_evidence_dir)
+    if not evidence_dir.exists():
+        raise HTTPException(status_code=404, detail="No captures yet")
+
+    latest_dirs = sorted(evidence_dir.glob("**/*_full.jpg"), reverse=True)
+    if not latest_dirs:
+        raise HTTPException(status_code=404, detail="No captures yet")
+
+    latest = latest_dirs[0]
+    import base64
+    from fastapi.responses import Response
+
+    image_bytes = latest.read_bytes()
+    return Response(content=image_bytes, media_type="image/jpeg")
