@@ -36,7 +36,7 @@
             <input type="hidden" id="modal-model" name="camera_model" value="">
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Device ID</label>
-                <input type="text" name="device_id" value="{{ settings.camera_id }}"
+                <input type="text" name="device_id" value="{{ default_device_id }}"
                        class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono">
             </div>
             <div>
@@ -46,12 +46,12 @@
             </div>
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Usuário</label>
-                <input type="text" name="camera_username" value="{{ settings.camera_username }}"
+                <input type="text" name="camera_username" value="{{ default_username }}"
                        class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white">
             </div>
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Senha</label>
-                <input type="password" name="camera_password" value="{{ settings.camera_password }}"
+                <input type="password" name="camera_password" value="{{ default_password }}"
                        class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white"
                        placeholder="••••••">
             </div>

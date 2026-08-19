@@ -558,7 +558,9 @@ async def discovery_scan(request: Request):
     return _tmpl().TemplateResponse(request, "discovery_results.html", {
         "cameras": cameras_found,
         "scan_count": len(cameras_found),
-        "settings": settings,
+        "default_device_id": settings.camera_id,
+        "default_username": settings.camera_username,
+        "default_password": settings.camera_password,
     })
 
 
