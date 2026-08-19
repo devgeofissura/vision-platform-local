@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
@@ -40,6 +42,37 @@ class Settings(BaseSettings):
     jwt_expire_hours: int = 24
     admin_username: str = "admin"
     admin_password: str = "admin"
+
+    def save_to_env(self, updates: dict[str, str], env_path: Path | None = None) -> None:
+        if env_path is None:
+            env_path = Path(".env")
+        if env_path.exists():
+            lines = env_path.read_text(encoding="utf-8").splitlines()
+        else:
+            lines = []
+
+        env_keys = set()
+        new_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                new_lines.append(line)
+                continue
+            if "=" in stripped:
+                key = stripped.split("=", 1)[0].strip()
+                env_keys.add(key)
+                if key in updates:
+                    new_lines.append(f"{key}={updates[key]}")
+                else:
+                    new_lines.append(line)
+            else:
+                new_lines.append(line)
+
+        for key, value in updates.items():
+            if key not in env_keys:
+                new_lines.append(f"{key}={value}")
+
+        env_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
 
 settings = Settings()

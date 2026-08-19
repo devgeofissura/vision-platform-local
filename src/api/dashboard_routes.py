@@ -310,7 +310,7 @@ async def queue_flush(request: Request, db: Session = Depends(get_db)):
 # ── Settings ─────────────────────────────────────────────────
 
 @router.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request):
+async def settings_page(request: Request, saved: bool = False):
     user, redirect = _require(request)
     if redirect:
         return redirect
@@ -318,14 +318,70 @@ async def settings_page(request: Request):
     return _tmpl().TemplateResponse(request, "settings.html", {
         "user": user,
         "page": "settings",
+        "saved": saved,
         "local_id": settings.local_id,
         "local_name": settings.local_name,
+        "timezone": settings.timezone,
         "local_api_token": settings.local_api_token,
+        "data_dir": settings.local_data_dir,
         "central_api_base_url": settings.central_api_base_url,
         "central_api_token": settings.central_api_token,
         "central_delivery_interval_ms": settings.central_delivery_interval_ms,
-        "data_dir": settings.local_data_dir,
+        "camera_id": settings.camera_id,
+        "camera_name": settings.camera_name,
+        "camera_hostname": settings.camera_hostname,
+        "camera_username": settings.camera_username,
+        "camera_password": settings.camera_password,
+        "camera_stream_type": settings.camera_stream_type,
+        "camera_channel": settings.camera_channel,
+        "camera_rtsp_url": settings.camera_rtsp_url,
+        "camera_capture_interval_ms": settings.camera_capture_interval_ms,
+        "camera_capture_width": settings.camera_capture_width,
+        "camera_capture_height": settings.camera_capture_height,
+        "camera_capture_jpeg_quality": settings.camera_capture_jpeg_quality,
+        "camera_rtsp_transport": settings.camera_rtsp_transport,
     })
+
+
+@router.post("/settings", response_class=HTMLResponse)
+async def settings_save(request: Request):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    form = await request.form()
+    updates = {}
+    env_map = {
+        "local_id": "LOCAL_ID",
+        "local_name": "LOCAL_NAME",
+        "timezone": "TIMEZONE",
+        "local_data_dir": "LOCAL_DATA_DIR",
+        "local_api_token": "LOCAL_API_TOKEN",
+        "central_api_base_url": "CENTRAL_API_BASE_URL",
+        "central_api_token": "CENTRAL_API_TOKEN",
+        "central_delivery_interval_ms": "CENTRAL_DELIVERY_INTERVAL_MS",
+        "camera_id": "CAMERA_ID",
+        "camera_name": "CAMERA_NAME",
+        "camera_hostname": "CAMERA_HOSTNAME",
+        "camera_username": "CAMERA_USERNAME",
+        "camera_password": "CAMERA_PASSWORD",
+        "camera_stream_type": "CAMERA_STREAM_TYPE",
+        "camera_channel": "CAMERA_CHANNEL",
+        "camera_rtsp_url": "CAMERA_RTSP_URL",
+        "camera_capture_interval_ms": "CAMERA_CAPTURE_INTERVAL_MS",
+        "camera_capture_width": "CAMERA_CAPTURE_WIDTH",
+        "camera_capture_height": "CAMERA_CAPTURE_HEIGHT",
+        "camera_capture_jpeg_quality": "CAMERA_CAPTURE_JPEG_QUALITY",
+        "camera_rtsp_transport": "CAMERA_RTSP_TRANSPORT",
+    }
+
+    for form_key, env_key in env_map.items():
+        if form_key in form:
+            updates[env_key] = str(form[form_key])
+
+    settings.save_to_env(updates)
+
+    return RedirectResponse(url="/dashboard/settings?saved=1", status_code=302)
 
 
 # ── API (HTMX) ──────────────────────────────────────────────
