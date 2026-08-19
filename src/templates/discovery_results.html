@@ -1,0 +1,38 @@
+{% if cameras %}
+<div class="bg-gray-800 p-4 rounded-lg mb-6">
+    <p class="text-gray-400 mb-4">Encontradas <span class="text-white font-bold">{{ scan_count }}</span> câmeras na rede</p>
+    <div class="space-y-3">
+        {% for cam in cameras %}
+        <div class="bg-gray-700 p-4 rounded-lg flex items-center justify-between">
+            <div>
+                <p class="text-white font-mono font-bold">{{ cam.ip }}</p>
+                <p class="text-sm text-gray-400">
+                    Hostname: <span class="text-white">{{ cam.hostname }}</span>
+                    {% if cam.manufacturer %} — Marca: <span class="text-white">{{ cam.manufacturer }}</span>{% endif %}
+                    {% if cam.model %} — Modelo: <span class="text-white">{{ cam.model }}</span>{% endif %}
+                </p>
+                {% if cam.mac %}
+                <p class="text-xs text-gray-500">MAC: {{ cam.mac }}</p>
+                {% endif %}
+            </div>
+            <form method="POST" action="/dashboard/discovery/select">
+                <input type="hidden" name="camera_ip" value="{{ cam.ip }}">
+                <input type="hidden" name="camera_hostname" value="{{ cam.hostname }}">
+                <input type="hidden" name="camera_manufacturer" value="{{ cam.manufacturer or '' }}">
+                <input type="hidden" name="camera_model" value="{{ cam.model or '' }}">
+                <button type="submit"
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
+                    Usar Esta
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="bg-yellow-900 border border-yellow-600 text-yellow-200 p-4 rounded-lg mb-6">
+    <p class="font-semibold">Nenhuma câmera encontrada</p>
+    <p class="text-sm mt-1">Verifique se a câmera está ligada e conectada à mesma rede.</p>
+    <p class="text-sm mt-1">Dica: configure o IP manualmente abaixo ou em <a href="/dashboard/settings" class="underline">Configurações</a></p>
+</div>
+{% endif %}

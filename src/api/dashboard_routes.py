@@ -530,11 +530,8 @@ async def discovery_scan(request: Request):
     discovery = OnvifDiscovery(timeout_seconds=8.0)
     cameras_found = discovery._send_probe()
 
-    return _tmpl().TemplateResponse(request, "discovery.html", {
-        "user": user,
-        "page": "discovery",
+    return _tmpl().TemplateResponse(request, "discovery_results.html", {
         "cameras": cameras_found,
-        "scanning": False,
         "scan_count": len(cameras_found),
     })
 

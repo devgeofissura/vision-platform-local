@@ -6,61 +6,48 @@
 
     <!-- Scan button -->
     <div class="mb-6">
-        <form method="POST" action="/dashboard/discovery/scan">
-            <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition">
-                🔍 Escanear Rede
-            </button>
-        </form>
+        <button type="button"
+                id="scan-btn"
+                hx-post="/dashboard/discovery/scan"
+                hx-target="#scan-results"
+                hx-swap="innerHTML"
+                hx-indicator="#scan-progress"
+                hx-on::before-request="this.disabled=true; this.classList.add('opacity-50')"
+                hx-on::after-settle="this.disabled=false; this.classList.remove('opacity-50')"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition">
+            🔍 Escanear Rede
+        </button>
     </div>
 
-    {% if scan_count is defined %}
-    <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <p class="text-gray-400">Encontradas <span class="text-white font-bold">{{ scan_count }}</span> câmeras na rede</p>
-    </div>
-    {% endif %}
-
-    {% if cameras %}
-    <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <h3 class="font-semibold mb-4">Câmeras Encontradas</h3>
-        <div class="space-y-3">
-            {% for cam in cameras %}
-            <div class="bg-gray-700 p-4 rounded-lg flex items-center justify-between">
-                <div>
-                    <p class="text-white font-mono font-bold">{{ cam.ip }}</p>
-                    <p class="text-sm text-gray-400">
-                        Hostname: <span class="text-white">{{ cam.hostname }}</span>
-                        {% if cam.manufacturer %} — Marca: <span class="text-white">{{ cam.manufacturer }}</span>{% endif %}
-                        {% if cam.model %} — Modelo: <span class="text-white">{{ cam.model }}</span>{% endif %}
-                    </p>
-                    {% if cam.mac %}
-                    <p class="text-xs text-gray-500">MAC: {{ cam.mac }}</p>
-                    {% endif %}
-                </div>
-                <form method="POST" action="/dashboard/discovery/select">
-                    <input type="hidden" name="camera_ip" value="{{ cam.ip }}">
-                    <input type="hidden" name="camera_hostname" value="{{ cam.hostname }}">
-                    <input type="hidden" name="camera_manufacturer" value="{{ cam.manufacturer or '' }}">
-                    <input type="hidden" name="camera_model" value="{{ cam.model or '' }}">
-                    <button type="submit"
-                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
-                        Usar Esta
-                    </button>
-                </form>
+    <!-- Progress bar -->
+    <div id="scan-progress" class="htmx-indicator mb-6">
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex items-center gap-3 mb-2">
+                <svg class="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-white font-semibold">Escaneando rede...</span>
             </div>
-            {% endfor %}
+            <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                <div class="bg-blue-500 h-3 rounded-full animate-pulse" style="width: 100%; animation: scanBar 8s linear infinite;"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Enviando WS-Discovery probe... (até 8 segundos)</p>
         </div>
     </div>
-    {% elif scan_count is defined and scan_count == 0 %}
-    <div class="bg-yellow-900 border border-yellow-600 text-yellow-200 p-4 rounded-lg mb-6">
-        <p class="font-semibold">Nenhuma câmera encontrada</p>
-        <p class="text-sm mt-1">Verifique se a câmera está ligada e conectada à mesma rede.</p>
-        <p class="text-sm mt-1">Dica: configure o IP manualmente em <a href="/dashboard/settings" class="underline">Configurações</a></p>
-    </div>
-    {% endif %}
+    <style>
+        @keyframes scanBar {
+            0% { width: 0%; }
+            50% { width: 80%; }
+            100% { width: 100%; }
+        }
+    </style>
+
+    <!-- Results container -->
+    <div id="scan-results"></div>
 
     <!-- Manual IP -->
-    <div class="bg-gray-800 p-4 rounded-lg">
+    <div class="bg-gray-800 p-4 rounded-lg mt-6">
         <h3 class="font-semibold mb-4">Configurar IP Manualmente</h3>
         <form method="POST" action="/dashboard/discovery/select" class="flex items-end gap-4">
             <div class="flex-1">
@@ -84,3 +71,4 @@
     {% endif %}
 </div>
 {% endblock %}
+
