@@ -1,0 +1,107 @@
+{% extends "base_local.html" %}
+{% block title %}Monitoramento{% endblock %}
+{% block content %}
+<div class="max-w-7xl">
+    <h2 class="text-2xl font-bold mb-6">Monitoramento em Tempo Real</h2>
+
+    <!-- Camera selector -->
+    <div class="mb-6">
+        <label class="block text-sm text-gray-400 mb-2">Câmera</label>
+        <div class="flex flex-wrap gap-3">
+            {% for cam in cameras %}
+            <a href="/dashboard/monitoring?camera={{ cam.device_id }}"
+               class="block bg-gray-800 p-3 rounded-lg border-2 transition hover:border-blue-500 {% if cam.device_id == selected_id %}border-blue-500{% else %}border-gray-700{% endif %}">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                    <span class="text-white font-mono text-sm">{{ cam.device_id }}</span>
+                </div>
+                <p class="text-xs text-gray-400">{{ cam.name }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if selected_id %}
+    <!-- Full-width live stream -->
+    <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Stream ao Vivo — {{ selected_id }}</h3>
+            <div class="flex gap-2">
+                <button onclick="startStream()" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded">▶ Play</button>
+                <button onclick="stopStream()" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded">⏹ Stop</button>
+            </div>
+        </div>
+        <div class="bg-black rounded-lg overflow-hidden relative" style="min-height: 400px;">
+            <img id="live-stream" alt="Stream ao vivo" class="w-full" style="display: none;">
+            <div id="stream-placeholder" class="flex items-center justify-center h-96 text-gray-500">
+                <div class="text-center">
+                    <p class="text-lg mb-2">Clique para iniciar</p>
+                    <button onclick="startStream()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                        ▶ Iniciar Monitoramento
+                    </button>
+                </div>
+            </div>
+            <!-- Overlay info bar -->
+            <div id="stream-overlay" class="hidden absolute bottom-0 left-0 right-0 bg-black/60 p-3 text-sm">
+                <div class="flex items-center gap-4">
+                    <span class="text-green-400 font-mono">● AO VIVO</span>
+                    <span class="text-gray-300" id="stream-time"></span>
+                    <span class="text-gray-400 text-xs">IP: {{ selected_id }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task type detection panels -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <h4 class="font-semibold text-orange-400 mb-2">Fissuras</h4>
+            <p class="text-xs text-gray-400">Detecção de fissuras em tempo real</p>
+            <div class="mt-3 text-center text-gray-600 text-sm">Em desenvolvimento</div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <h4 class="font-semibold text-blue-400 mb-2">EPIs</h4>
+            <p class="text-xs text-gray-400">Verificação de equipamentos de proteção</p>
+            <div class="mt-3 text-center text-gray-600 text-sm">Em desenvolvimento</div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <h4 class="font-semibold text-green-400 mb-2">Qualidade do Tecido</h4>
+            <p class="text-xs text-gray-400">Inspeção de defeitos no tecido</p>
+            <div class="mt-3 text-center text-gray-600 text-sm">Em desenvolvimento</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+let streamImg = null;
+
+function startStream() {
+    const img = document.getElementById('live-stream');
+    const placeholder = document.getElementById('stream-placeholder');
+    const overlay = document.getElementById('stream-overlay');
+    img.src = '/api/v1/stream/{{ selected_id }}?token={{ camera_token }}';
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    overlay.classList.remove('hidden');
+    streamImg = img;
+    updateTime();
+}
+
+function stopStream() {
+    if (streamImg) {
+        streamImg.src = '';
+        streamImg.style.display = 'none';
+    }
+    document.getElementById('stream-placeholder').style.display = 'flex';
+    document.getElementById('stream-overlay').classList.add('hidden');
+}
+
+function updateTime() {
+    const el = document.getElementById('stream-time');
+    if (!el) return;
+    el.textContent = new Date().toLocaleTimeString('pt-BR');
+    if (streamImg && streamImg.src) setTimeout(updateTime, 1000);
+}
+</script>
+{% endblock %}

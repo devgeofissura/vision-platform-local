@@ -15,20 +15,66 @@
                 <p class="text-xs text-gray-500">MAC: {{ cam.mac }}</p>
                 {% endif %}
             </div>
-            <form method="POST" action="/dashboard/discovery/select">
-                <input type="hidden" name="camera_ip" value="{{ cam.ip }}">
-                <input type="hidden" name="camera_hostname" value="{{ cam.hostname }}">
-                <input type="hidden" name="camera_manufacturer" value="{{ cam.manufacturer or '' }}">
-                <input type="hidden" name="camera_model" value="{{ cam.model or '' }}">
-                <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
-                    Usar Esta
-                </button>
-            </form>
+            <button type="button"
+                    onclick="document.getElementById('modal-ip').value='{{ cam.ip }}'; document.getElementById('modal-hostname').value='{{ cam.hostname }}'; document.getElementById('modal-manufacturer').value='{{ cam.manufacturer or '' }}'; document.getElementById('modal-model').value='{{ cam.model or '' }}'; document.getElementById('cred-modal').classList.remove('hidden')"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
+                Usar Esta
+            </button>
         </div>
         {% endfor %}
     </div>
 </div>
+
+<!-- Credentials Modal -->
+<div id="cred-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-2xl border border-gray-600">
+        <h3 class="text-lg font-bold mb-4">Credenciais da Câmera</h3>
+        <form method="POST" action="/dashboard/discovery/select" class="space-y-4">
+            <input type="hidden" id="modal-ip" name="camera_ip" value="">
+            <input type="hidden" id="modal-hostname" name="camera_hostname" value="">
+            <input type="hidden" id="modal-manufacturer" name="camera_manufacturer" value="">
+            <input type="hidden" id="modal-model" name="camera_model" value="">
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Device ID</label>
+                <input type="text" name="device_id" value="{{ settings.camera_id }}"
+                       class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Nome</label>
+                <input type="text" name="device_name" id="modal-device-name"
+                       class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Usuário</label>
+                <input type="text" name="camera_username" value="{{ settings.camera_username }}"
+                       class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Senha</label>
+                <input type="password" name="camera_password" value="{{ settings.camera_password }}"
+                       class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white"
+                       placeholder="••••••">
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit"
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex-1 transition">
+                    Salvar
+                </button>
+                <button type="button"
+                        onclick="document.getElementById('cred-modal').classList.add('hidden')"
+                        class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('modal-model').addEventListener('change', function() {
+    document.getElementById('modal-device-name').value = this.value || document.getElementById('modal-hostname').value;
+});
+</script>
 {% else %}
 <div class="bg-yellow-900 border border-yellow-600 text-yellow-200 p-4 rounded-lg mb-6">
     <p class="font-semibold">Nenhuma câmera encontrada</p>

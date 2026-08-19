@@ -4,31 +4,30 @@
 <div class="max-w-6xl">
     <h2 class="text-2xl font-bold mb-6">Câmera</h2>
 
-    <!-- Camera info -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-gray-800 p-4 rounded-lg">
-            <p class="text-gray-400 text-sm">Device ID</p>
-            <p class="text-white font-mono">{{ camera_id }}</p>
-        </div>
-        <div class="bg-gray-800 p-4 rounded-lg">
-            <p class="text-gray-400 text-sm">Nome</p>
-            <p class="text-white">{{ camera_name }}</p>
-        </div>
-        <div class="bg-gray-800 p-4 rounded-lg">
-            <p class="text-gray-400 text-sm">RTSP</p>
-            <p class="text-white font-mono text-xs">{{ rtsp_url }}</p>
-        </div>
-    </div>
-
-    <!-- Capture button -->
+    <!-- Camera selector -->
     <div class="mb-6">
-        <form method="POST" action="/dashboard/camera/capture" id="capture-form">
-            <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition"
-                    onclick="this.disabled=true; this.textContent='Capturando...'; document.getElementById('capture-form').submit();">
-                📸 Capturar Foto
-            </button>
-        </form>
+        <label class="block text-sm text-gray-400 mb-2">Selecionar Câmera</label>
+        <div class="flex flex-wrap gap-3">
+            {% for cam in cameras %}
+            <a href="/dashboard/camera?camera={{ cam.device_id }}"
+               class="block bg-gray-800 p-3 rounded-lg border-2 transition hover:border-blue-500 {% if cam.device_id == selected_id %}border-blue-500{% else %}border-gray-700{% endif %}"
+               style="min-width: 200px;">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2 h-2 rounded-full {% if cam.is_active %}bg-green-400{% else %}bg-red-400{% endif %}"></span>
+                    <span class="text-white font-mono text-sm">{{ cam.device_id }}</span>
+                </div>
+                <p class="text-xs text-gray-400 truncate">{{ cam.name }}</p>
+                {% if cam.connection_config and cam.connection_config.ip %}
+                <p class="text-xs text-gray-500 font-mono">{{ cam.connection_config.ip }}</p>
+                {% endif %}
+            </a>
+            {% endfor %}
+            {% if not cameras %}
+            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 text-gray-500">
+                Nenhuma câmera configurada — <a href="/dashboard/discovery" class="underline">descobrir câmeras</a>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Capture result/error -->
@@ -42,44 +41,89 @@
     {% if capture_result %}
     <div class="bg-green-900 border border-green-600 text-green-200 p-4 rounded-lg mb-6">
         <p class="font-semibold">Captura realizada com sucesso!</p>
-        <p class="text-sm">ID: {{ capture_result.observation_id }}</p>
-        <p class="text-sm">Resolução: {{ capture_result.width }}x{{ capture_result.height }}</p>
-        <p class="text-sm">Qualidade: {{ capture_result.quality.score }}</p>
+        <p class="text-sm">Resolução: {{ capture_result.width }}x{{ capture_result.height }} — Score: {{ capture_result.quality.score }}</p>
     </div>
     {% endif %}
 
-    <!-- Latest image -->
-    <div class="bg-gray-800 p-4 rounded-lg mb-6">
-        <h3 class="font-semibold mb-4">Última Imagem Capturada</h3>
-        {% if latest_image_url %}
-        <div class="flex justify-center">
-            <img src="{{ latest_image_url }}"
-                 alt="Última captura"
-                 class="max-w-full rounded-lg border border-gray-600"
-                 style="max-height: 600px;">
+    <!-- Two columns: live stream + capture button -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Live stream -->
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <h3 class="font-semibold mb-3">Stream ao Vivo</h3>
+            <div class="bg-black rounded-lg overflow-hidden" style="min-height: 300px;">
+                <img id="live-stream"
+                     alt="Stream ao vivo"
+                     class="w-full"
+                     style="display: none;">
+                <div id="stream-placeholder" class="flex items-center justify-center h-64 text-gray-500">
+                    <div class="text-center">
+                        <button onclick="startStream()"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
+                            ▶ Iniciar Stream
+                        </button>
+                        <p class="text-xs">Conecta na câmera RTSP em tempo real</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-2 flex gap-2">
+                <button onclick="startStream()" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded">▶ Play</button>
+                <button onclick="stopStream()" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded">⏹ Stop</button>
+            </div>
         </div>
-        {% if latest %}
-        <div class="mt-4 text-sm text-gray-400 text-center">
-            <p>
-                Capturada em: <span class="text-white">{{ latest.captured_at.strftime('%d/%m/%Y %H:%M:%S') if latest.captured_at else 'N/A' }}</span>
-                — Resolução: <span class="text-white">{{ latest.width }}x{{ latest.height }}</span>
-                — Score: <span class="text-white">{{ latest.quality_score }}</span>
-                — Status: <span class="text-blue-400">{{ latest.delivery_status }}</span>
-            </p>
-        </div>
-        {% endif %}
-        {% else %}
-        <div class="text-center text-gray-500 py-12">
-            <p class="text-lg">Nenhuma imagem capturada ainda</p>
-            <p class="text-sm mt-2">Clique em "Capturar Foto" para testar a câmera</p>
-        </div>
-        {% endif %}
-    </div>
 
-    <!-- Stats -->
-    <div class="bg-gray-800 p-4 rounded-lg">
-        <h3 class="font-semibold mb-2">Estatísticas</h3>
-        <p class="text-sm text-gray-400">Total de observações: <span class="text-white">{{ total_obs }}</span></p>
+        <!-- Capture + latest image -->
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <h3 class="font-semibold mb-3">Captura de Imagem</h3>
+            <form method="POST" action="/dashboard/camera/capture" class="mb-4">
+                <input type="hidden" name="camera_id" value="{{ selected_id }}">
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg w-full transition"
+                        onclick="this.disabled=true; this.textContent='Capturando...'">
+                    📸 Capturar Foto (Alta Resolução)
+                </button>
+            </form>
+            {% if latest_image_url %}
+            <div class="flex justify-center">
+                <img src="{{ latest_image_url }}"
+                     alt="Última captura"
+                     class="max-w-full rounded-lg border border-gray-600"
+                     style="max-height: 350px;">
+            </div>
+            {% if latest %}
+            <div class="mt-2 text-xs text-gray-400 text-center">
+                {{ latest.captured_at.strftime('%d/%m/%Y %H:%M:%S') if latest.captured_at else 'N/A' }}
+                — {{ latest.width }}x{{ latest.height }}
+                — Score: {{ latest.quality_score }}
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center text-gray-500 py-8">
+                <p>Nenhuma imagem capturada ainda</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<script>
+let streamImg = null;
+let streamInterval = null;
+
+function startStream() {
+    const img = document.getElementById('live-stream');
+    const placeholder = document.getElementById('stream-placeholder');
+    img.src = '/api/v1/stream/{{ selected_id }}?token={{ camera_token }}';
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    streamImg = img;
+}
+
+function stopStream() {
+    if (streamImg) {
+        streamImg.src = '';
+        streamImg.style.display = 'none';
+    }
+    document.getElementById('stream-placeholder').style.display = 'flex';
+}
+</script>
 {% endblock %}

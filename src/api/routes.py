@@ -1,3 +1,4 @@
+import os
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -190,3 +191,51 @@ async def latest_capture_image(token: str = Depends(verify_token)):
 
     image_bytes = latest.read_bytes()
     return Response(content=image_bytes, media_type="image/jpeg")
+
+
+@router.get("/api/v1/stream/{camera_id}")
+async def stream_camera(camera_id: str, token: str = Depends(verify_token)):
+    from fastapi.responses import StreamingResponse
+    import cv2
+    import time
+
+    db = SessionLocal()
+    try:
+        device = db.query(Device).filter(Device.device_id == camera_id).first()
+        if not device or device.device_type != "camera":
+            raise HTTPException(status_code=404, detail="Camera not found")
+
+        config = device.connection_config or {}
+        ip = config.get("ip", "")
+        username = config.get("username", settings.camera_username)
+        password = settings.camera_password
+        channel = settings.camera_channel
+
+        if not ip:
+            raise HTTPException(status_code=400, detail="Camera IP not configured")
+
+        rtsp_url = f"rtsp://{username}:{password}@{ip}:554/cam/realmonitor?channel={channel}&subtype=0"
+    finally:
+        db.close()
+
+    os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
+    cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+    cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)
+
+    if not cap.isOpened():
+        raise HTTPException(status_code=503, detail="Cannot connect to camera")
+
+    def generate():
+        try:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                _, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                yield (b"--frame\r\n"
+                       b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
+                time.sleep(0.05)
+        finally:
+            cap.release()
+
+    return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")

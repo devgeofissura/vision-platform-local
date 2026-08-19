@@ -412,19 +412,44 @@ async def api_stats(db: Session = Depends(get_db)):
 
 # ── Camera ───────────────────────────────────────────────────
 
+@router.get("/monitoring", response_class=HTMLResponse)
+async def monitoring_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    cameras = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.created_at.desc()).all()
+
+    selected_id = request.query_params.get("camera", cameras[0].device_id if cameras else None)
+
+    return _tmpl().TemplateResponse(request, "monitoring.html", {
+        "user": user,
+        "page": "monitoring",
+        "cameras": cameras,
+        "selected_id": selected_id,
+        "camera_token": settings.local_api_token,
+    })
+
+
 @router.get("/camera", response_class=HTMLResponse)
 async def camera_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
         return redirect
 
+    cameras = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.created_at.desc()).all()
+
+    selected_id = request.query_params.get("camera", settings.camera_id)
+
     latest = (
         db.query(Observation)
         .order_by(Observation.captured_at.desc())
         .first()
     )
-
-    total_obs = db.query(Observation).count()
 
     latest_image_url = None
     if latest and latest.file_path:
@@ -439,14 +464,11 @@ async def camera_page(request: Request, db: Session = Depends(get_db)):
     return _tmpl().TemplateResponse(request, "camera.html", {
         "user": user,
         "page": "camera",
-        "camera_id": settings.camera_id,
-        "camera_name": settings.camera_name,
-        "camera_hostname": settings.camera_hostname,
-        "camera_ip": settings.camera_ip,
-        "rtsp_url": settings.camera_rtsp_url.split("@")[-1] if "@" in settings.camera_rtsp_url else settings.camera_rtsp_url,
+        "cameras": cameras,
+        "selected_id": selected_id,
         "latest": latest,
         "latest_image_url": latest_image_url,
-        "total_obs": total_obs,
+        "camera_token": settings.local_api_token,
     })
 
 
@@ -455,6 +477,9 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
         return redirect
+
+    form = await request.form()
+    camera_id = form.get("camera_id", settings.camera_id)
 
     from src.camera.capture_worker import CaptureWorker
 
@@ -470,12 +495,15 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
     finally:
         worker.disconnect()
 
+    cameras = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.created_at.desc()).all()
+
     latest = (
         db.query(Observation)
         .order_by(Observation.captured_at.desc())
         .first()
     )
-    total_obs = db.query(Observation).count()
 
     latest_image_url = None
     if latest and latest.file_path:
@@ -490,14 +518,11 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
     return _tmpl().TemplateResponse(request, "camera.html", {
         "user": user,
         "page": "camera",
-        "camera_id": settings.camera_id,
-        "camera_name": settings.camera_name,
-        "camera_hostname": settings.camera_hostname,
-        "camera_ip": settings.camera_ip,
-        "rtsp_url": settings.camera_rtsp_url.split("@")[-1] if "@" in settings.camera_rtsp_url else settings.camera_rtsp_url,
+        "cameras": cameras,
+        "selected_id": camera_id,
         "latest": latest,
         "latest_image_url": latest_image_url,
-        "total_obs": total_obs,
+        "camera_token": settings.local_api_token,
         "capture_result": result,
         "capture_error": error,
     })
@@ -547,24 +572,34 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
     camera_hostname = str(form.get("camera_hostname", ""))
     camera_manufacturer = str(form.get("camera_manufacturer", ""))
     camera_model = str(form.get("camera_model", ""))
+    device_id = str(form.get("device_id", settings.camera_id))
+    device_name = str(form.get("device_name", camera_model or camera_hostname or device_id))
+    camera_username = str(form.get("camera_username", settings.camera_username))
+    camera_password = str(form.get("camera_password", settings.camera_password))
 
-    updates = {"CAMERA_IP": camera_ip}
+    updates = {
+        "CAMERA_IP": camera_ip,
+        "CAMERA_USERNAME": camera_username,
+        "CAMERA_PASSWORD": camera_password,
+    }
     settings.save_to_env(updates)
 
-    device_id = settings.camera_id
     existing = db.query(Device).filter(Device.device_id == device_id).first()
     if existing:
+        existing.name = device_name
         existing.connection_config = {
             **(existing.connection_config or {}),
             "ip": camera_ip,
             "hostname": camera_hostname,
+            "manufacturer": camera_manufacturer,
+            "model": camera_model,
         }
         existing.updated_at = datetime.now(UTC)
         db.commit()
     else:
         device = Device(
             device_id=device_id,
-            name=camera_model or camera_hostname or device_id,
+            name=device_name,
             device_type="camera",
             task_type="fissure",
             connection_type="rtsp",
@@ -573,6 +608,7 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
                 "hostname": camera_hostname,
                 "manufacturer": camera_manufacturer,
                 "model": camera_model,
+                "username": camera_username,
             },
             capture_interval_ms=settings.camera_capture_interval_ms,
             is_active=True,
