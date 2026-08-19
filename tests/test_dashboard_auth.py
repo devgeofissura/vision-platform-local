@@ -1,6 +1,6 @@
-from tests.conftest import TestSession
 from src.auth.password import hash_password
 from src.storage.models import User
+from tests.conftest import TestSession
 
 
 def _create_admin():
@@ -48,7 +48,7 @@ def test_dashboard_redirect_without_auth(client):
 
 def test_dashboard_with_auth(client):
     _create_admin()
-    login = client.post("/login", data={"username": "admin", "password": "admin"})
+    client.post("/login", data={"username": "admin", "password": "admin"})
     resp = client.get("/dashboard")
     assert resp.status_code == 200
     assert "Dashboard" in resp.text
@@ -60,8 +60,17 @@ def test_logout_clears_cookie(client):
     assert resp.headers["location"] == "/login"
 
 
+DASHBOARD_PATHS = [
+    "/dashboard",
+    "/dashboard/devices",
+    "/dashboard/observations",
+    "/dashboard/queue",
+    "/dashboard/settings",
+]
+
+
 def test_dashboard_pages_require_auth(client):
-    for path in ["/dashboard", "/dashboard/cameras", "/dashboard/observations", "/dashboard/queue", "/dashboard/settings"]:
+    for path in DASHBOARD_PATHS:
         resp = client.get(path, follow_redirects=False)
         assert resp.status_code == 302
         assert resp.headers["location"] == "/login"
@@ -70,7 +79,7 @@ def test_dashboard_pages_require_auth(client):
 def test_dashboard_pages_with_auth(client):
     _create_admin()
     client.post("/login", data={"username": "admin", "password": "admin"})
-    for path in ["/dashboard", "/dashboard/cameras", "/dashboard/observations", "/dashboard/queue", "/dashboard/settings"]:
+    for path in DASHBOARD_PATHS:
         resp = client.get(path)
         assert resp.status_code == 200
 

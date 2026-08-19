@@ -1,0 +1,240 @@
+{% extends "base_local.html" %}
+{% block title %}Devices{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Devices</h2>
+        <button onclick="document.getElementById('add-modal').classList.remove('hidden')"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+            + Adicionar Device
+        </button>
+    </div>
+
+    <!-- Devices table -->
+    <div class="bg-gray-800 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-700">
+                <tr>
+                    <th class="px-4 py-3 text-left text-gray-300">Device ID</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Nome</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Tipo</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Tarefa</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Conexao</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Intervalo</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Status</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Acoes</th>
+                </tr>
+            </thead>
+            <tbody id="devices-list">
+                {% for d in devices %}
+                <tr class="border-t border-gray-700 hover:bg-gray-750" id="device-{{ d.id }}">
+                    <td class="px-4 py-3 font-mono text-xs text-blue-400">{{ d.device_id }}</td>
+                    <td class="px-4 py-3">{{ d.name }}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs
+                            {% if d.device_type == 'camera' %}bg-purple-900 text-purple-300
+                            {% elif d.device_type == 'sensor' %}bg-green-900 text-green-300
+                            {% else %}bg-gray-600 text-gray-300{% endif %}">
+                            {{ d.device_type }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs
+                            {% if d.task_type == 'fissure' %}bg-red-900 text-red-300
+                            {% elif d.task_type == 'ppe' %}bg-yellow-900 text-yellow-300
+                            {% elif d.task_type == 'fabric_quality' %}bg-cyan-900 text-cyan-300
+                            {% elif d.task_type == 'structural' %}bg-orange-900 text-orange-300
+                            {% else %}bg-gray-600 text-gray-300{% endif %}">
+                            {{ d.task_type }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-gray-400">{{ d.connection_type }}</td>
+                    <td class="px-4 py-3 text-xs text-gray-400">{{ d.capture_interval_ms }}ms</td>
+                    <td class="px-4 py-3">
+                        {% if d.is_active %}
+                        <span class="text-green-400 text-xs">● Ativo</span>
+                        {% else %}
+                        <span class="text-red-400 text-xs">● Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 space-x-2">
+                        <button onclick="editDevice({{ d.id }}, '{{ d.device_id }}', '{{ d.name }}', '{{ d.device_type }}', '{{ d.task_type }}', '{{ d.connection_type }}', {{ d.capture_interval_ms }}, {{ 'true' if d.is_active else 'false' }})"
+                                class="text-blue-400 hover:text-blue-300 text-xs">Editar</button>
+                        <button hx-delete="/dashboard/devices/{{ d.id }}"
+                                hx-confirm="Excluir device {{ d.device_id }}?"
+                                hx-target="#device-{{ d.id }}"
+                                hx-swap="outerHTML"
+                                class="text-red-400 hover:text-red-300 text-xs">Excluir</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not devices %}
+                <tr>
+                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                        Nenhum device configurado. Clique em "+ Adicionar Device" para comecar.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Task type reference -->
+    <div class="mt-6 bg-gray-800 p-4 rounded-lg">
+        <h3 class="text-sm font-semibold text-gray-300 mb-3">Tipos de Tarefa</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div class="bg-gray-700 p-3 rounded">
+                <span class="px-2 py-1 rounded bg-red-900 text-red-300">fissure</span>
+                <p class="text-gray-400 mt-1">Deteccao de fissuras/rachaduras</p>
+            </div>
+            <div class="bg-gray-700 p-3 rounded">
+                <span class="px-2 py-1 rounded bg-yellow-900 text-yellow-300">ppe</span>
+                <p class="text-gray-400 mt-1">Reconhecimento de EPIs</p>
+            </div>
+            <div class="bg-gray-700 p-3 rounded">
+                <span class="px-2 py-1 rounded bg-cyan-900 text-cyan-300">fabric_quality</span>
+                <p class="text-gray-400 mt-1">Qualidade de tecido</p>
+            </div>
+            <div class="bg-gray-700 p-3 rounded">
+                <span class="px-2 py-1 rounded bg-orange-900 text-orange-300">structural</span>
+                <p class="text-gray-400 mt-1">Monitoramento estrutural</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Device Modal -->
+<div id="add-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
+        <h3 class="text-lg font-bold mb-4">Adicionar Device</h3>
+        <form hx-post="/dashboard/devices" hx-target="#devices-list" hx-swap="beforeend">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Device ID</label>
+                    <input name="device_id" required placeholder="geofissura_cam_000001"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Nome</label>
+                    <input name="name" required placeholder="Camera de fissura 01"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo</label>
+                    <select name="device_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="camera">Camera</option>
+                        <option value="sensor">Sensor</option>
+                        <option value="other">Outro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tarefa</label>
+                    <select name="task_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="fissure">Fissure</option>
+                        <option value="ppe">PPE</option>
+                        <option value="fabric_quality">Fabric Quality</option>
+                        <option value="structural">Structural</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo de Conexao</label>
+                    <select name="connection_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="rtsp">RTSP</option>
+                        <option value="mqtt">MQTT</option>
+                        <option value="http">HTTP</option>
+                        <option value="serial">Serial</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Intervalo (ms)</label>
+                    <input name="capture_interval_ms" type="number" value="60000"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs text-gray-400 mb-1">URL de Conexao (JSON)</label>
+                    <input name="connection_config" placeholder='{"rtsp_url": "rtsp://admin:pass@host:554/stream"}'
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm font-mono text-xs">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="document.getElementById('add-modal').classList.add('hidden')"
+                        class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Device Modal -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
+        <h3 class="text-lg font-bold mb-4">Editar Device</h3>
+        <form id="edit-form" hx-put="" hx-target="" hx-swap="outerHTML">
+            <input type="hidden" name="id" id="edit-id">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Device ID</label>
+                    <input name="device_id" id="edit-device_id" required
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Nome</label>
+                    <input name="name" id="edit-name" required
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo</label>
+                    <select name="device_type" id="edit-device_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="camera">Camera</option>
+                        <option value="sensor">Sensor</option>
+                        <option value="other">Outro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tarefa</label>
+                    <select name="task_type" id="edit-task_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="fissure">Fissure</option>
+                        <option value="ppe">PPE</option>
+                        <option value="fabric_quality">Fabric Quality</option>
+                        <option value="structural">Structural</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo de Conexao</label>
+                    <select name="connection_type" id="edit-connection_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="rtsp">RTSP</option>
+                        <option value="mqtt">MQTT</option>
+                        <option value="http">HTTP</option>
+                        <option value="serial">Serial</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Intervalo (ms)</label>
+                    <input name="capture_interval_ms" id="edit-capture_interval_ms" type="number"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')"
+                        class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function editDevice(id, deviceId, name, deviceType, taskType, connectionType, intervalMs, isActive) {
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-device_id').value = deviceId;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-device_type').value = deviceType;
+    document.getElementById('edit-task_type').value = taskType;
+    document.getElementById('edit-connection_type').value = connectionType;
+    document.getElementById('edit-capture_interval_ms').value = intervalMs;
+    const form = document.getElementById('edit-form');
+    form.setAttribute('hx-put', '/dashboard/devices/' + id);
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
+</script>
+{% endblock %}

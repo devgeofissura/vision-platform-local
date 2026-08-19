@@ -1,9 +1,29 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from src.storage.database import Base
+
+DEVICE_TYPES = ["camera", "sensor", "other"]
+TASK_TYPES = ["fissure", "ppe", "fabric_quality", "structural"]
+CONNECTION_TYPES = ["rtsp", "mqtt", "http", "serial"]
+
+
+class Device(Base):
+    __tablename__ = "devices"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    device_id = Column(String(64), unique=True, nullable=False, index=True)
+    name = Column(String(128), nullable=False)
+    device_type = Column(String(32), nullable=False, default="camera")
+    task_type = Column(String(32), nullable=False, default="fissure")
+    connection_type = Column(String(32), nullable=False, default="rtsp")
+    connection_config = Column(JSON, nullable=True, default=dict)
+    capture_interval_ms = Column(Integer, nullable=False, default=60000)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class Observation(Base):

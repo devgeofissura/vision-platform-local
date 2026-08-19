@@ -1,15 +1,17 @@
+import json
 import shutil
+from datetime import UTC, datetime
 from pathlib import Path
 
 import psutil
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from src.auth.dependencies import get_current_user
 from src.config.settings import settings
 from src.storage.database import get_db
-from src.storage.models import DeliveryLog, Observation
+from src.storage.models import CONNECTION_TYPES, DEVICE_TYPES, TASK_TYPES, DeliveryLog, Device, Observation
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -50,6 +52,7 @@ async def dashboard_home(request: Request, db: Session = Depends(get_db)):
         Observation.delivery_status == "failed"
     ).count()
 
+    device_count = db.query(Device).filter(Device.is_active).count()
     latest = (
         db.query(Observation)
         .order_by(Observation.captured_at.desc())
@@ -60,8 +63,7 @@ async def dashboard_home(request: Request, db: Session = Depends(get_db)):
         "user": user,
         "page": "home",
         "local_id": settings.local_id,
-        "camera_id": settings.camera_id,
-        "camera_name": settings.camera_name,
+        "device_count": device_count,
         "cpu_percent": psutil.cpu_percent(),
         "memory_percent": psutil.virtual_memory().percent,
         "disk_free": free_gb,
@@ -74,25 +76,128 @@ async def dashboard_home(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@router.get("/cameras", response_class=HTMLResponse)
-async def cameras_page(request: Request):
+# ── Device CRUD ──────────────────────────────────────────────
+
+@router.get("/devices", response_class=HTMLResponse)
+async def devices_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
         return redirect
 
-    return _tmpl().TemplateResponse(request, "cameras.html", {
+    devices = db.query(Device).order_by(Device.created_at.desc()).all()
+    return _tmpl().TemplateResponse(request, "devices.html", {
         "user": user,
-        "page": "cameras",
-        "camera_id": settings.camera_id,
-        "camera_name": settings.camera_name,
-        "camera_hostname": settings.camera_hostname,
-        "camera_username": settings.camera_username,
-        "camera_stream_type": settings.camera_stream_type,
-        "camera_channel": settings.camera_channel,
-        "camera_auto_discover": settings.camera_auto_discover,
-        "camera_interval_s": settings.capture_interval_s,
+        "page": "devices",
+        "devices": devices,
+        "device_types": DEVICE_TYPES,
+        "task_types": TASK_TYPES,
+        "connection_types": CONNECTION_TYPES,
     })
 
+
+@router.post("/devices", response_class=HTMLResponse)
+async def device_create(
+    request: Request,
+    db: Session = Depends(get_db),
+    device_id: str = Form(...),
+    name: str = Form(...),
+    device_type: str = Form("camera"),
+    task_type: str = Form("fissure"),
+    connection_type: str = Form("rtsp"),
+    connection_config: str = Form("{}"),
+    capture_interval_ms: int = Form(60000),
+):
+    existing = db.query(Device).filter(Device.device_id == device_id).first()
+    if existing:
+        existing.name = name
+        existing.device_type = device_type
+        existing.task_type = task_type
+        existing.connection_type = connection_type
+        existing.connection_config = json.loads(connection_config) if connection_config else {}
+        existing.capture_interval_ms = capture_interval_ms
+        existing.updated_at = datetime.now(UTC)
+        db.commit()
+        db.refresh(existing)
+        devices = db.query(Device).order_by(Device.created_at.desc()).all()
+        return _tmpl().TemplateResponse(request, "devices.html", {
+            "user": None,
+            "page": "devices",
+            "devices": devices,
+            "device_types": DEVICE_TYPES,
+            "task_types": TASK_TYPES,
+            "connection_types": CONNECTION_TYPES,
+        })
+
+    device = Device(
+        device_id=device_id,
+        name=name,
+        device_type=device_type,
+        task_type=task_type,
+        connection_type=connection_type,
+        connection_config=json.loads(connection_config) if connection_config else {},
+        capture_interval_ms=capture_interval_ms,
+        is_active=True,
+    )
+    db.add(device)
+    db.commit()
+    db.refresh(device)
+    devices = db.query(Device).order_by(Device.created_at.desc()).all()
+    return _tmpl().TemplateResponse(request, "devices.html", {
+        "user": None,
+        "page": "devices",
+        "devices": devices,
+        "device_types": DEVICE_TYPES,
+        "task_types": TASK_TYPES,
+        "connection_types": CONNECTION_TYPES,
+    })
+
+
+@router.put("/devices/{device_db_id}", response_class=HTMLResponse)
+async def device_update(
+    request: Request,
+    device_db_id: int,
+    db: Session = Depends(get_db),
+    device_id: str = Form(...),
+    name: str = Form(...),
+    device_type: str = Form("camera"),
+    task_type: str = Form("fissure"),
+    connection_type: str = Form("rtsp"),
+    capture_interval_ms: int = Form(60000),
+):
+    device = db.query(Device).filter(Device.id == device_db_id).first()
+    if not device:
+        return RedirectResponse(url="/dashboard/devices", status_code=302)
+
+    device.device_id = device_id
+    device.name = name
+    device.device_type = device_type
+    device.task_type = task_type
+    device.connection_type = connection_type
+    device.capture_interval_ms = capture_interval_ms
+    device.updated_at = datetime.now(UTC)
+    db.commit()
+
+    devices = db.query(Device).order_by(Device.created_at.desc()).all()
+    return _tmpl().TemplateResponse(request, "devices.html", {
+        "user": None,
+        "page": "devices",
+        "devices": devices,
+        "device_types": DEVICE_TYPES,
+        "task_types": TASK_TYPES,
+        "connection_types": CONNECTION_TYPES,
+    })
+
+
+@router.delete("/devices/{device_db_id}")
+async def device_delete(device_db_id: int, db: Session = Depends(get_db)):
+    device = db.query(Device).filter(Device.id == device_db_id).first()
+    if device:
+        db.delete(device)
+        db.commit()
+    return HTMLResponse("")
+
+
+# ── Observations ─────────────────────────────────────────────
 
 @router.get("/observations", response_class=HTMLResponse)
 async def observations_page(
@@ -153,6 +258,8 @@ async def observation_detail(
     })
 
 
+# ── Queue ────────────────────────────────────────────────────
+
 @router.get("/queue", response_class=HTMLResponse)
 async def queue_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
@@ -190,6 +297,18 @@ async def queue_page(request: Request, db: Session = Depends(get_db)):
     })
 
 
+@router.post("/queue/flush")
+async def queue_flush(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+    from src.storage.delivery_queue import process_delivery_queue
+    process_delivery_queue(db=db)
+    return RedirectResponse(url="/dashboard/queue", status_code=302)
+
+
+# ── Settings ─────────────────────────────────────────────────
+
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
     user, redirect = _require(request)
@@ -205,10 +324,11 @@ async def settings_page(request: Request):
         "central_api_base_url": settings.central_api_base_url,
         "central_api_token": settings.central_api_token,
         "central_delivery_interval_ms": settings.central_delivery_interval_ms,
-        "capture_interval_s": settings.capture_interval_s,
         "data_dir": settings.local_data_dir,
     })
 
+
+# ── API (HTMX) ──────────────────────────────────────────────
 
 @router.get("/api/stats")
 async def api_stats(db: Session = Depends(get_db)):
@@ -230,13 +350,3 @@ async def api_stats(db: Session = Depends(get_db)):
         "cpu_percent": psutil.cpu_percent(),
         "memory_percent": psutil.virtual_memory().percent,
     }
-
-
-@router.post("/queue/flush")
-async def queue_flush(request: Request, db: Session = Depends(get_db)):
-    user, redirect = _require(request)
-    if redirect:
-        return redirect
-    from src.storage.delivery_queue import process_delivery_queue
-    result = process_delivery_queue(db=db)
-    return RedirectResponse(url="/dashboard/queue", status_code=302)

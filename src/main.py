@@ -3,16 +3,15 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 
-from src.api.routes import router
 from src.api.dashboard_routes import router as dashboard_router
-from src.auth.router import router as auth_router
+from src.api.routes import router
 from src.auth.password import hash_password
+from src.auth.router import router as auth_router
 from src.config.settings import settings
 from src.storage.database import SessionLocal, create_tables
 from src.storage.delivery_queue import process_delivery_queue
-from src.storage.models import User
+from src.storage.models import Device, User
 
 logging.basicConfig(
     level=logging.INFO,
@@ -53,6 +52,36 @@ def _seed_admin():
         db.close()
 
 
+def _seed_default_devices():
+    db = SessionLocal()
+    try:
+        if settings.camera_id:
+            existing = db.query(Device).filter(Device.device_id == settings.camera_id).first()
+            if not existing:
+                device = Device(
+                    device_id=settings.camera_id,
+                    name=settings.camera_name or settings.camera_id,
+                    device_type="camera",
+                    task_type="fissure",
+                    connection_type="rtsp",
+                    connection_config={
+                        "rtsp_url": settings.camera_rtsp_url,
+                        "hostname": settings.camera_hostname,
+                        "username": settings.camera_username,
+                        "channel": settings.camera_channel,
+                        "stream_type": settings.camera_stream_type,
+                        "transport": settings.camera_rtsp_transport,
+                    },
+                    capture_interval_ms=settings.camera_capture_interval_ms,
+                    is_active=True,
+                )
+                db.add(device)
+                db.commit()
+                logger.info("Default camera device seeded: %s", settings.camera_id)
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _delivery_task
@@ -63,6 +92,7 @@ async def lifespan(app: FastAPI):
     )
     create_tables()
     _seed_admin()
+    _seed_default_devices()
     logger.info("Database tables verified")
     _delivery_task = asyncio.create_task(_delivery_loop())
     yield
