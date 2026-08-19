@@ -39,6 +39,19 @@ class CaptureWorker:
         if not settings.camera_auto_discover:
             return settings.camera_rtsp_url
 
+        if settings.camera_ip:
+            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
+            discovery = OnvifDiscovery(onvif_port=80)
+            url = discovery.build_rtsp_url(
+                ip=settings.camera_ip,
+                username=settings.camera_username,
+                password=settings.camera_password,
+                channel=settings.camera_channel,
+                stream=stream,
+            )
+            logger.info("Using configured IP: %s", settings.camera_ip)
+            return url
+
         discovery = OnvifDiscovery(onvif_port=80)
         cam = discovery.find_camera(
             hostname_prefix="GeoFissura_CAM_",
@@ -60,18 +73,6 @@ class CaptureWorker:
                 cam.mac,
                 cam.model,
             )
-            return url
-
-        if settings.camera_ip:
-            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
-            url = discovery.build_rtsp_url(
-                ip=settings.camera_ip,
-                username=settings.camera_username,
-                password=settings.camera_password,
-                channel=settings.camera_channel,
-                stream=stream,
-            )
-            logger.info("Using configured IP: %s", settings.camera_ip)
             return url
 
         ip = discovery.fallback_resolve(settings.camera_hostname)
