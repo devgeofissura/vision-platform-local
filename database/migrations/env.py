@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from logging.config import fileConfig
 
 from alembic import context
@@ -13,7 +14,21 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-db_url = os.environ.get("LOCAL_DB_URL")
+
+def _load_db_url() -> str | None:
+    db_url = os.environ.get("LOCAL_DB_URL")
+    if db_url:
+        return db_url
+    env_file = Path(__file__).resolve().parent.parent.parent / ".env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            line = line.strip()
+            if line.startswith("LOCAL_DB_URL="):
+                return line.split("=", 1)[1]
+    return None
+
+
+db_url = _load_db_url()
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
 
