@@ -48,16 +48,16 @@ if [ ! -f "$STATE_FILE" ]; then
     # ── Local ──
     echo ""
     echo -e "${YELLOW}── Local ──${NC}"
-    read -p "  Local ID [LOCAL-001]: " LOCAL_ID; LOCAL_ID="${LOCAL_ID:-LOCAL-001}"
-    read -p "  Local Name [Central Orange Pi 001]: " LOCAL_NAME; LOCAL_NAME="${LOCAL_NAME:-Central Orange Pi 001}"
+    read -p "  Local ID [sl000001]: " LOCAL_ID; LOCAL_ID="${LOCAL_ID:-sl000001}"
+    read -p "  Local Name [server_local_000001]: " LOCAL_NAME; LOCAL_NAME="${LOCAL_NAME:-server_local_000001}"
 
     # ── Camera ──
     echo ""
     echo -e "${YELLOW}── Câmera ──${NC}"
-    read -p "  Camera ID [GeoFissura_CAM_000001]: " CAM_ID; CAM_ID="${CAM_ID:-GeoFissura_CAM_000001}"
-    read -p "  Camera Name [VIPC-1230-B-G2 geofissura]: " CAM_NAME; CAM_NAME="${CAM_NAME:-VIPC-1230-B-G2 geofissura}"
-    read -p "  Hostname câmera [geofissuracam01]: " CAM_HOST; CAM_HOST="${CAM_HOST:-geofissuracam01}"
-    read -p "  Usuário câmera [admin]: " CAM_USER; CAM_USER="${CAM_USER:-admin}"
+    read -p "  Camera ID [gfcam000001]: " CAM_ID; CAM_ID="${CAM_ID:-gfcam000001}"
+    read -p "  Camera Name [vipc_1230_b_g2_geofissura_cam_000001]: " CAM_NAME; CAM_NAME="${CAM_NAME:-vipc_1230_b_g2_geofissura_cam_000001}"
+    read -p "  Hostname câmera [geofissura_cam_000001]: " CAM_HOST; CAM_HOST="${CAM_HOST:-geofissura_cam_000001}"
+    read -p "  Usuário câmera [geofissura]: " CAM_USER; CAM_USER="${CAM_USER:-geofissura}"
     read -s -p "  Senha câmera [{Alohomor4}]: " CAM_PASS; echo ""; CAM_PASS="${CAM_PASS:-{Alohomor4}}"
     CAM_RTSP="rtsp://${CAM_USER}:${CAM_PASS}@${CAM_HOST}:554/cam/realmonitor?channel=1&subtype=0"
 
@@ -65,7 +65,7 @@ if [ ! -f "$STATE_FILE" ]; then
     echo ""
     echo -e "${YELLOW}── Central ──${NC}"
     read -p "  Central API URL [http://192.168.1.20:8081]: " CENTRAL_URL; CENTRAL_URL="${CENTRAL_URL:-http://192.168.1.20:8081}"
-    read -p "  Central API Token [change-me]: " CENTRAL_TOKEN; CENTRAL_TOKEN="${CENTRAL_TOKEN:-change-me}"
+    read -p "  Central API Token [Estoicismo&70x7]: " CENTRAL_TOKEN; CENTRAL_TOKEN="${CENTRAL_TOKEN:-Estoicismo&70x7}"
 
     # ── Dashboard ──
     echo ""
