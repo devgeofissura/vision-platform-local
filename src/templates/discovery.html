@@ -39,6 +39,9 @@
                 </div>
                 <form method="POST" action="/dashboard/discovery/select">
                     <input type="hidden" name="camera_ip" value="{{ cam.ip }}">
+                    <input type="hidden" name="camera_hostname" value="{{ cam.hostname }}">
+                    <input type="hidden" name="camera_manufacturer" value="{{ cam.manufacturer or '' }}">
+                    <input type="hidden" name="camera_model" value="{{ cam.model or '' }}">
                     <button type="submit"
                             class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
                         Usar Esta

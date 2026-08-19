@@ -540,15 +540,47 @@ async def discovery_scan(request: Request):
 
 
 @router.post("/discovery/select", response_class=HTMLResponse)
-async def discovery_select(request: Request):
+async def discovery_select(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
         return redirect
 
     form = await request.form()
-    camera_ip = form.get("camera_ip", "")
+    camera_ip = str(form.get("camera_ip", ""))
+    camera_hostname = str(form.get("camera_hostname", ""))
+    camera_manufacturer = str(form.get("camera_manufacturer", ""))
+    camera_model = str(form.get("camera_model", ""))
 
-    updates = {"CAMERA_IP": str(camera_ip)}
+    updates = {"CAMERA_IP": camera_ip}
     settings.save_to_env(updates)
+
+    device_id = settings.camera_id
+    existing = db.query(Device).filter(Device.device_id == device_id).first()
+    if existing:
+        existing.connection_config = {
+            **(existing.connection_config or {}),
+            "ip": camera_ip,
+            "hostname": camera_hostname,
+        }
+        existing.updated_at = datetime.now(UTC)
+        db.commit()
+    else:
+        device = Device(
+            device_id=device_id,
+            name=camera_model or camera_hostname or device_id,
+            device_type="camera",
+            task_type="fissure",
+            connection_type="rtsp",
+            connection_config={
+                "ip": camera_ip,
+                "hostname": camera_hostname,
+                "manufacturer": camera_manufacturer,
+                "model": camera_model,
+            },
+            capture_interval_ms=settings.camera_capture_interval_ms,
+            is_active=True,
+        )
+        db.add(device)
+        db.commit()
 
     return RedirectResponse(url="/dashboard/discovery?selected=1", status_code=302)
