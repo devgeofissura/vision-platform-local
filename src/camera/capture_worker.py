@@ -62,6 +62,18 @@ class CaptureWorker:
             )
             return url
 
+        if settings.camera_ip:
+            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
+            url = discovery.build_rtsp_url(
+                ip=settings.camera_ip,
+                username=settings.camera_username,
+                password=settings.camera_password,
+                channel=settings.camera_channel,
+                stream=stream,
+            )
+            logger.info("Using configured IP: %s", settings.camera_ip)
+            return url
+
         ip = discovery.fallback_resolve(settings.camera_hostname)
         if ip:
             stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
@@ -76,7 +88,7 @@ class CaptureWorker:
             return url
 
         logger.warning(
-            "Discovery and DNS failed, using configured URL: %s",
+            "Discovery, IP and DNS failed, using configured URL: %s",
             settings.camera_rtsp_url,
         )
         return settings.camera_rtsp_url

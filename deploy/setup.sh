@@ -59,6 +59,7 @@ if [ ! -f "$STATE_FILE" ]; then
     read -p "  Hostname câmera [geofissura_cam_000001]: " CAM_HOST; CAM_HOST="${CAM_HOST:-geofissura_cam_000001}"
     read -p "  Usuário câmera [geofissura]: " CAM_USER; CAM_USER="${CAM_USER:-geofissura}"
     read -s -p "  Senha câmera [{Alohomor4}]: " CAM_PASS; echo ""; CAM_PASS="${CAM_PASS:-{Alohomor4}}"
+    read -p "  IP da câmera (deixe vazio para descobrir): " CAM_IP; CAM_IP="${CAM_IP:-}"
     CAM_RTSP="rtsp://${CAM_USER}:${CAM_PASS}@${CAM_HOST}:554/cam/realmonitor?channel=1&subtype=0"
 
     # ── Central ──
@@ -89,6 +90,7 @@ CAMERA_NAME=${CAM_NAME}
 CAMERA_HOSTNAME=${CAM_HOST}
 CAMERA_USERNAME=${CAM_USER}
 CAMERA_PASSWORD=${CAM_PASS}
+CAMERA_IP=${CAM_IP}
 CAMERA_AUTO_DISCOVER=true
 CAMERA_STREAM_TYPE=main
 CAMERA_CHANNEL=1

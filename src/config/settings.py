@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     camera_id: str = "GeoFissura_CAM_000001"
     camera_name: str = "VIPC-1230-B-G2 geofissura"
     camera_hostname: str = "geofissuracam01"
+    camera_ip: str = ""
     camera_username: str = "admin"
     camera_password: str = ""
     camera_auto_discover: bool = True

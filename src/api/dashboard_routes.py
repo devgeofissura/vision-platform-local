@@ -332,6 +332,7 @@ async def settings_page(request: Request, saved: bool = False):
         "camera_hostname": settings.camera_hostname,
         "camera_username": settings.camera_username,
         "camera_password": settings.camera_password,
+        "camera_ip": settings.camera_ip,
         "camera_stream_type": settings.camera_stream_type,
         "camera_channel": settings.camera_channel,
         "camera_rtsp_url": settings.camera_rtsp_url,
@@ -365,6 +366,7 @@ async def settings_save(request: Request):
         "camera_hostname": "CAMERA_HOSTNAME",
         "camera_username": "CAMERA_USERNAME",
         "camera_password": "CAMERA_PASSWORD",
+        "camera_ip": "CAMERA_IP",
         "camera_stream_type": "CAMERA_STREAM_TYPE",
         "camera_channel": "CAMERA_CHANNEL",
         "camera_rtsp_url": "CAMERA_RTSP_URL",
@@ -440,6 +442,7 @@ async def camera_page(request: Request, db: Session = Depends(get_db)):
         "camera_id": settings.camera_id,
         "camera_name": settings.camera_name,
         "camera_hostname": settings.camera_hostname,
+        "camera_ip": settings.camera_ip,
         "rtsp_url": settings.camera_rtsp_url.split("@")[-1] if "@" in settings.camera_rtsp_url else settings.camera_rtsp_url,
         "latest": latest,
         "latest_image_url": latest_image_url,
@@ -490,6 +493,7 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
         "camera_id": settings.camera_id,
         "camera_name": settings.camera_name,
         "camera_hostname": settings.camera_hostname,
+        "camera_ip": settings.camera_ip,
         "rtsp_url": settings.camera_rtsp_url.split("@")[-1] if "@" in settings.camera_rtsp_url else settings.camera_rtsp_url,
         "latest": latest,
         "latest_image_url": latest_image_url,
@@ -497,3 +501,54 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
         "capture_result": result,
         "capture_error": error,
     })
+
+
+# ── Discovery ────────────────────────────────────────────────
+
+@router.get("/discovery", response_class=HTMLResponse)
+async def discovery_page(request: Request):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    return _tmpl().TemplateResponse(request, "discovery.html", {
+        "user": user,
+        "page": "discovery",
+        "cameras": [],
+        "scanning": False,
+    })
+
+
+@router.post("/discovery/scan", response_class=HTMLResponse)
+async def discovery_scan(request: Request):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    from src.camera.discovery import OnvifDiscovery
+
+    discovery = OnvifDiscovery(timeout_seconds=8.0)
+    cameras_found = discovery._send_probe()
+
+    return _tmpl().TemplateResponse(request, "discovery.html", {
+        "user": user,
+        "page": "discovery",
+        "cameras": cameras_found,
+        "scanning": False,
+        "scan_count": len(cameras_found),
+    })
+
+
+@router.post("/discovery/select", response_class=HTMLResponse)
+async def discovery_select(request: Request):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    form = await request.form()
+    camera_ip = form.get("camera_ip", "")
+
+    updates = {"CAMERA_IP": str(camera_ip)}
+    settings.save_to_env(updates)
+
+    return RedirectResponse(url="/dashboard/discovery?selected=1", status_code=302)

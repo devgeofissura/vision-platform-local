@@ -1,0 +1,83 @@
+{% extends "base_local.html" %}
+{% block title %}Descobrir Câmeras{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <h2 class="text-2xl font-bold mb-6">Descobrir Câmeras ONVIF</h2>
+
+    <!-- Scan button -->
+    <div class="mb-6">
+        <form method="POST" action="/dashboard/discovery/scan">
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition">
+                🔍 Escanear Rede
+            </button>
+        </form>
+    </div>
+
+    {% if scan_count is defined %}
+    <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <p class="text-gray-400">Encontradas <span class="text-white font-bold">{{ scan_count }}</span> câmeras na rede</p>
+    </div>
+    {% endif %}
+
+    {% if cameras %}
+    <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h3 class="font-semibold mb-4">Câmeras Encontradas</h3>
+        <div class="space-y-3">
+            {% for cam in cameras %}
+            <div class="bg-gray-700 p-4 rounded-lg flex items-center justify-between">
+                <div>
+                    <p class="text-white font-mono font-bold">{{ cam.ip }}</p>
+                    <p class="text-sm text-gray-400">
+                        Hostname: <span class="text-white">{{ cam.hostname }}</span>
+                        {% if cam.manufacturer %} — Marca: <span class="text-white">{{ cam.manufacturer }}</span>{% endif %}
+                        {% if cam.model %} — Modelo: <span class="text-white">{{ cam.model }}</span>{% endif %}
+                    </p>
+                    {% if cam.mac %}
+                    <p class="text-xs text-gray-500">MAC: {{ cam.mac }}</p>
+                    {% endif %}
+                </div>
+                <form method="POST" action="/dashboard/discovery/select">
+                    <input type="hidden" name="camera_ip" value="{{ cam.ip }}">
+                    <button type="submit"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
+                        Usar Esta
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% elif scan_count is defined and scan_count == 0 %}
+    <div class="bg-yellow-900 border border-yellow-600 text-yellow-200 p-4 rounded-lg mb-6">
+        <p class="font-semibold">Nenhuma câmera encontrada</p>
+        <p class="text-sm mt-1">Verifique se a câmera está ligada e conectada à mesma rede.</p>
+        <p class="text-sm mt-1">Dica: configure o IP manualmente em <a href="/dashboard/settings" class="underline">Configurações</a></p>
+    </div>
+    {% endif %}
+
+    <!-- Manual IP -->
+    <div class="bg-gray-800 p-4 rounded-lg">
+        <h3 class="font-semibold mb-4">Configurar IP Manualmente</h3>
+        <form method="POST" action="/dashboard/discovery/select" class="flex items-end gap-4">
+            <div class="flex-1">
+                <label class="block text-sm text-gray-400 mb-1">IP da Câmera</label>
+                <input type="text" name="camera_ip" value="{{ settings.camera_ip if settings and settings.camera_ip else '' }}"
+                       placeholder="192.168.0.183"
+                       class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm">
+            </div>
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
+                Salvar IP
+            </button>
+        </form>
+    </div>
+
+    {% if request.query_params.get('selected') %}
+    <div class="bg-green-900 border border-green-600 text-green-200 p-4 rounded-lg mt-4">
+        <p class="font-semibold">IP configurado com sucesso!</p>
+        <p class="text-sm">Teste a captura em <a href="/dashboard/camera" class="underline">Câmera</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
