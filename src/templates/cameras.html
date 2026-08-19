@@ -1,0 +1,48 @@
+{% extends "base_local.html" %}
+{% block title %}Câmera{% endblock %}
+{% block content %}
+<div class="max-w-4xl">
+    <h2 class="text-2xl font-bold mb-6">Configuração da Câmera</h2>
+
+    <div class="bg-gray-800 p-6 rounded-lg">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Camera ID</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ camera_id }}</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Nome</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ camera_name }}</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Hostname</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ camera_hostname }}</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Usuário</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ camera_username }}</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Stream</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ camera_stream_type }}</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Canal</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ camera_channel }}</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Auto-Discover</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ 'Sim' if camera_auto_discover else 'Não' }}</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Intervalo de Captura</label>
+                <p class="text-white bg-gray-700 px-3 py-2 rounded">{{ camera_interval_s }}s</p>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-700">
+            <p class="text-xs text-gray-500">Edite as configurações em <code>.env</code> ou via API.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

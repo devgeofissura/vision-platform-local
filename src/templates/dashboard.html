@@ -1,0 +1,70 @@
+{% extends "base_local.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
+
+    <!-- Status cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-gray-400 text-sm">CPU</p>
+            <p class="text-2xl font-bold {% if cpu_percent > 80 %}text-red-400{% elif cpu_percent > 50 %}text-yellow-400{% else %}text-green-400{% endif %}">{{ cpu_percent }}%</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-gray-400 text-sm">Memória</p>
+            <p class="text-2xl font-bold {% if memory_percent > 80 %}text-red-400{% elif memory_percent > 50 %}text-yellow-400{% else %}text-green-400{% endif %}">{{ memory_percent }}%</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-gray-400 text-sm">Disco Livre</p>
+            <p class="text-2xl font-bold text-blue-400">{{ disk_free }} GB</p>
+            <p class="text-xs text-gray-500">de {{ disk_total }} GB</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-gray-400 text-sm">Fila Pendente</p>
+            <p class="text-2xl font-bold {% if queue_pending > 0 %}text-yellow-400{% else %}text-green-400{% endif %}"
+               hx-get="/dashboard/api/stats" hx-trigger="every 10s" hx-swap="innerHTML">
+                {{ queue_pending }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Camera + Observations -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <h3 class="font-semibold mb-2">Câmera</h3>
+            <p class="text-sm text-gray-400">ID: <span class="text-white">{{ camera_id }}</span></p>
+            <p class="text-sm text-gray-400">Nome: <span class="text-white">{{ camera_name }}</span></p>
+            <p class="text-sm text-gray-400">Local: <span class="text-white">{{ local_id }}</span></p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <h3 class="font-semibold mb-2">Observações</h3>
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div>
+                    <p class="text-2xl font-bold text-white">{{ total_obs }}</p>
+                    <p class="text-xs text-gray-400">Total</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-green-400">{{ delivered }}</p>
+                    <p class="text-xs text-gray-400">Entregues</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-red-400">{{ failed }}</p>
+                    <p class="text-xs text-gray-400">Falhas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest observation -->
+    {% if latest %}
+    <div class="bg-gray-800 p-4 rounded-lg">
+        <h3 class="font-semibold mb-2">Última Observação</h3>
+        <p class="text-sm text-gray-400">
+            <span class="text-white">{{ latest.observation_id }}</span> —
+            {{ latest.captured_at.strftime('%d/%m/%Y %H:%M:%S') if latest.captured_at else 'N/A' }}
+            — <span class="text-blue-400">{{ latest.delivery_status }}</span>
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

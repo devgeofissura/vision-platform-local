@@ -1,0 +1,59 @@
+{% extends "base_local.html" %}
+{% block title %}Configurações{% endblock %}
+{% block content %}
+<div class="max-w-4xl">
+    <h2 class="text-2xl font-bold mb-6">Configurações</h2>
+
+    <div class="space-y-6">
+        <!-- Local -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="font-semibold mb-4">Local</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-400">Local ID:</span>
+                    <p class="text-white">{{ local_id }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-400">Local Name:</span>
+                    <p class="text-white">{{ local_name }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-400">API Token:</span>
+                    <p class="text-white font-mono">{{ local_api_token[:8] }}...</p>
+                </div>
+                <div>
+                    <span class="text-gray-400">Data Dir:</span>
+                    <p class="text-white font-mono text-xs">{{ data_dir }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Central -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="font-semibold mb-4">Central</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-400">Central URL:</span>
+                    <p class="text-white">{{ central_api_base_url }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-400">Central Token:</span>
+                    <p class="text-white font-mono">{{ central_api_token[:8] }}...</p>
+                </div>
+                <div>
+                    <span class="text-gray-400">Delivery Interval:</span>
+                    <p class="text-white">{{ central_delivery_interval_ms }}ms</p>
+                </div>
+                <div>
+                    <span class="text-gray-400">Capture Interval:</span>
+                    <p class="text-white">{{ capture_interval_s }}s</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <p class="text-xs text-gray-500">Edite as configurações diretamente no arquivo <code>.env</code> do servidor.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -36,5 +36,10 @@ class Settings(BaseSettings):
     central_api_token: str = "change-me"
     central_delivery_interval_ms: int = 60000
 
+    jwt_secret_key: str = "change-me-in-production"
+    jwt_expire_hours: int = 24
+    admin_username: str = "admin"
+    admin_password: str = "admin"
+
 
 settings = Settings()

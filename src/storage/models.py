@@ -46,3 +46,13 @@ class DeliveryLog(Base):
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     observation = relationship("Observation", back_populates="delivery_logs")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(64), unique=True, nullable=False, index=True)
+    password_hash = Column(String(256), nullable=False)
+    role = Column(String(32), nullable=False, default="admin")
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))

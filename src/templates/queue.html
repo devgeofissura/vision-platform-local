@@ -1,0 +1,61 @@
+{% extends "base_local.html" %}
+{% block title %}Fila de Entrega{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Fila de Entrega</h2>
+        <form method="POST" action="/dashboard/queue/flush">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                Flush Manual
+            </button>
+        </form>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-800 p-4 rounded-lg text-center">
+            <p class="text-2xl font-bold text-yellow-400">{{ pending }}</p>
+            <p class="text-xs text-gray-400">Pendentes</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg text-center">
+            <p class="text-2xl font-bold text-orange-400">{{ retry }}</p>
+            <p class="text-xs text-gray-400">Retry</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg text-center">
+            <p class="text-2xl font-bold text-green-400">{{ delivered_count }}</p>
+            <p class="text-xs text-gray-400">Entregues</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg text-center">
+            <p class="text-2xl font-bold text-red-400">{{ failed }}</p>
+            <p class="text-xs text-gray-400">Falhas</p>
+        </div>
+    </div>
+
+    <!-- Recent logs -->
+    <div class="bg-gray-800 p-4 rounded-lg">
+        <h3 class="font-semibold mb-4">Últimos Logs</h3>
+        {% if recent_logs %}
+        <div class="space-y-2">
+            {% for log in recent_logs %}
+            <div class="flex items-center gap-4 text-sm p-2 rounded bg-gray-700/50">
+                <span class="text-gray-400 w-32 font-mono text-xs">{{ log.observation_id[:12] }}...</span>
+                <span class="text-gray-400 w-16">#{{ log.attempt }}</span>
+                <span class="px-2 py-0.5 rounded text-xs
+                    {% if log.status == 'delivered' %}bg-green-900 text-green-300
+                    {% elif log.status == 'error' %}bg-red-900 text-red-300
+                    {% else %}bg-gray-600 text-gray-300{% endif %}">
+                    {{ log.status }}
+                </span>
+                {% if log.status_code %}
+                <span class="text-gray-400">{{ log.status_code }}</span>
+                {% endif %}
+                <span class="text-gray-500 text-xs">{{ log.created_at.strftime('%d/%m %H:%M:%S') if log.created_at else '' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-sm">Nenhum log recente</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoFissura Local — {% block title %}Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        .sidebar-link.active { background-color: rgb(37 99 235); color: white; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 min-h-screen p-4 flex flex-col">
+        <div class="mb-6">
+            <h1 class="text-xl font-bold text-white">GeoFissura</h1>
+            <p class="text-xs text-gray-400">Vision Platform Local</p>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a href="/dashboard" class="sidebar-link block px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 {% if page == 'home' %}active{% endif %}">
+                Home
+            </a>
+            <a href="/dashboard/cameras" class="sidebar-link block px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 {% if page == 'cameras' %}active{% endif %}">
+                Câmera
+            </a>
+            <a href="/dashboard/observations" class="sidebar-link block px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 {% if page == 'observations' %}active{% endif %}">
+                Observações
+            </a>
+            <a href="/dashboard/queue" class="sidebar-link block px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 {% if page == 'queue' %}active{% endif %}">
+                Fila de Entrega
+            </a>
+            <a href="/dashboard/settings" class="sidebar-link block px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 {% if page == 'settings' %}active{% endif %}">
+                Configurações
+            </a>
+        </nav>
+        <div class="border-t border-gray-700 pt-3 mt-3">
+            <p class="text-xs text-gray-400">{{ user.username }}</p>
+            <a href="/logout" class="text-xs text-red-400 hover:text-red-300">Sair</a>
+        </div>
+    </aside>
+    <!-- Main -->
+    <main class="flex-1 p-6">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

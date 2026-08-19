@@ -1,0 +1,57 @@
+{% extends "base_local.html" %}
+{% block title %}Observações{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <h2 class="text-2xl font-bold mb-6">Observações</h2>
+
+    <!-- Filters -->
+    <div class="flex gap-2 mb-4">
+        <a href="/dashboard/observations" class="px-3 py-1 rounded text-sm {% if not current_status %}bg-blue-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">Todas</a>
+        <a href="/dashboard/observations?status=pending" class="px-3 py-1 rounded text-sm {% if current_status == 'pending' %}bg-yellow-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">Pendentes</a>
+        <a href="/dashboard/observations?status=acknowledged" class="px-3 py-1 rounded text-sm {% if current_status == 'acknowledged' %}bg-green-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">Entregues</a>
+        <a href="/dashboard/observations?status=failed" class="px-3 py-1 rounded text-sm {% if current_status == 'failed' %}bg-red-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">Falhas</a>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-gray-800 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-700">
+                <tr>
+                    <th class="px-4 py-2 text-left text-gray-300">ID</th>
+                    <th class="px-4 py-2 text-left text-gray-300">Câmera</th>
+                    <th class="px-4 py-2 text-left text-gray-300">Capturado</th>
+                    <th class="px-4 py-2 text-left text-gray-300">Score</th>
+                    <th class="px-4 py-2 text-left text-gray-300">Status</th>
+                    <th class="px-4 py-2 text-left text-gray-300">Tentativas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obs in observations %}
+                <tr class="border-t border-gray-700 hover:bg-gray-750">
+                    <td class="px-4 py-2">
+                        <a href="/dashboard/observations/{{ obs.observation_id }}" class="text-blue-400 hover:underline">{{ obs.observation_id[:12] }}...</a>
+                    </td>
+                    <td class="px-4 py-2 text-gray-300">{{ obs.camera_id }}</td>
+                    <td class="px-4 py-2 text-gray-300">{{ obs.captured_at.strftime('%d/%m %H:%M') if obs.captured_at else '-' }}</td>
+                    <td class="px-4 py-2 text-gray-300">{{ '%.2f'|format(obs.quality_score) if obs.quality_score else '-' }}</td>
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-0.5 rounded text-xs
+                            {% if obs.delivery_status == 'acknowledged' %}bg-green-900 text-green-300
+                            {% elif obs.delivery_status == 'failed' %}bg-red-900 text-red-300
+                            {% elif obs.delivery_status == 'retry' %}bg-yellow-900 text-yellow-300
+                            {% else %}bg-gray-600 text-gray-300{% endif %}">
+                            {{ obs.delivery_status }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-2 text-gray-300">{{ obs.delivery_attempts }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">Nenhuma observação encontrada</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
