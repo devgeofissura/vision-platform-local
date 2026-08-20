@@ -1,6 +1,6 @@
 """add processing_status columns to observations
 
-Revision ID: 007_observation_processing_status
+Revision ID: 007_proc_status
 Revises: 006_zone_configs
 Create Date: 2026-08-20
 
@@ -10,7 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-revision: str = "007_observation_processing_status"
+revision: str = "007_proc_status"
 down_revision: Union[str, None] = "006_zone_configs"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
