@@ -75,5 +75,31 @@ class Settings(BaseSettings):
 
         env_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
+        env_key_map = {
+            "CAMERA_IP": "camera_ip",
+            "CAMERA_USERNAME": "camera_username",
+            "CAMERA_PASSWORD": "camera_password",
+            "CAMERA_ID": "camera_id",
+            "CAMERA_NAME": "camera_name",
+            "CAMERA_HOSTNAME": "camera_hostname",
+            "CAMERA_CHANNEL": "camera_channel",
+            "CAMERA_STREAM_TYPE": "camera_stream_type",
+        }
+        for env_key, attr_name in env_key_map.items():
+            if env_key in updates and hasattr(self, attr_name):
+                current = getattr(self, attr_name)
+                new_val = updates[env_key]
+                if isinstance(current, int):
+                    try:
+                        new_val = int(new_val)
+                    except (ValueError, TypeError):
+                        pass
+                setattr(self, attr_name, new_val)
+
 
 settings = Settings()
+
+
+def reload_settings() -> None:
+    global settings
+    settings = Settings()
