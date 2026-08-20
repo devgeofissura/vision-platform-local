@@ -49,14 +49,11 @@
             <div class="flex gap-2">
                 <button onclick="startStream()" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded">▶ Play</button>
                 <button onclick="stopStream()" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded">⏹ Stop</button>
-                <form method="POST" action="/dashboard/monitoring/capture" class="inline">
-                    <input type="hidden" name="camera_id" value="{{ selected_id }}">
-                    <button type="submit"
-                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
-                            onclick="this.disabled=true; this.textContent='...'">
-                        📸 Capturar
-                    </button>
-                </form>
+                <button id="btn-capture"
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                        onclick="doCapture()">
+                    📸 Capturar
+                </button>
             </div>
         </div>
         <div class="bg-black rounded-lg overflow-hidden relative" style="min-height: 400px;">
@@ -121,6 +118,44 @@
 
 <script>
 let streamImg = null;
+
+async function doCapture() {
+    const btn = document.getElementById('btn-capture');
+    const cameraId = '{{ selected_id }}';
+    console.log('[CAPTURE] Iniciando captura para', cameraId);
+    btn.disabled = true;
+    btn.textContent = '⏳ Capturando...';
+    btn.className = 'bg-yellow-600 text-white text-sm py-1 px-3 rounded';
+
+    const start = Date.now();
+    try {
+        const fd = new FormData();
+        fd.append('camera_id', cameraId);
+        console.log('[CAPTURE] POST /dashboard/monitoring/capture');
+        const resp = await fetch('/dashboard/monitoring/capture', { method: 'POST', body: fd });
+        console.log('[CAPTURE] Status:', resp.status, resp.statusText);
+        const html = await resp.text();
+        console.log('[CAPTURE] Tamanho resposta:', html.length, 'bytes');
+        console.log('[CAPTURE] Tempo:', Date.now() - start, 'ms');
+
+        if (resp.ok) {
+            document.open();
+            document.write(html);
+            document.close();
+            console.log('[CAPTURE] Página atualizada com sucesso');
+        } else {
+            console.error('[CAPTURE] Erro HTTP', resp.status);
+            alert('Erro HTTP ' + resp.status + ': ' + resp.statusText);
+        }
+    } catch (e) {
+        console.error('[CAPTURE] Exceção:', e.message);
+        alert('Erro de conexão: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📸 Capturar';
+        btn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded';
+    }
+}
 
 function startStream() {
     const img = document.getElementById('live-stream');

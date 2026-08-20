@@ -1,3 +1,4 @@
+import asyncio
 import json
 import shutil
 from datetime import UTC, datetime
@@ -491,15 +492,20 @@ async def monitoring_capture(request: Request, db: Session = Depends(get_db)):
 
     error = None
     result = None
-    worker = CaptureWorker(device_id=camera_id)
-    try:
-        result = worker.capture()
-        if result is None:
-            error = "Câmera não disponível ou falha na captura"
-    except Exception as e:
-        error = str(e)
-    finally:
-        worker.disconnect()
+
+    def _do_capture():
+        w = CaptureWorker(device_id=camera_id)
+        try:
+            r = w.capture()
+            return r, None
+        except Exception as e:
+            return None, str(e)
+        finally:
+            w.disconnect()
+
+    result, error = await asyncio.to_thread(_do_capture)
+    if result is None and error is None:
+        error = "Câmera não disponível ou falha na captura"
 
     cameras = db.query(Device).filter(
         Device.device_type == "camera", Device.is_active
@@ -586,15 +592,20 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
 
     error = None
     result = None
-    worker = CaptureWorker(device_id=camera_id)
-    try:
-        result = worker.capture()
-        if result is None:
-            error = "Câmera não disponível ou falha na captura"
-    except Exception as e:
-        error = str(e)
-    finally:
-        worker.disconnect()
+
+    def _do_capture():
+        w = CaptureWorker(device_id=camera_id)
+        try:
+            r = w.capture()
+            return r, None
+        except Exception as e:
+            return None, str(e)
+        finally:
+            w.disconnect()
+
+    result, error = await asyncio.to_thread(_do_capture)
+    if result is None and error is None:
+        error = "Câmera não disponível ou falha na captura"
 
     cameras = db.query(Device).filter(
         Device.device_type == "camera", Device.is_active
