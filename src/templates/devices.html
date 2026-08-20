@@ -101,6 +101,63 @@
     </div>
 </div>
 
+<!-- Add Device Modal -->
+<div id="add-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-2xl my-8">
+        <h3 class="text-lg font-bold mb-4">Adicionar Device</h3>
+        <form hx-post="/dashboard/devices" hx-target="#devices-list" hx-swap="beforeend">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Device ID</label>
+                    <input name="device_id" required placeholder="geofissura_cam_000001"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Nome</label>
+                    <input name="name" required placeholder="Camera de fissura 01"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo</label>
+                    <select name="device_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="camera">Camera</option>
+                        <option value="sensor">Sensor</option>
+                        <option value="other">Outro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tarefa</label>
+                    <select name="task_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="fissure">Fissure</option>
+                        <option value="ppe">PPE</option>
+                        <option value="fabric_quality">Fabric Quality</option>
+                        <option value="structural">Structural</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo de Conexao</label>
+                    <select name="connection_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="rtsp">RTSP</option>
+                        <option value="mqtt">MQTT</option>
+                        <option value="http">HTTP</option>
+                        <option value="serial">Serial</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Intervalo (ms)</label>
+                    <input name="capture_interval_ms" type="number" value="60000"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="document.getElementById('add-modal').classList.add('hidden')"
+                        class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Edit Device Modal -->
 <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
     <div class="bg-gray-800 rounded-lg p-6 w-full max-w-2xl my-8">
