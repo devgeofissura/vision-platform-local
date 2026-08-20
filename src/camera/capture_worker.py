@@ -12,13 +12,14 @@ from src.camera.frame_validator import FrameValidator
 from src.camera.rtsp_client import RTSPClient
 from src.config.settings import settings
 from src.storage.database import SessionLocal
-from src.storage.models import Observation
+from src.storage.models import Device, Observation
 
 logger = logging.getLogger(__name__)
 
 
 class CaptureWorker:
-    def __init__(self):
+    def __init__(self, device_id: str | None = None):
+        self._device_id = device_id
         self.client = self._build_client()
         self.validator = FrameValidator()
         self._prev_frame: np.ndarray | None = None
@@ -26,73 +27,60 @@ class CaptureWorker:
         self._capture_count: int = 0
         self._error_count: int = 0
 
+    def _get_device_config(self) -> dict | None:
+        if not self._device_id:
+            return None
+        db = SessionLocal()
+        try:
+            device = db.query(Device).filter(Device.device_id == self._device_id).first()
+            return device.connection_config if device else None
+        finally:
+            db.close()
+
     def _build_client(self) -> RTSPClient:
         rtsp_url = self._resolve_rtsp_url()
+        cfg = self._get_device_config() or {}
+        transport = cfg.get("transport", settings.camera_rtsp_transport)
         return RTSPClient(
             rtsp_url=rtsp_url,
-            transport=settings.camera_rtsp_transport,
+            transport=transport,
             connect_timeout_ms=settings.camera_connect_timeout_ms,
             reconnect_interval_ms=settings.camera_reconnect_interval_ms,
         )
 
     def _resolve_rtsp_url(self) -> str:
-        if not settings.camera_auto_discover:
-            return settings.camera_rtsp_url
+        cfg = self._get_device_config() or {}
 
-        if settings.camera_ip:
-            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
-            discovery = OnvifDiscovery(onvif_port=80)
-            url = discovery.build_rtsp_url(
-                ip=settings.camera_ip,
-                username=settings.camera_username,
-                password=settings.camera_password,
-                channel=settings.camera_channel,
-                stream=stream,
-            )
-            logger.info("Using configured IP: %s", settings.camera_ip)
-            return url
+        ip = cfg.get("ip", settings.camera_ip)
+        username = cfg.get("username", settings.camera_username)
+        password = settings.camera_password
+        channel = cfg.get("channel", settings.camera_channel)
+        stream_type = cfg.get("stream_type", settings.camera_stream_type)
+        stream_value = "0" if stream_type == "main" else "1"
+        hostname = cfg.get("hostname", settings.camera_hostname)
 
-        discovery = OnvifDiscovery(onvif_port=80)
-        cam = discovery.find_camera(
-            hostname_prefix="GeoFissura_CAM_",
-            mac=None,
-        )
-        if cam:
-            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
-            url = discovery.build_rtsp_url(
-                ip=cam.ip,
-                username=settings.camera_username,
-                password=settings.camera_password,
-                channel=settings.camera_channel,
-                stream=stream,
-            )
-            logger.info(
-                "Discovered camera %s at %s (mac=%s, model=%s)",
-                cam.full_name,
-                cam.ip,
-                cam.mac,
-                cam.model,
-            )
-            return url
-
-        ip = discovery.fallback_resolve(settings.camera_hostname)
         if ip:
-            stream = StreamType.MAIN if settings.camera_stream_type == "main" else StreamType.SUB
-            url = discovery.build_rtsp_url(
-                ip=ip,
-                username=settings.camera_username,
-                password=settings.camera_password,
-                channel=settings.camera_channel,
-                stream=stream,
-            )
-            logger.info("Fallback DNS resolved %s -> %s", settings.camera_hostname, ip)
+            url = f"rtsp://{username}:{password}@{ip}:554/cam/realmonitor?channel={channel}&subtype={stream_value}"
+            logger.info("Using device IP: %s (device=%s)", ip, self._device_id or "default")
             return url
 
-        logger.warning(
-            "Discovery, IP and DNS failed, using configured URL: %s",
-            settings.camera_rtsp_url,
-        )
-        return settings.camera_rtsp_url
+        if settings.camera_auto_discover:
+            discovery = OnvifDiscovery(onvif_port=80)
+            cam = discovery.find_camera(hostname_prefix="GeoFissura_CAM_", mac=None)
+            if cam:
+                url = f"rtsp://{username}:{password}@{cam.ip}:554/cam/realmonitor?channel={channel}&subtype={stream_value}"
+                logger.info("Discovered camera %s at %s", cam.full_name, cam.ip)
+                return url
+
+        ip = OnvifDiscovery._reverse_dns(hostname)
+        if ip:
+            url = f"rtsp://{username}:{password}@{ip}:554/cam/realmonitor?channel={channel}&subtype={stream_value}"
+            logger.info("Fallback DNS resolved %s -> %s", hostname, ip)
+            return url
+
+        url = settings.camera_rtsp_url
+        logger.warning("Using configured URL: %s", url)
+        return url
 
     def capture(self) -> dict | None:
         if not self.client.is_connected:

@@ -67,7 +67,7 @@ def _seed_default_devices():
                     task_type="fissure",
                     connection_type="rtsp",
                     connection_config={
-                        "rtsp_url": settings.camera_rtsp_url,
+                        "ip": settings.camera_ip,
                         "hostname": settings.camera_hostname,
                         "username": settings.camera_username,
                         "channel": settings.camera_channel,

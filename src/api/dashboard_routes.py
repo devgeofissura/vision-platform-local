@@ -485,7 +485,7 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
 
     error = None
     result = None
-    worker = CaptureWorker()
+    worker = CaptureWorker(device_id=camera_id)
     try:
         result = worker.capture()
         if result is None:
@@ -588,15 +588,19 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
     settings.save_to_env(updates)
 
     existing = db.query(Device).filter(Device.device_id == device_id).first()
+    device_config = {
+        "ip": camera_ip,
+        "hostname": camera_hostname,
+        "manufacturer": camera_manufacturer,
+        "model": camera_model,
+        "username": camera_username,
+        "channel": settings.camera_channel,
+        "stream_type": settings.camera_stream_type,
+        "transport": settings.camera_rtsp_transport,
+    }
     if existing:
         existing.name = device_name
-        existing.connection_config = {
-            **(existing.connection_config or {}),
-            "ip": camera_ip,
-            "hostname": camera_hostname,
-            "manufacturer": camera_manufacturer,
-            "model": camera_model,
-        }
+        existing.connection_config = device_config
         existing.updated_at = datetime.now(UTC)
         db.commit()
     else:
@@ -606,13 +610,7 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
             device_type="camera",
             task_type="fissure",
             connection_type="rtsp",
-            connection_config={
-                "ip": camera_ip,
-                "hostname": camera_hostname,
-                "manufacturer": camera_manufacturer,
-                "model": camera_model,
-                "username": camera_username,
-            },
+            connection_config=device_config,
             capture_interval_ms=settings.camera_capture_interval_ms,
             is_active=True,
         )

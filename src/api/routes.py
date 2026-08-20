@@ -213,12 +213,14 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
         ip = config.get("ip", "")
         username = config.get("username", settings.camera_username)
         password = settings.camera_password
-        channel = settings.camera_channel
+        channel = config.get("channel", settings.camera_channel)
+        stream_type = config.get("stream_type", settings.camera_stream_type)
+        stream_value = "0" if stream_type == "main" else "1"
 
         if not ip:
-            raise HTTPException(status_code=400, detail="Camera IP not configured")
+            raise HTTPException(status_code=400, detail="Camera IP not configured in device")
 
-        rtsp_url = f"rtsp://{username}:{password}@{ip}:554/cam/realmonitor?channel={channel}&subtype=0"
+        rtsp_url = f"rtsp://{username}:{password}@{ip}:554/cam/realmonitor?channel={channel}&subtype={stream_value}"
     finally:
         db.close()
 
