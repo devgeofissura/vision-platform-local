@@ -169,6 +169,10 @@ async def device_update(
     device.task_type = str(form.get("task_type", device.task_type))
     device.connection_type = str(form.get("connection_type", device.connection_type))
     device.capture_interval_ms = int(form.get("capture_interval_ms", device.capture_interval_ms))
+    device.auto_capture_enabled = form.get("auto_capture_enabled") == "on"
+    device.auto_capture_interval_minutes = int(
+        form.get("auto_capture_interval_minutes", device.auto_capture_interval_minutes or 60)
+    )
     device.is_active = form.get("is_active") == "on"
     device.updated_at = datetime.now(UTC)
 
@@ -438,12 +442,86 @@ async def monitoring_page(request: Request, db: Session = Depends(get_db)):
 
     selected_id = request.query_params.get("camera", cameras[0].device_id if cameras else None)
 
+    latest = (
+        db.query(Observation)
+        .order_by(Observation.captured_at.desc())
+        .first()
+    )
+
+    latest_image_url = None
+    if latest and latest.file_path:
+        p = Path(latest.file_path)
+        evidence_root = Path(settings.local_evidence_dir)
+        try:
+            rel = p.relative_to(evidence_root)
+            latest_image_url = f"/evidence/{rel.as_posix()}"
+        except ValueError:
+            pass
+
     return _tmpl().TemplateResponse(request, "monitoring.html", {
         "user": user,
         "page": "monitoring",
         "cameras": cameras,
         "selected_id": selected_id,
         "camera_token": settings.local_api_token,
+        "latest": latest,
+        "latest_image_url": latest_image_url,
+    })
+
+
+@router.post("/monitoring/capture", response_class=HTMLResponse)
+async def monitoring_capture(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    form = await request.form()
+    camera_id = form.get("camera_id")
+
+    from src.camera.capture_worker import CaptureWorker
+
+    error = None
+    result = None
+    worker = CaptureWorker(device_id=camera_id)
+    try:
+        result = worker.capture()
+        if result is None:
+            error = "Câmera não disponível ou falha na captura"
+    except Exception as e:
+        error = str(e)
+    finally:
+        worker.disconnect()
+
+    cameras = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.created_at.desc()).all()
+
+    latest = (
+        db.query(Observation)
+        .order_by(Observation.captured_at.desc())
+        .first()
+    )
+
+    latest_image_url = None
+    if latest and latest.file_path:
+        p = Path(latest.file_path)
+        evidence_root = Path(settings.local_evidence_dir)
+        try:
+            rel = p.relative_to(evidence_root)
+            latest_image_url = f"/evidence/{rel.as_posix()}"
+        except ValueError:
+            pass
+
+    return _tmpl().TemplateResponse(request, "monitoring.html", {
+        "user": user,
+        "page": "monitoring",
+        "cameras": cameras,
+        "selected_id": camera_id,
+        "camera_token": settings.local_api_token,
+        "latest": latest,
+        "latest_image_url": latest_image_url,
+        "capture_result": result,
+        "capture_error": error,
     })
 
 
@@ -457,7 +535,7 @@ async def camera_page(request: Request, db: Session = Depends(get_db)):
         Device.device_type == "camera", Device.is_active
     ).order_by(Device.created_at.desc()).all()
 
-    selected_id = request.query_params.get("camera", settings.camera_id)
+    selected_id = request.query_params.get("camera", cameras[0].device_id if cameras else None)
 
     latest = (
         db.query(Observation)

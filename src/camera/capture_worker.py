@@ -99,20 +99,24 @@ class CaptureWorker:
         self._prev_frame = frame.copy()
 
         now = datetime.now(UTC)
-        observation_id = f"obs_{settings.local_id}_{settings.camera_id}_{now.strftime('%Y%m%dT%H%M%SZ')}"
+        active_id = self._device_id or settings.camera_id
+        observation_id = f"obs_{settings.local_id}_{active_id}_{now.strftime('%Y%m%dT%H%M%SZ')}"
+
+        cfg = self._get_device_config() or {}
+        jpeg_quality = cfg.get("jpeg_quality", settings.camera_capture_jpeg_quality)
 
         evidence_dir = Path(settings.local_evidence_dir) / now.strftime("%Y/%m/%d")
         evidence_dir.mkdir(parents=True, exist_ok=True)
 
         full_path = evidence_dir / f"{observation_id}_full.jpg"
-        cv2.imwrite(str(full_path), frame, [cv2.IMWRITE_JPEG_QUALITY, settings.camera_capture_jpeg_quality])
+        cv2.imwrite(str(full_path), frame, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality])
 
         roi_path = evidence_dir / f"{observation_id}_roi.jpg"
         roi_config = self._get_roi()
         if roi_config:
             x, y, w, h = roi_config["x"], roi_config["y"], roi_config["width"], roi_config["height"]
             roi_frame = frame[y : y + h, x : x + w]
-            cv2.imwrite(str(roi_path), roi_frame, [cv2.IMWRITE_JPEG_QUALITY, settings.camera_capture_jpeg_quality])
+            cv2.imwrite(str(roi_path), roi_frame, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality])
 
         sha256 = hashlib.sha256(full_path.read_bytes()).hexdigest()
 
@@ -121,7 +125,7 @@ class CaptureWorker:
 
         result = {
             "observation_id": observation_id,
-            "camera_id": settings.camera_id,
+            "camera_id": active_id,
             "local_id": settings.local_id,
             "captured_at": now.isoformat(),
             "file_path": str(full_path),

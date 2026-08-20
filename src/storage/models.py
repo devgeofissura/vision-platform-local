@@ -21,6 +21,9 @@ class Device(Base):
     connection_type = Column(String(32), nullable=False, default="rtsp")
     connection_config = Column(JSON, nullable=True, default=dict)
     capture_interval_ms = Column(Integer, nullable=False, default=60000)
+    auto_capture_enabled = Column(Boolean, nullable=False, default=False)
+    auto_capture_interval_minutes = Column(Integer, nullable=False, default=60)
+    last_auto_capture_at = Column(DateTime, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
@@ -35,6 +38,9 @@ class Device(Base):
             "connection_type": self.connection_type,
             "connection_config": self.connection_config or {},
             "capture_interval_ms": self.capture_interval_ms,
+            "auto_capture_enabled": self.auto_capture_enabled,
+            "auto_capture_interval_minutes": self.auto_capture_interval_minutes,
+            "last_auto_capture_at": self.last_auto_capture_at.isoformat() if self.last_auto_capture_at else None,
             "is_active": self.is_active,
         }
 

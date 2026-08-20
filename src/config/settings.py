@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     camera_capture_height: int = 1080
     camera_capture_jpeg_quality: int = 90
 
-    local_data_dir: str = "/var/lib/vision-platform-local"
-    local_evidence_dir: str = "/var/lib/vision-platform-local/evidence"
+    local_data_dir: str = "./data"
+    local_evidence_dir: str = "./evidence"
     local_db_url: str = "postgresql://vision:change-me@localhost:5432/vision_local"
     local_api_host: str = "0.0.0.0"
     local_api_port: int = 8080

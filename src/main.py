@@ -23,6 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 _delivery_task: asyncio.Task | None = None
+_auto_capture_task: asyncio.Task | None = None
 
 
 async def _delivery_loop():
@@ -35,6 +36,45 @@ async def _delivery_loop():
         except Exception as e:
             logger.error("Delivery loop error: %s", e)
         await asyncio.sleep(interval_s)
+
+
+async def _auto_capture_loop():
+    while True:
+        try:
+            db = SessionLocal()
+            try:
+                from datetime import UTC, datetime
+
+                from src.camera.capture_worker import CaptureWorker
+
+                now = datetime.now(UTC)
+                devices = db.query(Device).filter(
+                    Device.auto_capture_enabled.is_(True),
+                    Device.is_active.is_(True),
+                    Device.device_type == "camera",
+                ).all()
+
+                for device in devices:
+                    last = device.last_auto_capture_at
+                    interval_min = device.auto_capture_interval_minutes or 60
+                    if last is None or (now - last.replace(tzinfo=UTC)).total_seconds() >= interval_min * 60:
+                        try:
+                            worker = CaptureWorker(device_id=device.device_id)
+                            result = worker.capture()
+                            worker.disconnect()
+                            if result:
+                                device.last_auto_capture_at = now
+                                db.commit()
+                                logger.info("Auto-capture %s: OK", device.device_id)
+                            else:
+                                logger.warning("Auto-capture %s: no frame", device.device_id)
+                        except Exception as e:
+                            logger.error("Auto-capture %s error: %s", device.device_id, e)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error("Auto-capture loop error: %s", e)
+        await asyncio.sleep(60)
 
 
 def _seed_admin():
@@ -97,8 +137,10 @@ async def lifespan(app: FastAPI):
     _seed_default_devices()
     logger.info("Database tables verified")
     _delivery_task = asyncio.create_task(_delivery_loop())
+    _auto_capture_task = asyncio.create_task(_auto_capture_loop())
     yield
     _delivery_task.cancel()
+    _auto_capture_task.cancel()
     logger.info("Vision Platform Local shutting down")
 
 

@@ -20,6 +20,7 @@
                     <th class="px-4 py-3 text-left text-gray-300">Tipo</th>
                     <th class="px-4 py-3 text-left text-gray-300">Tarefa</th>
                     <th class="px-4 py-3 text-left text-gray-300">IP</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Auto</th>
                     <th class="px-4 py-3 text-left text-gray-300">Status</th>
                     <th class="px-4 py-3 text-left text-gray-300">Acoes</th>
                 </tr>
@@ -49,6 +50,13 @@
                     </td>
                     <td class="px-4 py-3 font-mono text-xs text-gray-400">{{ d.connection_config.get('ip', '-') if d.connection_config else '-' }}</td>
                     <td class="px-4 py-3">
+                        {% if d.auto_capture_enabled %}
+                        <span class="text-green-400 text-xs">a cada {{ d.auto_capture_interval_minutes }}min</span>
+                        {% else %}
+                        <span class="text-gray-600 text-xs">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
                         {% if d.is_active %}
                         <span class="text-green-400 text-xs">● Ativo</span>
                         {% else %}
@@ -68,7 +76,7 @@
                 {% endfor %}
                 {% if not devices %}
                 <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                         Nenhum device configurado. Clique em "+ Adicionar Device" para comecar.
                     </td>
                 </tr>
@@ -144,11 +152,109 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">Intervalo (ms)</label>
+                    <label class="block text-xs text-gray-400 mb-1">Intervalo Captura (ms)</label>
                     <input name="capture_interval_ms" type="number" value="60000"
                            class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
                 </div>
             </div>
+
+            <!-- Camera Config -->
+            <div class="mt-4 pt-4 border-t border-gray-700">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3">Configuracao da Camera</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">IP</label>
+                        <input name="config_ip" placeholder="192.168.0.183"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Hostname</label>
+                        <input name="config_hostname"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Username</label>
+                        <input name="config_username"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Password</label>
+                        <input name="config_password" type="password"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm" placeholder="••••••">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Channel</label>
+                        <input name="config_channel" type="number" value="1"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Stream Type</label>
+                        <select name="config_stream_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            <option value="main">Main (1080p)</option>
+                            <option value="sub">Sub (reduzido)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Transport</label>
+                        <select name="config_transport" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            <option value="tcp">TCP</option>
+                            <option value="udp">UDP</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Manufacturer</label>
+                        <input name="config_manufacturer"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Model</label>
+                        <input name="config_model"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">JPEG Quality</label>
+                        <input name="config_jpeg_quality" type="number" min="1" max="100" value="90"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Resolution WxH</label>
+                        <div class="flex gap-2">
+                            <input name="config_capture_width" type="number" value="1920" placeholder="1920"
+                                   class="w-1/2 bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            <span class="text-gray-500 self-center">x</span>
+                            <input name="config_capture_height" type="number" value="1080" placeholder="1080"
+                                   class="w-1/2 bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto-capture -->
+            <div class="mt-4 pt-4 border-t border-gray-700">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3">Captura Automatica</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-end">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="auto_capture_enabled" class="w-4 h-4 rounded">
+                            <span class="text-xs text-gray-400">Ativar captura automatica</span>
+                        </label>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Intervalo (minutos)</label>
+                        <select name="auto_capture_interval_minutes" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            <option value="1">1 minuto</option>
+                            <option value="5">5 minutos</option>
+                            <option value="10">10 minutos</option>
+                            <option value="15" selected>15 minutos</option>
+                            <option value="30">30 minutos</option>
+                            <option value="60">1 hora</option>
+                            <option value="720">12 horas</option>
+                            <option value="1440">24 horas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end gap-2 mt-4">
                 <button type="button" onclick="document.getElementById('add-modal').classList.add('hidden')"
                         class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancelar</button>
@@ -276,6 +382,32 @@
                 </div>
             </div>
 
+            <!-- Auto-capture -->
+            <div class="mt-4 pt-4 border-t border-gray-700">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3">Captura Automatica</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-end">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="auto_capture_enabled" id="edit-auto_capture_enabled" class="w-4 h-4 rounded">
+                            <span class="text-xs text-gray-400">Ativar captura automatica</span>
+                        </label>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Intervalo (minutos)</label>
+                        <select name="auto_capture_interval_minutes" id="edit-auto_capture_interval_minutes" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            <option value="1">1 minuto</option>
+                            <option value="5">5 minutos</option>
+                            <option value="10">10 minutos</option>
+                            <option value="15">15 minutos</option>
+                            <option value="30">30 minutos</option>
+                            <option value="60">1 hora</option>
+                            <option value="720">12 horas</option>
+                            <option value="1440">24 horas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end gap-2 mt-4">
                 <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')"
                         class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancelar</button>
@@ -307,6 +439,8 @@ function editDevice(id, device) {
     document.getElementById('edit-config_jpeg_quality').value = c.jpeg_quality || 90;
     document.getElementById('edit-config_capture_width').value = c.capture_width || 1920;
     document.getElementById('edit-config_capture_height').value = c.capture_height || 1080;
+    document.getElementById('edit-auto_capture_enabled').checked = device.auto_capture_enabled || false;
+    document.getElementById('edit-auto_capture_interval_minutes').value = device.auto_capture_interval_minutes || 60;
     const form = document.getElementById('edit-form');
     form.setAttribute('hx-put', '/dashboard/devices/' + id);
     document.getElementById('edit-modal').classList.remove('hidden');

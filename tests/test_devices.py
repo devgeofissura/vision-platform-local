@@ -307,3 +307,110 @@ class TestDeviceCameraConfig:
     def test_to_dict_returns_empty_config_when_none(self):
         d = Device(device_id="x", name="X", connection_config=None)
         assert d.to_dict()["connection_config"] == {}
+
+
+# ── Auto-capture fields ──
+
+class TestAutoCapture:
+    def test_update_saves_auto_capture_enabled(self, client):
+        _login(client)
+        d = _create_device(device_id="cam_auto")
+        resp = client.put(f"/dashboard/devices/{d.id}", data={
+            "device_id": "cam_auto",
+            "name": "Auto Capture",
+            "device_type": "camera",
+            "task_type": "fissure",
+            "connection_type": "rtsp",
+            "capture_interval_ms": "60000",
+            "auto_capture_enabled": "on",
+            "auto_capture_interval_minutes": "30",
+        })
+        assert resp.status_code == 200
+
+        db = TestSession()
+        updated = db.query(Device).filter(Device.id == d.id).first()
+        assert updated.auto_capture_enabled is True
+        assert updated.auto_capture_interval_minutes == 30
+        db.close()
+
+    def test_update_auto_capture_disabled_when_checkbox_off(self, client):
+        _login(client)
+        d = _create_device(device_id="cam_noauto", auto_capture_enabled=True)
+        resp = client.put(f"/dashboard/devices/{d.id}", data={
+            "device_id": "cam_noauto",
+            "name": "Disable Auto",
+            "device_type": "camera",
+            "task_type": "fissure",
+            "connection_type": "rtsp",
+            "capture_interval_ms": "60000",
+            "auto_capture_interval_minutes": "60",
+        })
+        assert resp.status_code == 200
+
+        db = TestSession()
+        updated = db.query(Device).filter(Device.id == d.id).first()
+        assert updated.auto_capture_enabled is False
+        db.close()
+
+    def test_to_dict_includes_auto_capture_fields(self, client):
+        _login(client)
+        d = _create_device(
+            device_id="cam_dict_auto",
+            auto_capture_enabled=True,
+            auto_capture_interval_minutes=15,
+        )
+        result = d.to_dict()
+        assert result["auto_capture_enabled"] is True
+        assert result["auto_capture_interval_minutes"] == 15
+        assert "last_auto_capture_at" in result
+
+    def test_default_auto_capture_values(self):
+        d = Device(device_id="cam_defaults", name="Defaults")
+        assert d.auto_capture_enabled is None or d.auto_capture_enabled is False
+        assert d.auto_capture_interval_minutes is None or d.auto_capture_interval_minutes == 60
+        assert d.last_auto_capture_at is None
+
+
+# ── Monitoring capture endpoint ──
+
+class TestMonitoringCapture:
+    def test_monitoring_page_renders(self, client):
+        _login(client)
+        resp = client.get("/dashboard/monitoring")
+        assert resp.status_code == 200
+        assert "Monitoramento" in resp.text or "monitoring" in resp.text.lower()
+
+    def test_monitoring_page_shows_cameras(self, client):
+        _login(client)
+        _create_device(device_id="cam_mon", name="Camera Mon")
+        resp = client.get("/dashboard/monitoring")
+        assert "cam_mon" in resp.text
+
+    def test_monitoring_page_requires_auth(self, client):
+        resp = client.get("/dashboard/monitoring", follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.headers["location"] == "/login"
+
+    def test_monitoring_capture_requires_camera(self, client):
+        _login(client)
+        resp = client.post("/dashboard/monitoring/capture", data={
+            "camera_id": "nonexistent_device",
+        })
+        assert resp.status_code == 200
+        assert "Câmera não disponível" in resp.text or "não disponível" in resp.text
+
+
+# ── Evidence dir default ──
+
+class TestEvidenceDirDefault:
+    def test_default_evidence_dir_is_relative(self):
+        from src.config.settings import Settings
+        s = Settings()
+        assert s.local_evidence_dir == "./evidence"
+        assert not s.local_evidence_dir.startswith("/")
+
+    def test_default_data_dir_is_relative(self):
+        from src.config.settings import Settings
+        s = Settings()
+        assert s.local_data_dir == "./data"
+        assert not s.local_data_dir.startswith("/")

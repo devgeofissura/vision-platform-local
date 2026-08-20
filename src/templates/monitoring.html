@@ -12,23 +12,51 @@
             <a href="/dashboard/monitoring?camera={{ cam.device_id }}"
                class="block bg-gray-800 p-3 rounded-lg border-2 transition hover:border-blue-500 {% if cam.device_id == selected_id %}border-blue-500{% else %}border-gray-700{% endif %}">
                 <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                    <span class="w-2 h-2 rounded-full {% if cam.is_active %}bg-green-400{% else %}bg-red-400{% endif %}"></span>
                     <span class="text-white font-mono text-sm">{{ cam.device_id }}</span>
                 </div>
                 <p class="text-xs text-gray-400">{{ cam.name }}</p>
+                {% if cam.auto_capture_enabled %}
+                <p class="text-xs text-green-400 mt-1">Auto: a cada {{ cam.auto_capture_interval_minutes }}min</p>
+                {% endif %}
             </a>
             {% endfor %}
+            {% if not cameras %}
+            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 text-gray-500">
+                Nenhuma câmera configurada — <a href="/dashboard/discovery" class="underline">descobrir câmeras</a>
+            </div>
+            {% endif %}
         </div>
     </div>
 
     {% if selected_id %}
-    <!-- Full-width live stream -->
+    <!-- Capture result/error -->
+    {% if capture_error %}
+    <div class="bg-red-900 border border-red-600 text-red-200 p-3 rounded-lg mb-4 text-sm">
+        Erro na captura: {{ capture_error }}
+    </div>
+    {% endif %}
+    {% if capture_result %}
+    <div class="bg-green-900 border border-green-600 text-green-200 p-3 rounded-lg mb-4 text-sm">
+        Captura OK — {{ capture_result.width }}x{{ capture_result.height }} — Score: {{ capture_result.quality.score }}
+    </div>
+    {% endif %}
+
+    <!-- Full-width live stream + capture -->
     <div class="bg-gray-800 p-4 rounded-lg mb-6">
         <div class="flex items-center justify-between mb-3">
             <h3 class="font-semibold">Stream ao Vivo — {{ selected_id }}</h3>
             <div class="flex gap-2">
                 <button onclick="startStream()" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded">▶ Play</button>
                 <button onclick="stopStream()" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded">⏹ Stop</button>
+                <form method="POST" action="/dashboard/monitoring/capture" class="inline">
+                    <input type="hidden" name="camera_id" value="{{ selected_id }}">
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                            onclick="this.disabled=true; this.textContent='...'">
+                        📸 Capturar
+                    </button>
+                </form>
             </div>
         </div>
         <div class="bg-black rounded-lg overflow-hidden relative" style="min-height: 400px;">
@@ -51,6 +79,24 @@
             </div>
         </div>
     </div>
+
+    <!-- Latest capture -->
+    {% if latest_image_url %}
+    <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h3 class="font-semibold mb-3">Última Captura</h3>
+        <div class="flex justify-center">
+            <img src="{{ latest_image_url }}" alt="Última captura"
+                 class="max-w-full rounded-lg border border-gray-600" style="max-height: 300px;">
+        </div>
+        {% if latest %}
+        <div class="mt-2 text-xs text-gray-400 text-center">
+            {{ latest.captured_at.strftime('%d/%m/%Y %H:%M:%S') if latest.captured_at else 'N/A' }}
+            — {{ latest.width }}x{{ latest.height }}
+            — Score: {{ latest.quality_score }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <!-- Task type detection panels -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
