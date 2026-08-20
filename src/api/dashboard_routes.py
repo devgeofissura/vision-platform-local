@@ -11,7 +11,16 @@ from sqlalchemy.orm import Session
 from src.auth.dependencies import get_current_user
 from src.config.settings import settings
 from src.storage.database import get_db
-from src.storage.models import CONNECTION_TYPES, DEVICE_TYPES, TASK_TYPES, DeliveryLog, Device, Observation
+from src.storage.models import (
+    CONNECTION_TYPES,
+    DEVICE_TYPES,
+    TASK_TYPES,
+    DeliveryLog,
+    Device,
+    Observation,
+    ProcessingResult,
+    ZoneConfig,
+)
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -711,3 +720,154 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
         db.commit()
 
     return RedirectResponse(url="/dashboard/discovery?selected=1", status_code=302)
+
+
+# ── Processing Results ──────────────────────────────────────
+
+@router.get("/processing", response_class=HTMLResponse)
+async def processing_page(
+    request: Request,
+    status: str | None = None,
+    result_type: str | None = None,
+    db: Session = Depends(get_db),
+):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    query = db.query(Observation)
+    if status:
+        query = query.filter(Observation.processing_status == status)
+    observations = (
+        query.order_by(Observation.captured_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    total = db.query(Observation).count()
+    pending = db.query(Observation).filter(Observation.processing_status == "pending").count()
+    processing = db.query(Observation).filter(Observation.processing_status == "processing").count()
+    completed = db.query(Observation).filter(Observation.processing_status == "completed").count()
+    failed = db.query(Observation).filter(Observation.processing_status == "failed").count()
+
+    return _tmpl().TemplateResponse(request, "processing.html", {
+        "user": user,
+        "page": "processing",
+        "observations": observations,
+        "current_status": status,
+        "result_type_filter": result_type,
+        "total": total,
+        "pending": pending,
+        "processing": processing,
+        "completed": completed,
+        "failed": failed,
+    })
+
+
+@router.get("/processing/{observation_id}", response_class=HTMLResponse)
+async def processing_detail(
+    request: Request,
+    observation_id: str,
+    db: Session = Depends(get_db),
+):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    obs = db.query(Observation).filter(
+        Observation.observation_id == observation_id
+    ).first()
+    if obs is None:
+        return RedirectResponse(url="/dashboard/processing", status_code=302)
+
+    results = (
+        db.query(ProcessingResult)
+        .filter(ProcessingResult.observation_id == observation_id)
+        .order_by(ProcessingResult.created_at.desc())
+        .all()
+    )
+
+    latest_image_url = None
+    if obs and obs.file_path:
+        p = Path(obs.file_path)
+        evidence_root = Path(settings.local_evidence_dir)
+        try:
+            rel = p.relative_to(evidence_root)
+            latest_image_url = f"/evidence/{rel.as_posix()}"
+        except ValueError:
+            pass
+
+    return _tmpl().TemplateResponse(request, "processing_detail.html", {
+        "user": user,
+        "page": "processing",
+        "obs": obs,
+        "results": results,
+        "latest_image_url": latest_image_url,
+    })
+
+
+# ── Zones ──────────────────────────────────────────────────
+
+@router.get("/zones", response_class=HTMLResponse)
+async def zones_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    zones = db.query(ZoneConfig).order_by(ZoneConfig.zone_name).all()
+    devices = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.name).all()
+
+    return _tmpl().TemplateResponse(request, "zones.html", {
+        "user": user,
+        "page": "zones",
+        "zones": zones,
+        "devices": devices,
+    })
+
+
+@router.post("/zones", response_class=HTMLResponse)
+async def zone_create(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    form = await request.form()
+    zone_name = str(form.get("zone_name", ""))
+    zone_type = str(form.get("zone_type", "ppe_enforcement"))
+    device_id = str(form.get("device_id", ""))
+
+    vertices_str = str(form.get("polygon_vertices", "[]"))
+    try:
+        vertices = json.loads(vertices_str)
+    except (json.JSONDecodeError, TypeError):
+        vertices = []
+
+    config_str = str(form.get("zone_config", "{}"))
+    try:
+        config = json.loads(config_str)
+    except (json.JSONDecodeError, TypeError):
+        config = {}
+
+    zone = ZoneConfig(
+        device_id=device_id,
+        zone_name=zone_name,
+        zone_type=zone_type,
+        polygon_vertices=vertices,
+        zone_config=config,
+        is_active=True,
+    )
+    db.add(zone)
+    db.commit()
+
+    return RedirectResponse(url="/dashboard/zones", status_code=302)
+
+
+@router.delete("/zones/{zone_id}")
+async def zone_delete(zone_id: int, db: Session = Depends(get_db)):
+    zone = db.query(ZoneConfig).filter(ZoneConfig.id == zone_id).first()
+    if zone:
+        db.delete(zone)
+        db.commit()
+    return HTMLResponse("")

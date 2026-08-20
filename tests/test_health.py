@@ -98,7 +98,7 @@ class TestAckObservation:
 
         response = client.post(
             "/api/v1/observations/obs_ack/ack",
-            headers={"X-Api-Token": "change-me"},
+            headers={"X-Api-Token": "test-token"},
         )
         assert response.status_code == 200
         assert response.json()["status"] == "acknowledged"
@@ -112,7 +112,7 @@ class TestAckObservation:
     def test_ack_not_found(self, client: TestClient):
         response = client.post(
             "/api/v1/observations/obs_nonexistent/ack",
-            headers={"X-Api-Token": "change-me"},
+            headers={"X-Api-Token": "test-token"},
         )
         assert response.status_code == 404
 
@@ -125,7 +125,7 @@ class TestFlushDelivery:
     def test_flush_empty(self, client: TestClient):
         response = client.post(
             "/api/v1/delivery/flush",
-            headers={"X-Api-Token": "change-me"},
+            headers={"X-Api-Token": "test-token"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -139,7 +139,7 @@ class TestFlushDelivery:
         with _patch("src.storage.delivery_queue.deliver_observation", return_value=True):
             response = client.post(
                 "/api/v1/delivery/flush",
-                headers={"X-Api-Token": "change-me"},
+                headers={"X-Api-Token": "test-token"},
             )
         assert response.status_code == 200
         data = response.json()

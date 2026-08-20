@@ -4,14 +4,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import psutil
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.config.settings import settings
 from src.storage.database import SessionLocal, get_db
 from src.storage.delivery_queue import process_delivery_queue
-from src.storage.models import Device, Observation
+from src.storage.models import Device, Observation, ProcessingResult, ZoneConfig
 
 router = APIRouter()
 
@@ -295,3 +295,114 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
             cap.release()
 
     return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@router.get("/api/v1/processing/results")
+async def list_processing_results(
+    observation_id: str | None = Query(None),
+    result_type: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    query = db.query(ProcessingResult)
+    if observation_id:
+        query = query.filter(ProcessingResult.observation_id == observation_id)
+    if result_type:
+        query = query.filter(ProcessingResult.result_type == result_type)
+    results = query.order_by(ProcessingResult.created_at.desc()).limit(limit).all()
+    return {
+        "results": [
+            {
+                "id": r.id,
+                "observation_id": r.observation_id,
+                "device_id": r.device_id,
+                "result_type": r.result_type,
+                "model_name": r.model_name,
+                "model_version": r.model_version,
+                "confidence": r.confidence,
+                "result_data": r.result_data,
+                "inference_ms": r.inference_ms,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in results
+        ]
+    }
+
+
+@router.get("/api/v1/processing/status")
+async def processing_status(db: Session = Depends(get_db)):
+    total = db.query(Observation).count()
+    pending = db.query(Observation).filter(Observation.processing_status == "pending").count()
+    processing = db.query(Observation).filter(Observation.processing_status == "processing").count()
+    completed = db.query(Observation).filter(Observation.processing_status == "completed").count()
+    failed = db.query(Observation).filter(Observation.processing_status == "failed").count()
+    return {
+        "total": total,
+        "pending": pending,
+        "processing": processing,
+        "completed": completed,
+        "failed": failed,
+    }
+
+
+@router.get("/api/v1/zones")
+async def list_zones(
+    device_id: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    query = db.query(ZoneConfig)
+    if device_id:
+        query = query.filter(ZoneConfig.device_id == device_id)
+    zones = query.filter(ZoneConfig.is_active.is_(True)).order_by(ZoneConfig.zone_name).all()
+    return {
+        "zones": [
+            {
+                "id": z.id,
+                "device_id": z.device_id,
+                "zone_name": z.zone_name,
+                "zone_type": z.zone_type,
+                "polygon_vertices": z.polygon_vertices,
+                "zone_config": z.zone_config,
+                "is_active": z.is_active,
+            }
+            for z in zones
+        ]
+    }
+
+
+@router.post("/api/v1/zones")
+async def create_zone(
+    device_id: str = Body(...),
+    zone_name: str = Body(...),
+    zone_type: str = Body(...),
+    polygon_vertices: list = Body(...),
+    zone_config: dict = Body(default={}),
+    token: str = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
+    zone = ZoneConfig(
+        device_id=device_id,
+        zone_name=zone_name,
+        zone_type=zone_type,
+        polygon_vertices=polygon_vertices,
+        zone_config=zone_config,
+        is_active=True,
+    )
+    db.add(zone)
+    db.commit()
+    db.refresh(zone)
+    return {"id": zone.id, "zone_name": zone.zone_name, "status": "created"}
+
+
+@router.delete("/api/v1/zones/{zone_id}")
+async def delete_zone(
+    zone_id: int,
+    token: str = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
+    zone = db.query(ZoneConfig).filter(ZoneConfig.id == zone_id).first()
+    if not zone:
+        raise HTTPException(status_code=404, detail="Zone not found")
+    db.delete(zone)
+    db.commit()
+    return {"status": "deleted"}

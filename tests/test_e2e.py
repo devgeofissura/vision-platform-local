@@ -155,7 +155,7 @@ class TestE2EDeliveryFlow:
 
         response = client.post(
             "/api/v1/observations/obs_ack_flow/ack",
-            headers={"X-Api-Token": "change-me"},
+            headers={"X-Api-Token": "test-token"},
         )
         assert response.status_code == 200
         assert response.json()["status"] == "acknowledged"
@@ -185,7 +185,7 @@ class TestE2EDeliveryFlow:
 
         response = client.post(
             "/api/v1/delivery/flush",
-            headers={"X-Api-Token": "change-me"},
+            headers={"X-Api-Token": "test-token"},
         )
         assert response.status_code == 200
         data = response.json()

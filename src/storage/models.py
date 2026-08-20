@@ -7,7 +7,9 @@ from src.storage.database import Base
 
 DEVICE_TYPES = ["camera", "sensor", "other"]
 TASK_TYPES = ["fissure", "ppe", "fabric_quality", "structural"]
-CONNECTION_TYPES = ["rtsp", "mqtt", "http", "serial"]
+CONNECTION_TYPES = ["rtsp", "onvif", "http", "mqtt", "serial"]
+RESULT_TYPES = ["fissure", "person", "ppe", "plate", "count", "fabric_defect"]
+PROCESSING_STATUSES = ["none", "pending", "processing", "completed", "failed"]
 
 
 class Device(Base):
@@ -67,10 +69,15 @@ class Observation(Base):
     last_delivery_error = Column(Text, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
 
+    processing_status = Column(String(32), nullable=False, default="none")
+    processing_started_at = Column(DateTime, nullable=True)
+    processing_completed_at = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     delivery_logs = relationship("DeliveryLog", back_populates="observation", cascade="all, delete-orphan")
+    processing_results = relationship("ProcessingResult", back_populates="observation", cascade="all, delete-orphan")
 
 
 class DeliveryLog(Base):
@@ -94,4 +101,65 @@ class User(Base):
     username = Column(String(64), unique=True, nullable=False, index=True)
     password_hash = Column(String(256), nullable=False)
     role = Column(String(32), nullable=False, default="admin")
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+
+class ProcessingResult(Base):
+    __tablename__ = "processing_results"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    observation_id = Column(String(128), ForeignKey("observations.observation_id"), nullable=False, index=True)
+    device_id = Column(String(64), nullable=False, index=True)
+
+    result_type = Column(String(32), nullable=False, index=True)
+    model_name = Column(String(64), nullable=False)
+    model_version = Column(String(32), nullable=False)
+    confidence = Column(Float, nullable=False)
+
+    result_data = Column(JSON, nullable=False)
+
+    inference_ms = Column(Integer, nullable=True)
+    image_width = Column(Integer, nullable=True)
+    image_height = Column(Integer, nullable=True)
+
+    delivered_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    observation = relationship("Observation", back_populates="processing_results")
+
+
+class TrackingSession(Base):
+    __tablename__ = "tracking_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String(128), unique=True, nullable=False, index=True)
+    device_id = Column(String(64), nullable=False, index=True)
+    entity_type = Column(String(32), nullable=False)
+    entity_id = Column(String(64), nullable=True, index=True)
+
+    first_seen_at = Column(DateTime, nullable=False)
+    last_seen_at = Column(DateTime, nullable=False)
+    frame_count = Column(Integer, nullable=False, default=1)
+
+    avg_bbox_width = Column(Float, nullable=True)
+    avg_bbox_height = Column(Float, nullable=True)
+    path_centroids = Column(JSON, nullable=True)
+
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+
+
+class ZoneConfig(Base):
+    __tablename__ = "zone_configs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    device_id = Column(String(64), nullable=False, index=True)
+    zone_name = Column(String(64), nullable=False)
+    zone_type = Column(String(32), nullable=False)
+
+    polygon_vertices = Column(JSON, nullable=False)
+    zone_config = Column(JSON, nullable=False, default=dict)
+
+    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))

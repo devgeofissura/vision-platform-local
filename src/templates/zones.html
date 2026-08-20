@@ -1,0 +1,103 @@
+{% extends "base_local.html" %}
+{% block title %}Zonas{% endblock %}
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Zonas de Monitoramento</h2>
+        <button onclick="document.getElementById('addZoneModal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+            + Nova Zona
+        </button>
+    </div>
+
+    {% if zones %}
+    <div class="bg-gray-800 rounded overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-400 border-b border-gray-700">
+                    <th class="p-3">Nome</th>
+                    <th class="p-3">Tipo</th>
+                    <th class="p-3">Device</th>
+                    <th class="p-3">Vértices</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for zone in zones %}
+                <tr class="border-b border-gray-700 hover:bg-gray-750">
+                    <td class="p-3">{{ zone.zone_name }}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs bg-purple-900 text-purple-300">{{ zone.zone_type }}</span>
+                    </td>
+                    <td class="p-3 font-mono text-xs">{{ zone.device_id }}</td>
+                    <td class="p-3 text-xs">{{ zone.polygon_vertices|length }} pontos</td>
+                    <td class="p-3">
+                        {% if zone.is_active %}
+                        <span class="px-2 py-1 rounded text-xs bg-green-900 text-green-300">Ativo</span>
+                        {% else %}
+                        <span class="px-2 py-1 rounded text-xs bg-gray-700 text-gray-400">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3">
+                        <button hx-delete="/dashboard/zones/{{ zone.id }}" hx-confirm="Excluir esta zona?" hx-target="closest tr" hx-swap="outerHTML" class="text-red-400 hover:text-red-300 text-xs">
+                            Excluir
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-gray-400 text-sm">Nenhuma zona configurada.</p>
+    {% endif %}
+
+    <!-- Add Zone Modal -->
+    <div id="addZoneModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
+            <h3 class="text-lg font-semibold mb-4">Nova Zona</h3>
+            <form hx-post="/dashboard/zones" hx-target="body" hx-swap="outerHTML">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Nome</label>
+                        <input type="text" name="zone_name" required class="w-full bg-gray-700 rounded px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Device</label>
+                        <select name="device_id" required class="w-full bg-gray-700 rounded px-3 py-2 text-sm text-white">
+                            {% for device in devices %}
+                            <option value="{{ device.device_id }}">{{ device.name }} ({{ device.device_id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Tipo</label>
+                        <select name="zone_type" class="w-full bg-gray-700 rounded px-3 py-2 text-sm text-white">
+                            <option value="ppe_enforcement">EPI Enforcement</option>
+                            <option value="counting_line">Contagem por Linha</option>
+                            <option value="counting_region">Contagem por Região</option>
+                            <option value="fissure_area">Área de Fissura</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Vértices (JSON: [[x1,y1],[x2,y2],...])</label>
+                        <textarea name="polygon_vertices" rows="3" class="w-full bg-gray-700 rounded px-3 py-2 text-sm text-white font-mono">[[0.1,0.1],[0.9,0.1],[0.9,0.9],[0.1,0.9]]</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Config (JSON)</label>
+                        <textarea name="zone_config" rows="2" class="w-full bg-gray-700 rounded px-3 py-2 text-sm text-white font-mono">{}</textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="document.getElementById('addZoneModal').classList.add('hidden')" class="px-4 py-2 rounded text-sm text-gray-400 hover:text-white">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                        Criar Zona
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

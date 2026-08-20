@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.config.settings import settings
 from src.storage.database import SessionLocal
-from src.storage.models import DeliveryLog, Observation
+from src.storage.models import DeliveryLog, Observation, ProcessingResult
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,22 @@ def deliver_observation(observation_id: str, central_url: str | None = None, db:
         if obs.delivery_status == "delivered":
             return True
 
+        processing = (
+            db.query(ProcessingResult)
+            .filter(ProcessingResult.observation_id == observation_id)
+            .all()
+        )
+        processing_payload = []
+        for pr in processing:
+            processing_payload.append({
+                "result_type": pr.result_type,
+                "model_name": pr.model_name,
+                "model_version": pr.model_version,
+                "confidence": pr.confidence,
+                "result_data": pr.result_data,
+                "inference_ms": pr.inference_ms,
+            })
+
         payload = {
             "observation_id": obs.observation_id,
             "camera_id": obs.camera_id,
@@ -41,6 +57,8 @@ def deliver_observation(observation_id: str, central_url: str | None = None, db:
             "height": obs.height,
             "quality_score": obs.quality_score,
             "algorithm_version": obs.algorithm_version,
+            "processing_status": obs.processing_status,
+            "processing_results": processing_payload,
         }
 
         attempt = obs.delivery_attempts + 1
@@ -59,6 +77,9 @@ def deliver_observation(observation_id: str, central_url: str | None = None, db:
             obs.delivered_at = datetime.now(UTC)
             obs.updated_at = datetime.now(UTC)
 
+            for pr in processing:
+                pr.delivered_at = datetime.now(UTC)
+
             db.add(DeliveryLog(
                 observation_id=observation_id,
                 attempt=attempt,
@@ -66,7 +87,10 @@ def deliver_observation(observation_id: str, central_url: str | None = None, db:
                 status_code=resp.status_code,
             ))
             db.commit()
-            logger.info("Delivered observation %s (attempt %d)", observation_id, attempt)
+            logger.info(
+                "Delivered observation %s with %d results (attempt %d)",
+                observation_id, len(processing), attempt,
+            )
             return True
 
         except Exception as e:

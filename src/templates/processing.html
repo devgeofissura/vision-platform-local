@@ -1,0 +1,81 @@
+{% extends "base_local.html" %}
+{% block title %}Processamento{% endblock %}
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold mb-4">Processamento de Visão</h2>
+
+    <div class="grid grid-cols-5 gap-4 mb-6">
+        <div class="bg-gray-800 rounded p-4 text-center">
+            <p class="text-3xl font-bold text-white">{{ total }}</p>
+            <p class="text-xs text-gray-400">Total</p>
+        </div>
+        <div class="bg-gray-800 rounded p-4 text-center">
+            <p class="text-3xl font-bold text-yellow-400">{{ pending }}</p>
+            <p class="text-xs text-gray-400">Pendente</p>
+        </div>
+        <div class="bg-gray-800 rounded p-4 text-center">
+            <p class="text-3xl font-bold text-blue-400">{{ processing }}</p>
+            <p class="text-xs text-gray-400">Processando</p>
+        </div>
+        <div class="bg-gray-800 rounded p-4 text-center">
+            <p class="text-3xl font-bold text-green-400">{{ completed }}</p>
+            <p class="text-xs text-gray-400">Concluído</p>
+        </div>
+        <div class="bg-gray-800 rounded p-4 text-center">
+            <p class="text-3xl font-bold text-red-400">{{ failed }}</p>
+            <p class="text-xs text-gray-400">Falhou</p>
+        </div>
+    </div>
+
+    <div class="flex gap-2 mb-4">
+        <a href="/dashboard/processing" class="px-3 py-1 rounded text-sm {% if not current_status %}bg-blue-600 text-white{% else %}bg-gray-700 text-gray-300{% endif %}">Todos</a>
+        <a href="/dashboard/processing?status=pending" class="px-3 py-1 rounded text-sm {% if current_status == 'pending' %}bg-yellow-600 text-white{% else %}bg-gray-700 text-gray-300{% endif %}">Pendente</a>
+        <a href="/dashboard/processing?status=processing" class="px-3 py-1 rounded text-sm {% if current_status == 'processing' %}bg-blue-600 text-white{% else %}bg-gray-700 text-gray-300{% endif %}">Processando</a>
+        <a href="/dashboard/processing?status=completed" class="px-3 py-1 rounded text-sm {% if current_status == 'completed' %}bg-green-600 text-white{% else %}bg-gray-700 text-gray-300{% endif %}">Concluído</a>
+        <a href="/dashboard/processing?status=failed" class="px-3 py-1 rounded text-sm {% if current_status == 'failed' %}bg-red-600 text-white{% else %}bg-gray-700 text-gray-300{% endif %}">Falhou</a>
+    </div>
+
+    {% if observations %}
+    <div class="bg-gray-800 rounded overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-400 border-b border-gray-700">
+                    <th class="p-3">Observation</th>
+                    <th class="p-3">Câmera</th>
+                    <th class="p-3">Capturado</th>
+                    <th class="p-3">Processamento</th>
+                    <th class="p-3">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obs in observations %}
+                <tr class="border-b border-gray-700 hover:bg-gray-750">
+                    <td class="p-3 font-mono text-xs">{{ obs.observation_id[:30] }}...</td>
+                    <td class="p-3">{{ obs.camera_id }}</td>
+                    <td class="p-3 text-xs">{{ obs.captured_at.strftime('%d/%m %H:%M') }}</td>
+                    <td class="p-3">
+                        {% if obs.processing_status == 'completed' %}
+                        <span class="px-2 py-1 rounded text-xs bg-green-900 text-green-300">Concluído</span>
+                        {% elif obs.processing_status == 'processing' %}
+                        <span class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-300">Processando</span>
+                        {% elif obs.processing_status == 'pending' %}
+                        <span class="px-2 py-1 rounded text-xs bg-yellow-900 text-yellow-300">Pendente</span>
+                        {% elif obs.processing_status == 'failed' %}
+                        <span class="px-2 py-1 rounded text-xs bg-red-900 text-red-300">Falhou</span>
+                        {% else %}
+                        <span class="px-2 py-1 rounded text-xs bg-gray-700 text-gray-400">{{ obs.processing_status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3">
+                        <a href="/dashboard/processing/{{ obs.observation_id }}" class="text-blue-400 hover:text-blue-300 text-xs">Detalhes</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-gray-400 text-sm">Nenhuma observação encontrada.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -43,11 +43,13 @@ def _patch_sessions():
     with patch("src.storage.delivery_queue.SessionLocal", TestSession), \
          patch("src.camera.capture_worker.SessionLocal", TestSession), \
          patch("src.main.create_tables"), \
+         patch("src.main.SessionLocal", TestSession), \
          patch("src.auth.router.SessionLocal", TestSession), \
          patch("src.auth.dependencies.SessionLocal", TestSession), \
          patch("src.auth.router.settings") as mock_auth_settings, \
          patch("src.auth.dependencies.settings") as mock_dep_settings, \
          patch("src.api.dashboard_routes.settings") as mock_dash_settings, \
+         patch("src.api.routes.settings") as mock_routes_settings, \
          patch("src.camera.capture_worker.settings") as mock_settings:
         mock_settings.camera_auto_discover = False
         mock_settings.camera_rtsp_url = "rtsp://test"
@@ -110,6 +112,14 @@ def _patch_sessions():
         mock_dash_settings.jwt_expire_hours = 24
         mock_dash_settings.admin_username = "admin"
         mock_dash_settings.admin_password = "admin"
+        mock_routes_settings.local_api_token = "test-token"
+        mock_routes_settings.local_api_host = "0.0.0.0"
+        mock_routes_settings.local_api_port = 8080
+        mock_routes_settings.local_id = "LOCAL-001"
+        mock_routes_settings.local_name = "Test Local"
+        mock_routes_settings.camera_id = "GeoFissura_CAM_000001"
+        mock_routes_settings.camera_name = "VIPC-1230-B-G2 geofissura"
+        mock_routes_settings.local_data_dir = "/tmp/test_data"
         for s in (mock_auth_settings, mock_dep_settings):
             s.jwt_secret_key = "test-secret-key"
             s.jwt_expire_hours = 24
