@@ -200,3 +200,110 @@ class TestTaskTypes:
         assert "ppe" in resp.text
         assert "fabric_quality" in resp.text
         assert "structural" in resp.text
+
+
+# ── Camera config per-device ──
+
+class TestDeviceCameraConfig:
+    def test_update_saves_camera_config(self, client):
+        _login(client)
+        d = _create_device(device_id="cam_cfg")
+        resp = client.put(f"/dashboard/devices/{d.id}", data={
+            "device_id": "cam_cfg",
+            "name": "Camera Config",
+            "device_type": "camera",
+            "task_type": "fissure",
+            "connection_type": "rtsp",
+            "capture_interval_ms": "5000",
+            "is_active": "on",
+            "config_ip": "192.168.0.183",
+            "config_hostname": "geofissuracam01",
+            "config_username": "geofissura",
+            "config_password": "secret123",
+            "config_channel": "1",
+            "config_stream_type": "main",
+            "config_transport": "tcp",
+            "config_manufacturer": "Intelbras",
+            "config_model": "VIPC-1230",
+            "config_jpeg_quality": "95",
+            "config_capture_width": "1920",
+            "config_capture_height": "1080",
+        })
+        assert resp.status_code == 200
+
+        db = TestSession()
+        updated = db.query(Device).filter(Device.id == d.id).first()
+        cfg = updated.connection_config
+        assert cfg["ip"] == "192.168.0.183"
+        assert cfg["hostname"] == "geofissuracam01"
+        assert cfg["username"] == "geofissura"
+        assert cfg["password"] == "secret123"
+        assert cfg["channel"] == 1
+        assert cfg["stream_type"] == "main"
+        assert cfg["transport"] == "tcp"
+        assert cfg["manufacturer"] == "Intelbras"
+        assert cfg["model"] == "VIPC-1230"
+        assert cfg["jpeg_quality"] == 95
+        assert cfg["capture_width"] == 1920
+        assert cfg["capture_height"] == 1080
+        assert updated.is_active is True
+        db.close()
+
+    def test_update_preserves_existing_config_keys(self, client):
+        _login(client)
+        d = _create_device(
+            device_id="cam_keep",
+            connection_config={"ip": "10.0.0.1", "extra_key": "keep_me"},
+        )
+        resp = client.put(f"/dashboard/devices/{d.id}", data={
+            "device_id": "cam_keep",
+            "name": "Keep Config",
+            "device_type": "camera",
+            "task_type": "fissure",
+            "connection_type": "rtsp",
+            "capture_interval_ms": "60000",
+            "config_ip": "192.168.0.200",
+        })
+        assert resp.status_code == 200
+
+        db = TestSession()
+        updated = db.query(Device).filter(Device.id == d.id).first()
+        assert updated.connection_config["ip"] == "192.168.0.200"
+        assert updated.connection_config["extra_key"] == "keep_me"
+        db.close()
+
+    def test_update_is_active_checkbox_off(self, client):
+        _login(client)
+        d = _create_device(device_id="cam_active", is_active=True)
+        resp = client.put(f"/dashboard/devices/{d.id}", data={
+            "device_id": "cam_active",
+            "name": "Deactivate",
+            "device_type": "camera",
+            "task_type": "fissure",
+            "connection_type": "rtsp",
+            "capture_interval_ms": "60000",
+        })
+        assert resp.status_code == 200
+
+        db = TestSession()
+        updated = db.query(Device).filter(Device.id == d.id).first()
+        assert updated.is_active is False
+        db.close()
+
+    def test_to_dict_includes_all_fields(self, client):
+        _login(client)
+        d = _create_device(
+            device_id="cam_dict",
+            name="Dict Test",
+            connection_config={"ip": "1.2.3.4"},
+        )
+        result = d.to_dict()
+        assert result["device_id"] == "cam_dict"
+        assert result["name"] == "Dict Test"
+        assert result["connection_config"] == {"ip": "1.2.3.4"}
+        assert result["is_active"] is True
+        assert "id" in result
+
+    def test_to_dict_returns_empty_config_when_none(self):
+        d = Device(device_id="x", name="X", connection_config=None)
+        assert d.to_dict()["connection_config"] == {}
