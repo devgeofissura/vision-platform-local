@@ -194,7 +194,11 @@ async def latest_capture_image(token: str = Depends(verify_token)):
 
 
 @router.get("/api/v1/stream/{camera_id}")
-async def stream_camera(camera_id: str, token: str = Depends(verify_token)):
+async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: str = Header(None)):
+    api_token = token or x_api_token
+    if api_token != settings.local_api_token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     from fastapi.responses import StreamingResponse
     import cv2
     import time
