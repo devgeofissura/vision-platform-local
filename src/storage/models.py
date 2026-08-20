@@ -25,6 +25,19 @@ class Device(Base):
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "device_id": self.device_id,
+            "name": self.name,
+            "device_type": self.device_type,
+            "task_type": self.task_type,
+            "connection_type": self.connection_type,
+            "connection_config": self.connection_config or {},
+            "capture_interval_ms": self.capture_interval_ms,
+            "is_active": self.is_active,
+        }
+
 
 class Observation(Base):
     __tablename__ = "observations"

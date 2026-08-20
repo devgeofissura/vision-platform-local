@@ -7,7 +7,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from src.camera.discovery import OnvifDiscovery, StreamType
+from src.camera.discovery import OnvifDiscovery
 from src.camera.frame_validator import FrameValidator
 from src.camera.rtsp_client import RTSPClient
 from src.config.settings import settings

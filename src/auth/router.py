@@ -11,8 +11,9 @@ router = APIRouter()
 
 
 def _get_templates():
-    from fastapi.templating import Jinja2Templates
     from pathlib import Path
+
+    from fastapi.templating import Jinja2Templates
     return Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
 

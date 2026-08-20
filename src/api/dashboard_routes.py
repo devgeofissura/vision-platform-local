@@ -157,24 +157,38 @@ async def device_update(
     request: Request,
     device_db_id: int,
     db: Session = Depends(get_db),
-    device_id: str = Form(...),
-    name: str = Form(...),
-    device_type: str = Form("camera"),
-    task_type: str = Form("fissure"),
-    connection_type: str = Form("rtsp"),
-    capture_interval_ms: int = Form(60000),
 ):
+    form = await request.form()
     device = db.query(Device).filter(Device.id == device_db_id).first()
     if not device:
         return RedirectResponse(url="/dashboard/devices", status_code=302)
 
-    device.device_id = device_id
-    device.name = name
-    device.device_type = device_type
-    device.task_type = task_type
-    device.connection_type = connection_type
-    device.capture_interval_ms = capture_interval_ms
+    device.device_id = str(form.get("device_id", device.device_id))
+    device.name = str(form.get("name", device.name))
+    device.device_type = str(form.get("device_type", device.device_type))
+    device.task_type = str(form.get("task_type", device.task_type))
+    device.connection_type = str(form.get("connection_type", device.connection_type))
+    device.capture_interval_ms = int(form.get("capture_interval_ms", device.capture_interval_ms))
+    device.is_active = form.get("is_active") == "on"
     device.updated_at = datetime.now(UTC)
+
+    existing_config = device.connection_config or {}
+    device.connection_config = {
+        **existing_config,
+        "ip": str(form.get("config_ip", existing_config.get("ip", ""))),
+        "hostname": str(form.get("config_hostname", existing_config.get("hostname", ""))),
+        "username": str(form.get("config_username", existing_config.get("username", ""))),
+        "password": str(form.get("config_password", existing_config.get("password", ""))),
+        "channel": int(form.get("config_channel", existing_config.get("channel", 1))),
+        "stream_type": str(form.get("config_stream_type", existing_config.get("stream_type", "main"))),
+        "transport": str(form.get("config_transport", existing_config.get("transport", "tcp"))),
+        "manufacturer": str(form.get("config_manufacturer", existing_config.get("manufacturer", ""))),
+        "model": str(form.get("config_model", existing_config.get("model", ""))),
+        "jpeg_quality": int(form.get("config_jpeg_quality", existing_config.get("jpeg_quality", 90))),
+        "capture_width": int(form.get("config_capture_width", existing_config.get("capture_width", 1920))),
+        "capture_height": int(form.get("config_capture_height", existing_config.get("capture_height", 1080))),
+    }
+
     db.commit()
 
     devices = db.query(Device).order_by(Device.created_at.desc()).all()

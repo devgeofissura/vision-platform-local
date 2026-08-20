@@ -9,9 +9,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.config.settings import settings
-from src.storage.database import get_db
+from src.storage.database import SessionLocal, get_db
 from src.storage.delivery_queue import process_delivery_queue
-from src.storage.models import Observation
+from src.storage.models import Device, Observation
 
 router = APIRouter()
 
@@ -186,7 +186,6 @@ async def latest_capture_image(token: str = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="No captures yet")
 
     latest = latest_dirs[0]
-    import base64
     from fastapi.responses import Response
 
     image_bytes = latest.read_bytes()
@@ -249,9 +248,10 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
     if api_token != settings.local_api_token:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    from fastapi.responses import StreamingResponse
-    import cv2
     import time
+
+    import cv2
+    from fastapi.responses import StreamingResponse
 
     db = SessionLocal()
     try:
