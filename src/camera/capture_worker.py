@@ -53,7 +53,7 @@ class CaptureWorker:
 
         ip = cfg.get("ip", settings.camera_ip)
         username = cfg.get("username", settings.camera_username)
-        password = settings.camera_password
+        password = cfg.get("password", settings.camera_password)
         channel = cfg.get("channel", settings.camera_channel)
         stream_type = cfg.get("stream_type", settings.camera_stream_type)
         stream_value = "0" if stream_type == "main" else "1"

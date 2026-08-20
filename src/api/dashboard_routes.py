@@ -594,6 +594,7 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
         "manufacturer": camera_manufacturer,
         "model": camera_model,
         "username": camera_username,
+        "password": camera_password,
         "channel": settings.camera_channel,
         "stream_type": settings.camera_stream_type,
         "transport": settings.camera_rtsp_transport,

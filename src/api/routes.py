@@ -193,6 +193,56 @@ async def latest_capture_image(token: str = Depends(verify_token)):
     return Response(content=image_bytes, media_type="image/jpeg")
 
 
+@router.get("/api/v1/debug/camera/{camera_id}")
+async def debug_camera(camera_id: str, x_api_token: str = Header(None)):
+    if x_api_token != settings.local_api_token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    import cv2
+
+    db = SessionLocal()
+    try:
+        device = db.query(Device).filter(Device.device_id == camera_id).first()
+        if not device:
+            return {"status": "error", "detail": f"Device '{camera_id}' not found in DB"}
+
+        config = device.connection_config or {}
+        ip = config.get("ip", "")
+        username = config.get("username", "")
+        password = config.get("password", "")
+        channel = config.get("channel", 1)
+        stream_type = config.get("stream_type", "main")
+        stream_value = "0" if stream_type == "main" else "1"
+
+        if not ip:
+            return {"status": "error", "detail": "No IP in device connection_config", "config": config}
+
+        rtsp_url = f"rtsp://{username}:{password}@{ip}:554/cam/realmonitor?channel={channel}&subtype={stream_value}"
+        redacted = f"rtsp://{username}:***@{ip}:554/cam/realmonitor?channel={channel}&subtype={stream_value}"
+    finally:
+        db.close()
+
+    os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
+    cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+    cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)
+
+    if not cap.isOpened():
+        return {"status": "error", "detail": "Cannot open RTSP stream", "url": redacted}
+
+    ret, frame = cap.read()
+    cap.release()
+
+    if not ret or frame is None:
+        return {"status": "error", "detail": "Cannot read frame", "url": redacted}
+
+    return {
+        "status": "ok",
+        "url": redacted,
+        "width": frame.shape[1],
+        "height": frame.shape[0],
+    }
+
+
 @router.get("/api/v1/stream/{camera_id}")
 async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: str = Header(None)):
     api_token = token or x_api_token
@@ -212,7 +262,7 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
         config = device.connection_config or {}
         ip = config.get("ip", "")
         username = config.get("username", settings.camera_username)
-        password = settings.camera_password
+        password = config.get("password", settings.camera_password)
         channel = config.get("channel", settings.camera_channel)
         stream_type = config.get("stream_type", settings.camera_stream_type)
         stream_value = "0" if stream_type == "main" else "1"
