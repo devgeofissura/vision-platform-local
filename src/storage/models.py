@@ -163,3 +163,14 @@ class ZoneConfig(Base):
 
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+
+class SystemSettings(Base):
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(128), unique=True, nullable=False, index=True)
+    value = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
