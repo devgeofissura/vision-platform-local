@@ -1,0 +1,31 @@
+<table class="w-full text-sm">
+    <thead class="bg-gray-700">
+        <tr>
+            <th class="px-4 py-2 text-left text-gray-300">Registro</th>
+            <th class="px-4 py-2 text-left text-gray-300">Device</th>
+            <th class="px-4 py-2 text-left text-gray-300">Tipo</th>
+            <th class="px-4 py-2 text-left text-gray-300">Valor</th>
+            <th class="px-4 py-2 text-left text-gray-300">Tópico</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in readings %}
+        <tr class="border-t border-gray-700 hover:bg-gray-750">
+            <td class="px-4 py-2 text-gray-300">{{ r.recorded_at.strftime('%d/%m %H:%M:%S') if r.recorded_at else '-' }}</td>
+            <td class="px-4 py-2 text-gray-300">{{ r.device_id }}</td>
+            <td class="px-4 py-2">
+                <span class="px-2 py-0.5 rounded text-xs bg-blue-900 text-blue-300">{{ r.reading_type }}</span>
+            </td>
+            <td class="px-4 py-2 font-mono">
+                {% if r.value_float is not none %}{{ '%g'|format(r.value_float) }}{% if r.unit %} {{ r.unit }}{% endif %}
+                {% else %}{{ r.value_text or '-' }}{% endif %}
+            </td>
+            <td class="px-4 py-2 text-gray-500 text-xs">{{ r.topic or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma leitura encontrada</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

@@ -21,6 +21,7 @@ from src.storage.models import (
     Device,
     Observation,
     ProcessingResult,
+    SensorReading,
     ZoneConfig,
 )
 
@@ -284,6 +285,85 @@ async def observation_detail(
         "page": "observations",
         "obs": obs,
         "logs": logs,
+    })
+
+
+# ── Sensores ─────────────────────────────────────────────────
+
+@router.get("/sensors", response_class=HTMLResponse)
+async def sensors_page(
+    request: Request,
+    device_id: str | None = None,
+    reading_type: str | None = None,
+    db: Session = Depends(get_db),
+):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    query = db.query(SensorReading)
+    if device_id:
+        query = query.filter(SensorReading.device_id == device_id)
+    if reading_type:
+        query = query.filter(SensorReading.reading_type == reading_type)
+
+    readings = (
+        query.order_by(SensorReading.recorded_at.desc(), SensorReading.id.desc())
+        .limit(100)
+        .all()
+    )
+
+    sensor_devices = [
+        row[0]
+        for row in db.query(SensorReading.device_id).distinct().order_by(SensorReading.device_id)
+    ]
+    known_types = [
+        row[0]
+        for row in db.query(SensorReading.reading_type).distinct().order_by(SensorReading.reading_type)
+    ]
+
+    mqtt_status = {"enabled": False, "connected": False, "message_count": 0, "last_message_at": None}
+    mqtt_client = getattr(request.app.state, "mqtt_client", None)
+    if mqtt_client is not None:
+        mqtt_status = mqtt_client.status_dict()
+
+    return _tmpl().TemplateResponse(request, "sensors.html", {
+        "user": user,
+        "page": "sensors",
+        "readings": readings,
+        "sensor_devices": sensor_devices,
+        "known_types": known_types,
+        "current_device": device_id,
+        "current_type": reading_type,
+        "mqtt": mqtt_status,
+    })
+
+
+@router.get("/sensors/refresh", response_class=HTMLResponse)
+async def sensors_refresh(
+    request: Request,
+    device_id: str | None = None,
+    reading_type: str | None = None,
+    db: Session = Depends(get_db),
+):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    query = db.query(SensorReading)
+    if device_id:
+        query = query.filter(SensorReading.device_id == device_id)
+    if reading_type:
+        query = query.filter(SensorReading.reading_type == reading_type)
+
+    readings = (
+        query.order_by(SensorReading.recorded_at.desc(), SensorReading.id.desc())
+        .limit(100)
+        .all()
+    )
+
+    return _tmpl().TemplateResponse(request, "_sensor_rows.html", {
+        "readings": readings,
     })
 
 

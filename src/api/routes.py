@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from src.config.settings import settings
 from src.storage.database import SessionLocal, get_db
 from src.storage.delivery_queue import process_delivery_queue
-from src.storage.models import Device, Observation, ProcessingResult, ZoneConfig
+from src.storage.models import Device, Observation, ProcessingResult, SensorReading, ZoneConfig
 
 router = APIRouter()
 
@@ -134,6 +134,40 @@ async def list_observations(
             for obs in items
         ],
         "next_cursor": next_cursor,
+    }
+
+
+@router.get("/api/v1/sensors/readings")
+async def list_sensor_readings(
+    device_id: str | None = Query(None),
+    reading_type: str | None = Query(None),
+    since_id: int | None = Query(None, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    query = db.query(SensorReading)
+
+    if device_id:
+        query = query.filter(SensorReading.device_id == device_id)
+    if reading_type:
+        query = query.filter(SensorReading.reading_type == reading_type)
+    if since_id is not None:
+        query = query.filter(SensorReading.id > since_id)
+
+    readings = (
+        query.order_by(SensorReading.recorded_at.desc(), SensorReading.id.desc())
+        .limit(limit + 1)
+        .all()
+    )
+
+    has_next = len(readings) > limit
+    items = readings[:limit]
+    next_since_id = items[-1].id if has_next and items else None
+
+    return {
+        "readings": [r.to_dict() for r in items],
+        "next_since_id": next_since_id,
+        "count": len(items),
     }
 
 

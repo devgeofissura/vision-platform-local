@@ -1,0 +1,48 @@
+{% extends "base_local.html" %}
+{% block title %}Sensores{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <h2 class="text-2xl font-bold mb-6">Sensores</h2>
+
+    <!-- MQTT Status -->
+    <div class="bg-gray-800 rounded-lg p-4 mb-6 flex items-center gap-8">
+        <div>
+            <p class="text-xs text-gray-400">MQTT</p>
+            <span class="px-2 py-0.5 rounded text-xs
+                {% if mqtt.connected %}bg-green-900 text-green-300
+                {% elif mqtt.enabled %}bg-yellow-900 text-yellow-300
+                {% else %}bg-gray-600 text-gray-300{% endif %}">
+                {% if mqtt.connected %}conectado{% elif mqtt.enabled %}habilitado (conectando...){% else %}desabilitado{% endif %}
+            </span>
+        </div>
+        <div>
+            <p class="text-xs text-gray-400">Mensagens processadas</p>
+            <p class="text-lg font-semibold">{{ mqtt.message_count }}</p>
+        </div>
+        <div>
+            <p class="text-xs text-gray-400">Última mensagem</p>
+            <p class="text-sm text-gray-300">
+                {% if mqtt.last_message_at %}{{ mqtt.last_message_at[:19].replace('T', ' ') }}{% else %}-{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <a href="/dashboard/sensors" class="px-3 py-1 rounded text-sm {% if not current_device and not current_type %}bg-blue-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">Todas</a>
+        {% for dev in sensor_devices %}
+        <a href="/dashboard/sensors?device_id={{ dev }}" class="px-3 py-1 rounded text-sm {% if current_device == dev %}bg-blue-600 text-white{% elif not current_device and not current_type %}bg-gray-700 text-gray-300 hover:bg-gray-600{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">{{ dev }}</a>
+        {% endfor %}
+        {% for rtype in known_types %}
+        <a href="/dashboard/sensors?reading_type={{ rtype }}" class="px-3 py-1 rounded text-sm bg-gray-700 text-gray-300 hover:bg-gray-600 {{ 'ring-1 ring-blue-500' if current_type == rtype }}">{{ rtype }}</a>
+        {% endfor %}
+    </div>
+
+    <!-- Table -->
+    <div class="bg-gray-800 rounded-lg overflow-hidden" id="sensor-table"
+         hx-get="/dashboard/sensors/refresh?device_id={{ current_device or '' }}&reading_type={{ current_type or '' }}"
+         hx-trigger="every 15s" hx-swap="innerHTML">
+        {% include "_sensor_rows.html" %}
+    </div>
+</div>
+{% endblock %}
