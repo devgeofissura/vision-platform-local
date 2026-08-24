@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 _delivery_task: asyncio.Task | None = None
 _auto_capture_task: asyncio.Task | None = None
 _processing_task: asyncio.Task | None = None
+_mqtt_task: asyncio.Task | None = None
 
 
 async def _delivery_loop():
@@ -222,7 +223,7 @@ def _seed_default_devices():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _delivery_task, _auto_capture_task, _processing_task
+    global _delivery_task, _auto_capture_task, _processing_task, _mqtt_task
     logger.info(
         "Vision Platform Local starting | local_id=%s camera=%s",
         settings.local_id,
@@ -236,11 +237,30 @@ async def lifespan(app: FastAPI):
     _delivery_task = asyncio.create_task(_delivery_loop())
     _auto_capture_task = asyncio.create_task(_auto_capture_loop())
     _processing_task = asyncio.create_task(_processing_loop())
+    _mqtt_task = asyncio.create_task(_mqtt_loop())
     yield
-    _delivery_task.cancel()
-    _auto_capture_task.cancel()
-    _processing_task.cancel()
+    for task in (_delivery_task, _auto_capture_task, _processing_task, _mqtt_task):
+        task.cancel()
     logger.info("Vision Platform Local shutting down")
+
+
+async def _mqtt_loop():
+    """Mantém o cliente MQTT vivo; paho roda em thread própria com reconexão."""
+    from src.config.global_settings import get_setting_bool
+    from src.mqtt.client import MQTTClient
+
+    client = MQTTClient()
+    app.state.mqtt_client = client
+
+    while True:
+        if get_setting_bool("mqtt_enabled"):
+            if not client.connected and client._client is None:
+                client.start()
+        else:
+            if client._client is not None:
+                logger.info("MQTT desabilitado nas settings; desconectando")
+                client.stop()
+        await asyncio.sleep(30)
 
 
 app = FastAPI(
