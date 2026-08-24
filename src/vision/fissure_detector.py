@@ -21,6 +21,7 @@ class FissureDetector(BaseDetector):
     def __init__(self, config: dict | None = None):
         super().__init__(config)
         self._model = None
+        self._onnx = None
 
     def _load_model(self) -> None:
         try:
@@ -29,15 +30,50 @@ class FissureDetector(BaseDetector):
             model_path = self.config.get("model_path", "yolo11n-seg.pt")
             self._model = YOLO(model_path)
             logger.info("FissureDetector loaded: %s", model_path)
+            return
         except ImportError:
-            logger.warning("ultralytics not installed, FissureDetector using classical fallback")
-            self._model = None
+            pass
+        from src.vision.onnx_backend import OnnxYoloDetector
+
+        onnx_path = self.config.get("onnx_model_path", "models/fissure.onnx")
+        detector = OnnxYoloDetector(
+            onnx_path, conf=self.config.get("conf", 0.25)
+        )
+        if detector.is_available:
+            self._onnx = detector
+            logger.info("FissureDetector loaded (ONNX): %s", onnx_path)
+        else:
+            logger.info("FissureDetector sem modelo; usando fallback classico (OpenCV)")
 
     def detect(self, frame: np.ndarray) -> list[ProcessingResult]:
         self.load()
         if self._model is not None:
             return self._detect_yolo(frame)
+        if self._onnx is not None:
+            return self._detect_onnx(frame)
         return self._detect_classical(frame)
+
+    def _detect_onnx(self, frame: np.ndarray) -> list[ProcessingResult]:
+        detections = []
+        for det in self._onnx.detect(frame):
+            w_px = det["bbox"][2]
+            h_px = det["bbox"][3]
+            severity = self._classify_severity(max(w_px, h_px))
+            detections.append(ProcessingResult(
+                result_type="fissure",
+                model_name=self.model_name,
+                model_version=self.model_version,
+                confidence=det["confidence"],
+                result_data={
+                    "bbox": det["bbox"],
+                    "width_px": round(w_px, 1),
+                    "length_px": round(h_px, 1),
+                    "area_px": round(w_px * h_px, 1),
+                    "severity": severity,
+                    "mask_path": None,
+                },
+            ))
+        return detections
 
     def _detect_yolo(self, frame: np.ndarray) -> list[ProcessingResult]:
         results = self._model(frame, verbose=False, conf=self.config.get("conf", 0.25))

@@ -6,6 +6,22 @@ from src.vision.base import BaseDetector, ProcessingResult
 
 logger = logging.getLogger(__name__)
 
+_COCO_CLASSES = [
+    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train",
+    "truck", "boat", "traffic light", "fire hydrant", "stop sign",
+    "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep",
+    "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella",
+    "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard",
+    "sports ball", "kite", "baseball bat", "baseball glove", "skateboard",
+    "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork",
+    "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange",
+    "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair",
+    "couch", "potted plant", "bed", "dining table", "toilet", "tv",
+    "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave",
+    "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase",
+    "scissors", "teddy bear", "hair drier", "toothbrush",
+]
+
 
 class PersonDetector(BaseDetector):
     model_name = "yolo11n"
@@ -15,6 +31,7 @@ class PersonDetector(BaseDetector):
     def __init__(self, config: dict | None = None):
         super().__init__(config)
         self._model = None
+        self._onnx = None
 
     def _load_model(self) -> None:
         try:
@@ -23,15 +40,52 @@ class PersonDetector(BaseDetector):
             model_path = self.config.get("model_path", "yolo11n.pt")
             self._model = YOLO(model_path)
             logger.info("PersonDetector loaded: %s", model_path)
+            return
         except ImportError:
-            logger.warning("ultralytics not installed, PersonDetector disabled")
-            self._model = None
+            pass
+        from src.vision.onnx_backend import OnnxYoloDetector
+
+        onnx_path = self.config.get(
+            "onnx_model_path", "models/yolo11n.onnx"
+        )
+        detector = OnnxYoloDetector(
+            onnx_path,
+            conf=self.config.get("conf", 0.4),
+            class_names=_COCO_CLASSES,
+        )
+        if detector.is_available:
+            self._onnx = detector
+            logger.info("PersonDetector loaded (ONNX): %s", onnx_path)
+        else:
+            logger.warning(
+                "PersonDetector sem ultralytics e sem %s; desabilitado", onnx_path
+            )
 
     def detect(self, frame: np.ndarray) -> list[ProcessingResult]:
         self.load()
-        if self._model is None:
-            return []
+        if self._model is not None:
+            return self._detect_ultralytics(frame)
+        if self._onnx is not None:
+            return self._detect_onnx(frame)
+        return []
 
+    def _detect_onnx(self, frame: np.ndarray) -> list[ProcessingResult]:
+        detections = []
+        for det in self._onnx.detect(frame, class_filter={0}):
+            detections.append(ProcessingResult(
+                result_type="person",
+                model_name=self.model_name,
+                model_version=self.model_version,
+                confidence=det["confidence"],
+                result_data={
+                    "bbox": det["bbox"],
+                    "person_id": None,
+                    "reid_embedding": None,
+                },
+            ))
+        return detections
+
+    def _detect_ultralytics(self, frame: np.ndarray) -> list[ProcessingResult]:
         results = self._model(frame, verbose=False, conf=self.config.get("conf", 0.4), classes=[0])
         detections = []
         for r in results:

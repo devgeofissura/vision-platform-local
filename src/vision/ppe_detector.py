@@ -18,6 +18,7 @@ class PPEDetector(BaseDetector):
     def __init__(self, config: dict | None = None):
         super().__init__(config)
         self._model = None
+        self._onnx = None
         self._person_detector = PersonDetector(config)
         self._ppe_classes = {
             "helmet": 0,
@@ -36,33 +37,33 @@ class PPEDetector(BaseDetector):
             model_path = self.config.get("model_path", "yolo11n.pt")
             self._model = YOLO(model_path)
             logger.info("PPEDetector loaded: %s", model_path)
+            return
         except ImportError:
-            logger.warning("ultralytics not installed, PPEDetector disabled")
-            self._model = None
+            pass
+        from src.vision.onnx_backend import OnnxYoloDetector
+
+        onnx_path = self.config.get(
+            "onnx_ppe_model_path", self.config.get("onnx_model_path", "models/yolo11n.onnx")
+        )
+        detector = OnnxYoloDetector(onnx_path, conf=self.config.get("conf", 0.3))
+        if detector.is_available:
+            self._onnx = detector
+            logger.info("PPEDetector loaded (ONNX): %s", onnx_path)
+        else:
+            logger.warning(
+                "PPEDetector sem ultralytics e sem %s; desabilitado", onnx_path
+            )
 
     def detect(self, frame: np.ndarray) -> list[ProcessingResult]:
         self.load()
-        if self._model is None:
+        if self._model is None and self._onnx is None:
             return []
 
         person_results = self._person_detector.detect(frame)
         if not person_results:
             return []
 
-        ppe_results = self._model(frame, verbose=False, conf=self.config.get("conf", 0.3))
-        ppe_boxes = []
-        for r in ppe_results:
-            if r.boxes is None:
-                continue
-            for box in r.boxes:
-                cls_id = int(box.cls[0])
-                conf = float(box.conf[0])
-                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                ppe_boxes.append({
-                    "class_id": cls_id,
-                    "confidence": conf,
-                    "bbox": [float(x1), float(y1), float(x2 - x1), float(y2 - y1)],
-                })
+        ppe_boxes = self._detect_ppe_boxes(frame)
 
         detections = []
         for person in person_results:
@@ -88,6 +89,35 @@ class PPEDetector(BaseDetector):
                 },
             ))
         return detections
+
+    def _detect_ppe_boxes(self, frame: np.ndarray) -> list[dict]:
+        """Retorna [{class_id, confidence, bbox_xywh}] dos itens de PPE no frame."""
+        if self._model is not None:
+            results = self._model(frame, verbose=False, conf=self.config.get("conf", 0.3))
+            boxes = []
+            for r in results:
+                if r.boxes is None:
+                    continue
+                for box in r.boxes:
+                    cls_id = int(box.cls[0])
+                    conf = float(box.conf[0])
+                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                    boxes.append({
+                        "class_id": cls_id,
+                        "confidence": conf,
+                        "bbox": [float(x1), float(y1), float(x2 - x1), float(y2 - y1)],
+                    })
+            return boxes
+
+        ppe_ids = {cid for cid in self._ppe_classes.values()}
+        boxes = []
+        for det in self._onnx.detect(frame, class_filter=ppe_ids):
+            boxes.append({
+                "class_id": det["class_id"],
+                "confidence": det["confidence"],
+                "bbox": det["bbox"],
+            })
+        return boxes
 
     def _check_ppe_for_person(self, person_bbox: list[float], ppe_boxes: list[dict]) -> list[str]:
         detected = []

@@ -15,6 +15,7 @@ class ObjectCounter(BaseDetector):
     def __init__(self, config: dict | None = None):
         super().__init__(config)
         self._model = None
+        self._onnx = None
 
     def _load_model(self) -> None:
         try:
@@ -23,15 +24,59 @@ class ObjectCounter(BaseDetector):
             model_path = self.config.get("model_path", "yolo11n.pt")
             self._model = YOLO(model_path)
             logger.info("ObjectCounter loaded: %s", model_path)
+            return
         except ImportError:
-            logger.warning("ultralytics not installed, ObjectCounter disabled")
-            self._model = None
+            pass
+        from src.vision.onnx_backend import OnnxYoloDetector
+        from src.vision.person_detector import _COCO_CLASSES
+
+        onnx_path = self.config.get("onnx_model_path", "models/yolo11n.onnx")
+        detector = OnnxYoloDetector(
+            onnx_path,
+            conf=self.config.get("conf", 0.4),
+            class_names=_COCO_CLASSES,
+        )
+        if detector.is_available:
+            self._onnx = detector
+            logger.info("ObjectCounter loaded (ONNX, sem tracking): %s", onnx_path)
+        else:
+            logger.warning(
+                "ObjectCounter sem ultralytics e sem %s; desabilitado", onnx_path
+            )
 
     def detect(self, frame: np.ndarray) -> list[ProcessingResult]:
         self.load()
-        if self._model is None:
-            return []
+        if self._model is not None:
+            return self._detect_ultralytics(frame)
+        if self._onnx is not None:
+            return self._detect_onnx(frame)
+        return []
 
+    def _detect_onnx(self, frame: np.ndarray) -> list[ProcessingResult]:
+        class_counts: dict[str, int] = {}
+        all_bboxes: dict[str, list] = {}
+        for det in self._onnx.detect(frame):
+            name = det["class_name"]
+            class_counts[name] = class_counts.get(name, 0) + 1
+            all_bboxes.setdefault(name, []).append(det["bbox"])
+
+        detections = []
+        for cls_name, count in class_counts.items():
+            detections.append(ProcessingResult(
+                result_type="count",
+                model_name=self.model_name,
+                model_version=self.model_version,
+                confidence=1.0,
+                result_data={
+                    "class": cls_name,
+                    "count": count,
+                    "zone": self.config.get("zone_name", "default"),
+                    "bboxes": all_bboxes.get(cls_name, []),
+                },
+            ))
+        return detections
+
+    def _detect_ultralytics(self, frame: np.ndarray) -> list[ProcessingResult]:
         results = self._model.track(
             frame,
             verbose=False,

@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Vision models (transferidos via scp, nao via git)
+models/
+*.pt
+
