@@ -238,9 +238,9 @@ Usar `resolve_device_config()` em vez de ler `connection_config` direto.
 
 ## Ordem de implementação
 
-1. **SystemSettings ORM + migration** (Fase 1)
-2. **global_settings.py** (ler/gravar settings do DB)
-3. **Dashboard settings page** (reescrita completa)
+1. ~~**SystemSettings ORM + migration** (Fase 1)~~ ✅ `19df42e`
+2. ~~**global_settings.py** (ler/gravar settings do DB)~~ ✅ `4a9dbe2`
+3. ~~**Dashboard settings page** (reescrita completa)~~ ✅ `7a82a79`
 4. **device_config.py** (fallback global→device)
 5. **Atualizar CaptureWorker** (usar fallback)
 6. **SensorReading ORM + migration** (Fase 2)

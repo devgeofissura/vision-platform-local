@@ -10,6 +10,7 @@ import numpy as np
 from src.camera.discovery import OnvifDiscovery
 from src.camera.frame_validator import FrameValidator
 from src.camera.rtsp_client import RTSPClient
+from src.config.device_config import resolve_device_config
 from src.config.settings import settings
 from src.storage.database import SessionLocal
 from src.storage.models import Device, Observation
@@ -20,6 +21,8 @@ logger = logging.getLogger(__name__)
 class CaptureWorker:
     def __init__(self, device_id: str | None = None):
         self._device_id = device_id
+        self._device = self._load_device()
+        self._config = resolve_device_config(self._device)
         self.client = self._build_client()
         self.validator = FrameValidator()
         self._prev_frame: np.ndarray | None = None
@@ -27,37 +30,33 @@ class CaptureWorker:
         self._capture_count: int = 0
         self._error_count: int = 0
 
-    def _get_device_config(self) -> dict | None:
+    def _load_device(self) -> Device | None:
         if not self._device_id:
             return None
         db = SessionLocal()
         try:
-            device = db.query(Device).filter(Device.device_id == self._device_id).first()
-            return device.connection_config if device else None
+            return db.query(Device).filter(Device.device_id == self._device_id).first()
         finally:
             db.close()
 
     def _build_client(self) -> RTSPClient:
-        rtsp_url = self._resolve_rtsp_url()
-        cfg = self._get_device_config() or {}
-        transport = cfg.get("transport", settings.camera_rtsp_transport)
         return RTSPClient(
-            rtsp_url=rtsp_url,
-            transport=transport,
-            connect_timeout_ms=settings.camera_connect_timeout_ms,
+            rtsp_url=self._resolve_rtsp_url(),
+            transport=self._config["transport"],
+            connect_timeout_ms=self._config["connect_timeout_ms"],
             reconnect_interval_ms=settings.camera_reconnect_interval_ms,
         )
 
     def _resolve_rtsp_url(self) -> str:
-        cfg = self._get_device_config() or {}
+        cfg = self._config
 
-        ip = cfg.get("ip", settings.camera_ip)
-        username = cfg.get("username", settings.camera_username)
-        password = cfg.get("password", settings.camera_password)
-        channel = cfg.get("channel", settings.camera_channel)
-        stream_type = cfg.get("stream_type", settings.camera_stream_type)
+        ip = cfg["ip"]
+        username = cfg["username"]
+        password = cfg["password"]
+        channel = cfg["channel"]
+        stream_type = cfg["stream_type"]
         stream_value = "0" if stream_type == "main" else "1"
-        hostname = cfg.get("hostname", settings.camera_hostname)
+        hostname = cfg["hostname"]
 
         if ip:
             url = f"rtsp://{username}:{password}@{ip}:554/cam/realmonitor?channel={channel}&subtype={stream_value}"
@@ -102,10 +101,10 @@ class CaptureWorker:
         active_id = self._device_id or settings.camera_id
         observation_id = f"obs_{settings.local_id}_{active_id}_{now.strftime('%Y%m%dT%H%M%SZ')}"
 
-        cfg = self._get_device_config() or {}
-        jpeg_quality = cfg.get("jpeg_quality", settings.camera_capture_jpeg_quality)
+        cfg = self._config
+        jpeg_quality = cfg["jpeg_quality"]
 
-        evidence_dir = Path(settings.local_evidence_dir) / now.strftime("%Y/%m/%d")
+        evidence_dir = Path(cfg["evidence_dir"]) / now.strftime("%Y/%m/%d")
         evidence_dir.mkdir(parents=True, exist_ok=True)
 
         full_path = evidence_dir / f"{observation_id}_full.jpg"

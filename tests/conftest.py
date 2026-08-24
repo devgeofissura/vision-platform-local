@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from src.config.global_settings import clear_cache as _clear_gs_cache
 from src.main import app
 from src.storage.database import Base, get_db
 
@@ -40,6 +41,7 @@ def _override_get_db():
 
 @pytest.fixture(autouse=True)
 def _patch_sessions():
+    _clear_gs_cache()
     with patch("src.storage.delivery_queue.SessionLocal", TestSession), \
          patch("src.camera.capture_worker.SessionLocal", TestSession), \
          patch("src.main.create_tables"), \
@@ -47,6 +49,7 @@ def _patch_sessions():
          patch("src.auth.router.SessionLocal", TestSession), \
          patch("src.auth.dependencies.SessionLocal", TestSession), \
          patch("src.config.global_settings.SessionLocal", TestSession), \
+         patch("src.config.device_config.settings") as mock_dev_settings, \
          patch("src.auth.router.settings") as mock_auth_settings, \
          patch("src.auth.dependencies.settings") as mock_dep_settings, \
          patch("src.api.dashboard_routes.settings") as mock_dash_settings, \
@@ -126,7 +129,21 @@ def _patch_sessions():
             s.jwt_expire_hours = 24
             s.admin_username = "admin"
             s.admin_password = "admin"
+        mock_dev_settings.camera_username = "admin"
+        mock_dev_settings.camera_password = ""
+        mock_dev_settings.camera_ip = ""
+        mock_dev_settings.camera_hostname = ""
+        mock_dev_settings.camera_channel = 1
+        mock_dev_settings.camera_stream_type = "main"
+        mock_dev_settings.camera_rtsp_transport = "tcp"
+        mock_dev_settings.camera_connect_timeout_ms = 10000
+        mock_dev_settings.camera_capture_jpeg_quality = 90
+        mock_dev_settings.camera_capture_width = 1920
+        mock_dev_settings.camera_capture_height = 1080
+        mock_dev_settings.camera_capture_interval_ms = 60000
+        mock_dev_settings.local_evidence_dir = "/tmp/test_evidence"
         yield
+    _clear_gs_cache()
 
 
 @pytest.fixture

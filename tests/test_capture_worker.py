@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from src.camera.capture_worker import CaptureWorker
-from src.storage.models import Observation
+from src.storage.models import Device, Observation, SystemSettings
 from tests.conftest import TestSession
 
 
@@ -43,14 +43,20 @@ class TestCaptureWorkerConnect:
 
 
 class TestCaptureWorkerCapture:
-    def test_capture_success(self, worker, tmp_path):
-        frame = _fake_frame()
+    def _mock_client(self, worker, frame):
         worker.client.connect = MagicMock(return_value=True)
         worker.client._connected = True
         worker.client._cap = MagicMock()
         worker.client.capture_frame = MagicMock(return_value=frame)
 
-        worker._get_roi = MagicMock(return_value=None)
+    def test_capture_success(self, tmp_path):
+        db = TestSession()
+        db.add(SystemSettings(key="capture_evidence_dir", value=str(tmp_path)))
+        db.add(SystemSettings(key="capture_jpeg_quality", value="95"))
+        db.commit()
+        db.close()
+
+        frame = _fake_frame()
 
         with patch("src.camera.capture_worker.settings") as s:
             s.camera_rtsp_url = "rtsp://test"
@@ -62,6 +68,10 @@ class TestCaptureWorkerCapture:
             s.local_evidence_dir = str(tmp_path)
             s.camera_capture_jpeg_quality = 95
 
+            worker = CaptureWorker()
+            self._mock_client(worker, frame)
+            worker._get_roi = MagicMock(return_value=None)
+
             with patch("src.camera.capture_worker.SessionLocal", TestSession):
                 result = worker.capture()
 
@@ -72,6 +82,10 @@ class TestCaptureWorkerCapture:
         assert result["width"] == 640
         assert result["height"] == 480
         assert result["algorithm_version"] == "capture-0.1.0"
+        from pathlib import Path
+
+        assert Path(result["file_path"]).exists()
+        assert str(tmp_path) in result["file_path"]
 
     def test_capture_not_connected_fails(self, worker):
         worker.client.connect = MagicMock(return_value=False)
@@ -89,6 +103,57 @@ class TestCaptureWorkerCapture:
         result = worker.capture()
         assert result is None
         assert worker._error_count == 1
+
+
+class TestCaptureWorkerResolvedConfig:
+    def test_device_config_overrides_rtsp_url(self):
+        db = TestSession()
+        db.add(Device(
+            device_id="CAM-TEST",
+            name="Test Cam",
+            connection_type="rtsp",
+            connection_config={
+                "ip": "10.0.0.99",
+                "username": "camuser",
+                "password": "campass",
+                "channel": 2,
+                "stream_type": "sub",
+                "transport": "udp",
+            },
+        ))
+        db.commit()
+        db.close()
+
+        with patch("src.camera.capture_worker.settings") as s:
+            s.camera_reconnect_interval_ms = 3000
+            s.camera_auto_discover = False
+            worker = CaptureWorker(device_id="CAM-TEST")
+
+        assert "10.0.0.99" in worker.client.rtsp_url
+        assert "camuser:campass" in worker.client.rtsp_url
+        assert "channel=2" in worker.client.rtsp_url
+        assert "subtype=1" in worker.client.rtsp_url
+        assert worker.client.transport == "udp"
+
+    def test_worker_without_device_uses_global_defaults(self):
+        with patch("src.camera.capture_worker.settings") as s:
+            s.camera_reconnect_interval_ms = 3000
+            s.camera_auto_discover = False
+            worker = CaptureWorker()
+
+        assert worker._config["channel"] == 1
+        assert worker._config["stream_type"] == "main"
+        assert worker._config["transport"] == "tcp"
+        assert worker._config["username"] == "admin"
+
+    def test_worker_missing_device_id_falls_back_to_defaults(self):
+        with patch("src.camera.capture_worker.settings") as s:
+            s.camera_reconnect_interval_ms = 3000
+            s.camera_auto_discover = False
+            worker = CaptureWorker(device_id="NO-SUCH-DEVICE")
+
+        assert worker._device is None
+        assert worker._config["transport"] == "tcp"
 
 
 class TestCaptureWorkerSaveObservation:
