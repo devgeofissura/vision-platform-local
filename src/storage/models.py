@@ -174,3 +174,32 @@ class SystemSettings(Base):
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+
+
+class SensorReading(Base):
+    __tablename__ = "sensor_readings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    device_id = Column(String(64), nullable=False, index=True)
+    topic = Column(String(256), nullable=True)
+    reading_type = Column(String(32), nullable=False, index=True)
+    value_float = Column(Float, nullable=True)
+    value_text = Column(Text, nullable=True)
+    unit = Column(String(16), nullable=True)
+    raw_payload = Column(Text, nullable=True)
+    recorded_at = Column(DateTime, nullable=False, index=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "device_id": self.device_id,
+            "topic": self.topic,
+            "reading_type": self.reading_type,
+            "value_float": self.value_float,
+            "value_text": self.value_text,
+            "unit": self.unit,
+            "raw_payload": self.raw_payload,
+            "recorded_at": self.recorded_at.isoformat() if self.recorded_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
