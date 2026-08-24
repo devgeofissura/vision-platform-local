@@ -137,6 +137,44 @@ async def list_observations(
     }
 
 
+@router.get("/api/v1/settings")
+async def get_settings_api():
+    from src.config.global_settings import DEFAULT_DESCRIPTIONS, get_all_settings
+
+    all_values = get_all_settings()
+    return {
+        "settings": {
+            key: {"value": all_values.get(key, ""), "description": DEFAULT_DESCRIPTIONS.get(key, "")}
+            for key in sorted(all_values)
+        },
+        "count": len(all_values),
+    }
+
+
+@router.post("/api/v1/settings")
+async def update_settings_api(payload: dict):
+    from src.config.global_settings import (
+        DEFAULT_SETTINGS,
+        clear_cache,
+        set_settings,
+    )
+
+    if not isinstance(payload, dict) or not payload:
+        raise HTTPException(status_code=400, detail="body must be a non-empty JSON object")
+
+    unknown = [k for k in payload if k not in DEFAULT_SETTINGS]
+    if unknown:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown settings keys: {', '.join(sorted(unknown))}",
+        )
+
+    set_settings({k: v for k, v in payload.items()})
+    clear_cache()
+
+    return {"updated": len(payload), "keys": sorted(payload.keys())}
+
+
 @router.get("/api/v1/sensors/readings")
 async def list_sensor_readings(
     device_id: str | None = Query(None),

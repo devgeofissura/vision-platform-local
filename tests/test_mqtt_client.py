@@ -163,3 +163,46 @@ class TestMQTTClientStatus:
         _seed_settings(mqtt_enabled="false")
         client = MQTTClient()
         assert client.enabled is False
+
+
+class TestMQTTClientReconnect:
+    def test_reconnect_delay_configured(self, mock_paho):
+        _, instance = mock_paho
+        _seed_settings()
+        MQTTClient().start()
+        instance.reconnect_delay_set.assert_called_once_with(min_delay=1, max_delay=60)
+
+    def test_resubscribes_on_reconnect(self, mock_paho):
+        _, instance = mock_paho
+        client, _ = _started_client(mock_paho)
+        reason = MagicMock()
+        reason.is_failure = False
+
+        client._on_connect(instance, None, None, reason)
+        client._on_disconnect(instance, None, None, reason)
+        client._on_connect(instance, None, None, reason)
+
+        assert instance.subscribe.call_count == 2
+        assert client.connected is True
+
+    def test_message_count_accumulates_across_messages(self, mock_paho):
+        handler = MagicMock()
+        handler.handle.return_value = 1
+        with patch("src.mqtt.client.SensorHandler", return_value=handler):
+            client, instance = _started_client(mock_paho)
+
+        for i in range(3):
+            msg = MagicMock()
+            msg.topic = "gf/ESP-001/sensors"
+            msg.payload = b'{"temperature": 20.0}'
+            client._on_message(instance, None, msg)
+
+        assert client.message_count == 3
+        assert client.last_message_at is not None
+
+    def test_client_id_is_vision_local(self, mock_paho):
+        _, instance = mock_paho
+        _seed_settings()
+        MQTTClient().start()
+        kwargs = mock_paho[0].Client.call_args.kwargs
+        assert kwargs["client_id"] == "vision-local"
