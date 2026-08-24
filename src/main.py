@@ -10,6 +10,7 @@ from src.api.dashboard_routes import router as dashboard_router
 from src.api.routes import router
 from src.auth.password import hash_password
 from src.auth.router import router as auth_router
+from src.config.global_settings import seed_default_settings
 from src.config.settings import settings
 from src.storage.database import SessionLocal, create_tables
 from src.storage.delivery_queue import process_delivery_queue
@@ -230,6 +231,7 @@ async def lifespan(app: FastAPI):
     create_tables()
     _seed_admin()
     _seed_default_devices()
+    seed_default_settings()
     logger.info("Database tables verified")
     _delivery_task = asyncio.create_task(_delivery_loop())
     _auto_capture_task = asyncio.create_task(_auto_capture_loop())
