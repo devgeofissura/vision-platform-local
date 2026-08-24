@@ -423,6 +423,7 @@ SETTING_FORM_KEYS = [
     "timezone",
     # Captura
     "capture_interval_minutes",
+    "capture_schedule",
     "capture_evidence_dir",
     "capture_jpeg_quality",
     "capture_width",

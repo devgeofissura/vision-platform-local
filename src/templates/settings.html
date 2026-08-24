@@ -51,6 +51,12 @@
                     <p class="text-xs text-gray-500 mt-1">{{ desc.capture_interval_minutes }}</p>
                 </div>
                 <div>
+                    <label class="block text-sm text-gray-400 mb-1">Agenda diária (HH:MM)</label>
+                    <input type="text" name="capture_schedule" value="{{ s.capture_schedule }}" placeholder="07:00,12:00,23:00"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.capture_schedule }}</p>
+                </div>
+                <div>
                     <label class="block text-sm text-gray-400 mb-1">Diretório de evidências</label>
                     <input type="text" name="capture_evidence_dir" value="{{ s.capture_evidence_dir }}"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">

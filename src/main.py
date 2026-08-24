@@ -138,13 +138,17 @@ def _process_observation(db, obs: Observation):
 async def _auto_capture_loop():
     while True:
         try:
+            from datetime import UTC, datetime
+
+            from src.camera.schedule import parse_schedule, should_capture
+            from src.config.global_settings import get_setting
+
+            now = datetime.now(UTC)
+            schedule_times = parse_schedule(get_setting("capture_schedule") or "")
+            tz_name = get_setting("timezone") or "UTC"
+
             db = SessionLocal()
             try:
-                from datetime import UTC, datetime
-
-                from src.camera.capture_worker import CaptureWorker
-
-                now = datetime.now(UTC)
                 devices = db.query(Device).filter(
                     Device.auto_capture_enabled.is_(True),
                     Device.is_active.is_(True),
@@ -152,26 +156,44 @@ async def _auto_capture_loop():
                 ).all()
 
                 for device in devices:
-                    last = device.last_auto_capture_at
-                    interval_min = device.auto_capture_interval_minutes or 60
-                    if last is None or (now - last.replace(tzinfo=UTC)).total_seconds() >= interval_min * 60:
-                        try:
-                            worker = CaptureWorker(device_id=device.device_id)
-                            result = worker.capture()
-                            worker.disconnect()
-                            if result:
-                                device.last_auto_capture_at = now
-                                db.commit()
-                                logger.info("Auto-capture %s: OK", device.device_id)
-                            else:
-                                logger.warning("Auto-capture %s: no frame", device.device_id)
-                        except Exception as e:
-                            logger.error("Auto-capture %s error: %s", device.device_id, e)
+                    if schedule_times:
+                        if not should_capture(device.last_auto_capture_at, schedule_times, tz_name, now):
+                            continue
+                    else:
+                        last = device.last_auto_capture_at
+                        interval_min = device.auto_capture_interval_minutes or 60
+                        if last is not None and (now - last.replace(tzinfo=UTC)).total_seconds() < interval_min * 60:
+                            continue
+
+                    device_id = device.device_id
+                    try:
+                        ok = await asyncio.to_thread(_capture_device_once, device_id)
+                        if ok:
+                            device.last_auto_capture_at = now
+                            db.commit()
+                            mode = "agenda" if schedule_times else "intervalo"
+                            logger.info("Auto-capture %s (%s): OK", device_id, mode)
+                        else:
+                            logger.warning("Auto-capture %s: no frame", device_id)
+                    except Exception as e:
+                        logger.error("Auto-capture %s error: %s", device_id, e)
             finally:
                 db.close()
         except Exception as e:
             logger.error("Auto-capture loop error: %s", e)
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
+
+
+def _capture_device_once(device_id: str) -> bool:
+    """Roda em thread própria (não tocar em sessions do event loop aqui)."""
+    from src.camera.capture_worker import CaptureWorker
+
+    worker = CaptureWorker(device_id=device_id)
+    try:
+        result = worker.capture()
+    finally:
+        worker.disconnect()
+    return bool(result)
 
 
 def _seed_admin():

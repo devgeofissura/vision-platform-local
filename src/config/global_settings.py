@@ -15,6 +15,7 @@ _DEFAULT_SPECS: dict[str, tuple[str, str]] = {
     "timezone": ("America/Sao_Paulo", "Fuso horário"),
     # Captura global
     "capture_interval_minutes": ("60", "Intervalo padrão de captura em minutos"),
+    "capture_schedule": ("07:00,12:00,23:00", "Horários diários de captura HH:MM (vírgula; vazio = intervalo)"),
     "capture_evidence_dir": ("/var/lib/vision-platform-local/evidence", "Diretório de evidências"),
     "capture_jpeg_quality": ("90", "Qualidade JPEG padrão (1-100)"),
     "capture_width": ("1920", "Largura padrão da captura"),
