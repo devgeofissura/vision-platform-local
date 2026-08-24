@@ -247,7 +247,7 @@ Usar `resolve_device_config()` em vez de ler `connection_config` direto.
 7. ~~**Mosquitto install script** (deploy/setup-mqtt.sh)~~ ✅ `fcef430`
 8. ~~**MQTT client + sensor_handler** (paho-mqtt)~~ ✅ `507e762`
 9. ~~**Dashboard sensores page**~~ ✅ `bef71ff` (16 testes, total 329)
-10. **Testes** para cada módulo — contínuo (329 até aqui)
+10. ~~**Testes** para cada módulo~~ ✅ `b105ddc` (API settings 12 + reconnect MQTT 4, total 345)
 
 ## Testes
 
