@@ -1,6 +1,6 @@
 from src.auth.password import hash_password
 from src.config.settings import Settings
-from src.storage.models import User
+from src.storage.models import SystemSettings, User
 from tests.conftest import TestSession
 
 
@@ -17,6 +17,10 @@ def _login(client):
     client.post("/login", data={"username": "admin", "password": "admin"})
 
 
+def _form_headers():
+    return {"Content-Type": "application/x-www-form-urlencoded"}
+
+
 # ── Page rendering ──
 
 class TestSettingsPage:
@@ -31,11 +35,11 @@ class TestSettingsPage:
         assert resp.status_code == 302
         assert resp.headers["location"] == "/login"
 
-    def test_settings_page_shows_current_values(self, client):
+    def test_settings_page_shows_default_values(self, client):
         _login(client)
         resp = client.get("/dashboard/settings")
-        assert "LOCAL-001" in resp.text
-        assert "admin" in resp.text
+        assert "sl000001" in resp.text
+        assert "Orange Pi 001" in resp.text
 
     def test_settings_page_shows_saved_message(self, client):
         _login(client)
@@ -46,8 +50,13 @@ class TestSettingsPage:
     def test_settings_page_has_all_sections(self, client):
         _login(client)
         resp = client.get("/dashboard/settings")
-        assert "Local" in resp.text
-        assert "Central" in resp.text
+        for section in ("Geral", "Captura", "Câmera Padrão", "Entrega", "MQTT", "Processamento"):
+            assert section in resp.text
+
+    def test_settings_page_shows_descriptions(self, client):
+        _login(client)
+        resp = client.get("/dashboard/settings")
+        assert "Fuso horário" in resp.text
 
 
 # ── save_to_env unit tests ──
@@ -117,7 +126,7 @@ class TestSettingsRoute:
     def test_save_redirects_with_saved_param(self, client):
         _login(client)
         resp = client.post("/dashboard/settings", data={
-            "local_id": "NEW-001",
+            "local_id": "sl000042",
         }, follow_redirects=False)
         assert resp.status_code == 302
         assert "saved=1" in resp.headers["location"]
@@ -127,10 +136,55 @@ class TestSettingsRoute:
         assert resp.status_code == 302
         assert resp.headers["location"] == "/login"
 
-    def test_settings_page_shows_all_form_fields(self, client):
+    def test_save_persists_to_db(self, client):
+        _login(client)
+        client.post("/dashboard/settings", data={"local_name": "Orange Pi Teste"})
+        row = TestSession().query(SystemSettings).filter(SystemSettings.key == "local_name").first()
+        assert row is not None and row.value == "Orange Pi Teste"
+
+    def test_save_multiple_fields(self, client):
+        _login(client)
+        client.post("/dashboard/settings", data={
+            "local_id": "sl000099",
+            "capture_jpeg_quality": "75",
+            "central_api_base_url": "http://10.0.0.5:8081",
+        })
+        db = TestSession()
+        values = {r.key: r.value for r in db.query(SystemSettings).all()}
+        db.close()
+        assert values["local_id"] == "sl000099"
+        assert values["capture_jpeg_quality"] == "75"
+        assert values["central_api_base_url"] == "http://10.0.0.5:8081"
+
+    def test_save_checkbox_checked(self, client):
+        _login(client)
+        client.post("/dashboard/settings", headers=_form_headers(),
+                    content=b"mqtt_enabled=false&mqtt_enabled=true")
+        assert TestSession().query(SystemSettings).filter(
+            SystemSettings.key == "mqtt_enabled").first().value == "true"
+
+    def test_save_checkbox_unchecked_saves_false(self, client):
+        _login(client)
+        client.post("/dashboard/settings", headers=_form_headers(),
+                    content=b"mqtt_enabled=false")
+        assert TestSession().query(SystemSettings).filter(
+            SystemSettings.key == "mqtt_enabled").first().value == "false"
+
+    def test_saved_value_shown_on_reload(self, client):
+        _login(client)
+        client.post("/dashboard/settings", data={"timezone": "UTC"})
+        resp = client.get("/dashboard/settings")
+        assert 'value="UTC"' in resp.text
+
+    def test_form_has_all_sections_fields(self, client):
         _login(client)
         resp = client.get("/dashboard/settings")
-        assert "camera_id" in resp.text
-        assert "camera_hostname" in resp.text
-        assert "central_api_base_url" in resp.text
-        assert "local_api_token" in resp.text
+        for field in (
+            "local_id", "local_name", "timezone",
+            "capture_interval_minutes", "capture_jpeg_quality",
+            "camera_default_username", "camera_default_stream_type",
+            "delivery_interval_seconds", "central_api_token",
+            "mqtt_broker_host", "mqtt_topic_prefix",
+            "processing_enabled", "processing_auto_on_capture",
+        ):
+            assert f'name="{field}"' in resp.text

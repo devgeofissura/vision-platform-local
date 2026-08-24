@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from src.auth.dependencies import get_current_user
+from src.config.global_settings import DEFAULT_DESCRIPTIONS, get_all_settings, set_settings
 from src.config.settings import settings
 from src.storage.database import get_db
 from src.storage.models import (
@@ -335,6 +336,41 @@ async def queue_flush(request: Request, db: Session = Depends(get_db)):
     return RedirectResponse(url="/dashboard/queue", status_code=302)
 
 
+SETTING_FORM_KEYS = [
+    # Geral
+    "local_id",
+    "local_name",
+    "timezone",
+    # Captura
+    "capture_interval_minutes",
+    "capture_evidence_dir",
+    "capture_jpeg_quality",
+    "capture_width",
+    "capture_height",
+    # Câmera padrão
+    "camera_default_username",
+    "camera_default_password",
+    "camera_default_stream_type",
+    "camera_default_channel",
+    "camera_default_transport",
+    "camera_connect_timeout_ms",
+    # Entrega
+    "delivery_interval_seconds",
+    "central_api_base_url",
+    "central_api_token",
+    # MQTT
+    "mqtt_enabled",
+    "mqtt_broker_host",
+    "mqtt_broker_port",
+    "mqtt_username",
+    "mqtt_password",
+    "mqtt_topic_prefix",
+    # Processamento
+    "processing_enabled",
+    "processing_auto_on_capture",
+]
+
+
 # ── Settings ─────────────────────────────────────────────────
 
 @router.get("/settings", response_class=HTMLResponse)
@@ -347,28 +383,8 @@ async def settings_page(request: Request, saved: bool = False):
         "user": user,
         "page": "settings",
         "saved": saved,
-        "local_id": settings.local_id,
-        "local_name": settings.local_name,
-        "timezone": settings.timezone,
-        "local_api_token": settings.local_api_token,
-        "data_dir": settings.local_data_dir,
-        "central_api_base_url": settings.central_api_base_url,
-        "central_api_token": settings.central_api_token,
-        "central_delivery_interval_ms": settings.central_delivery_interval_ms,
-        "camera_id": settings.camera_id,
-        "camera_name": settings.camera_name,
-        "camera_hostname": settings.camera_hostname,
-        "camera_username": settings.camera_username,
-        "camera_password": settings.camera_password,
-        "camera_ip": settings.camera_ip,
-        "camera_stream_type": settings.camera_stream_type,
-        "camera_channel": settings.camera_channel,
-        "camera_rtsp_url": settings.camera_rtsp_url,
-        "camera_capture_interval_ms": settings.camera_capture_interval_ms,
-        "camera_capture_width": settings.camera_capture_width,
-        "camera_capture_height": settings.camera_capture_height,
-        "camera_capture_jpeg_quality": settings.camera_capture_jpeg_quality,
-        "camera_rtsp_transport": settings.camera_rtsp_transport,
+        "s": get_all_settings(),
+        "desc": DEFAULT_DESCRIPTIONS,
     })
 
 
@@ -380,36 +396,11 @@ async def settings_save(request: Request):
 
     form = await request.form()
     updates = {}
-    env_map = {
-        "local_id": "LOCAL_ID",
-        "local_name": "LOCAL_NAME",
-        "timezone": "TIMEZONE",
-        "local_data_dir": "LOCAL_DATA_DIR",
-        "local_api_token": "LOCAL_API_TOKEN",
-        "central_api_base_url": "CENTRAL_API_BASE_URL",
-        "central_api_token": "CENTRAL_API_TOKEN",
-        "central_delivery_interval_ms": "CENTRAL_DELIVERY_INTERVAL_MS",
-        "camera_id": "CAMERA_ID",
-        "camera_name": "CAMERA_NAME",
-        "camera_hostname": "CAMERA_HOSTNAME",
-        "camera_username": "CAMERA_USERNAME",
-        "camera_password": "CAMERA_PASSWORD",
-        "camera_ip": "CAMERA_IP",
-        "camera_stream_type": "CAMERA_STREAM_TYPE",
-        "camera_channel": "CAMERA_CHANNEL",
-        "camera_rtsp_url": "CAMERA_RTSP_URL",
-        "camera_capture_interval_ms": "CAMERA_CAPTURE_INTERVAL_MS",
-        "camera_capture_width": "CAMERA_CAPTURE_WIDTH",
-        "camera_capture_height": "CAMERA_CAPTURE_HEIGHT",
-        "camera_capture_jpeg_quality": "CAMERA_CAPTURE_JPEG_QUALITY",
-        "camera_rtsp_transport": "CAMERA_RTSP_TRANSPORT",
-    }
+    for key in SETTING_FORM_KEYS:
+        if key in form:
+            updates[key] = str(form[key])
 
-    for form_key, env_key in env_map.items():
-        if form_key in form:
-            updates[env_key] = str(form[form_key])
-
-    settings.save_to_env(updates)
+    set_settings(updates)
 
     return RedirectResponse(url="/dashboard/settings?saved=1", status_code=302)
 

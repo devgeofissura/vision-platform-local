@@ -46,6 +46,7 @@ def _patch_sessions():
          patch("src.main.SessionLocal", TestSession), \
          patch("src.auth.router.SessionLocal", TestSession), \
          patch("src.auth.dependencies.SessionLocal", TestSession), \
+         patch("src.config.global_settings.SessionLocal", TestSession), \
          patch("src.auth.router.settings") as mock_auth_settings, \
          patch("src.auth.dependencies.settings") as mock_dep_settings, \
          patch("src.api.dashboard_routes.settings") as mock_dash_settings, \

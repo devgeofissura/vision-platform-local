@@ -1,151 +1,213 @@
 {% extends "base_local.html" %}
 {% block title %}Configurações{% endblock %}
 {% block content %}
-<div class="max-w-4xl">
-    <h2 class="text-2xl font-bold mb-6">Configurações</h2>
+<div class="max-w-5xl">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Configurações</h2>
+        <span class="text-xs text-gray-500">Salvas no banco — aplicadas sem reiniciar o serviço</span>
+    </div>
+
+    {% if saved %}
+    <div class="mb-4 bg-green-900/50 border border-green-700 text-green-300 px-4 py-3 rounded text-sm">
+        Configurações salvas com sucesso.
+    </div>
+    {% endif %}
 
     <form method="POST" action="/dashboard/settings" class="space-y-6">
-        <!-- Local -->
+
+        <!-- Geral -->
         <div class="bg-gray-800 p-6 rounded-lg">
-            <h3 class="font-semibold mb-4">Local</h3>
+            <h3 class="font-semibold mb-4">📋 Geral</h3>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Local ID</label>
-                    <input type="text" name="local_id" value="{{ local_id }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" name="local_id" value="{{ s.local_id }}"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.local_id }}</p>
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Local Name</label>
-                    <input type="text" name="local_name" value="{{ local_name }}"
+                    <label class="block text-sm text-gray-400 mb-1">Nome do Local</label>
+                    <input type="text" name="local_name" value="{{ s.local_name }}"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.local_name }}</p>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Timezone</label>
-                    <input type="text" name="timezone" value="{{ timezone }}"
+                    <input type="text" name="timezone" value="{{ s.timezone }}"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Data Dir</label>
-                    <input type="text" name="local_data_dir" value="{{ data_dir }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">API Token</label>
-                    <input type="text" name="local_api_token" value="{{ local_api_token }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.timezone }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- Central -->
+        <!-- Captura -->
         <div class="bg-gray-800 p-6 rounded-lg">
-            <h3 class="font-semibold mb-4">Central</h3>
+            <h3 class="font-semibold mb-4">📸 Captura (Global)</h3>
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Central API URL</label>
-                    <input type="text" name="central_api_base_url" value="{{ central_api_base_url }}"
+                    <label class="block text-sm text-gray-400 mb-1">Intervalo de captura (min)</label>
+                    <input type="number" name="capture_interval_minutes" value="{{ s.capture_interval_minutes }}" min="1"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.capture_interval_minutes }}</p>
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Central API Token</label>
-                    <input type="text" name="central_api_token" value="{{ central_api_token }}"
+                    <label class="block text-sm text-gray-400 mb-1">Diretório de evidências</label>
+                    <input type="text" name="capture_evidence_dir" value="{{ s.capture_evidence_dir }}"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.capture_evidence_dir }}</p>
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Delivery Interval (ms)</label>
-                    <input type="number" name="central_delivery_interval_ms" value="{{ central_delivery_interval_ms }}"
+                    <label class="block text-sm text-gray-400 mb-1">Qualidade JPEG (1-100)</label>
+                    <input type="number" name="capture_jpeg_quality" value="{{ s.capture_jpeg_quality }}" min="1" max="100"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.capture_jpeg_quality }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Resolução padrão</label>
+                    <div class="flex gap-2">
+                        <input type="number" name="capture_width" value="{{ s.capture_width }}"
+                               class="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                        <span class="text-gray-500 self-center">x</span>
+                        <input type="number" name="capture_height" value="{{ s.capture_height }}"
+                               class="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.capture_width }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- Câmera -->
+        <!-- Câmera Padrão -->
         <div class="bg-gray-800 p-6 rounded-lg">
-            <h3 class="font-semibold mb-4">Câmera</h3>
+            <h3 class="font-semibold mb-4">📡 Câmera Padrão</h3>
+            <p class="text-xs text-gray-500 mb-4">Usada quando um device não tem configuração própria.</p>
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Camera ID</label>
-                    <input type="text" name="camera_id" value="{{ camera_id }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Camera Name</label>
-                    <input type="text" name="camera_name" value="{{ camera_name }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Hostname</label>
-                    <input type="text" name="camera_hostname" value="{{ camera_hostname }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">IP da Câmera</label>
-                    <input type="text" name="camera_ip" value="{{ camera_ip }}"
-                           placeholder="192.168.0.183"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
-                </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Username</label>
-                    <input type="text" name="camera_username" value="{{ camera_username }}"
+                    <input type="text" name="camera_default_username" value="{{ s.camera_default_username }}"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Password</label>
-                    <input type="password" name="camera_password" value="{{ camera_password }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                           placeholder="••••••">
+                    <input type="password" name="camera_default_password" value="{{ s.camera_default_password }}"
+                           placeholder="••••••"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Stream Type</label>
-                    <select name="camera_stream_type"
+                    <select name="camera_default_stream_type"
                             class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                        <option value="main" {% if camera_stream_type == 'main' %}selected{% endif %}>Main (1080p)</option>
-                        <option value="sub" {% if camera_stream_type == 'sub' %}selected{% endif %}>Sub (reduzido)</option>
+                        <option value="main" {% if s.camera_default_stream_type == 'main' %}selected{% endif %}>Main (resolução máxima)</option>
+                        <option value="sub" {% if s.camera_default_stream_type == 'sub' %}selected{% endif %}>Sub (reduzido)</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Channel</label>
-                    <input type="number" name="camera_channel" value="{{ camera_channel }}"
+                    <input type="number" name="camera_default_channel" value="{{ s.camera_default_channel }}" min="1"
                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">RTSP URL</label>
-                    <input type="text" name="camera_rtsp_url" value="{{ camera_rtsp_url }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Capture Interval (ms)</label>
-                    <input type="number" name="camera_capture_interval_ms" value="{{ camera_capture_interval_ms }}"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Resolution (WxH)</label>
-                    <div class="flex gap-2">
-                        <input type="number" name="camera_capture_width" value="{{ camera_capture_width }}"
-                               class="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                        <span class="text-gray-500 self-center">x</span>
-                        <input type="number" name="camera_capture_height" value="{{ camera_capture_height }}"
-                               class="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">JPEG Quality</label>
-                    <input type="number" name="camera_capture_jpeg_quality" value="{{ camera_capture_jpeg_quality }}" min="1" max="100"
-                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">RTSP Transport</label>
-                    <select name="camera_rtsp_transport"
+                    <label class="block text-sm text-gray-400 mb-1">Transporte RTSP</label>
+                    <select name="camera_default_transport"
                             class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                        <option value="tcp" {% if camera_rtsp_transport == 'tcp' %}selected{% endif %}>TCP</option>
-                        <option value="udp" {% if camera_rtsp_transport == 'udp' %}selected{% endif %}>UDP</option>
+                        <option value="tcp" {% if s.camera_default_transport == 'tcp' %}selected{% endif %}>TCP</option>
+                        <option value="udp" {% if s.camera_default_transport == 'udp' %}selected{% endif %}>UDP</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Timeout de conexão (ms)</label>
+                    <input type="number" name="camera_connect_timeout_ms" value="{{ s.camera_connect_timeout_ms }}" min="1000"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                 </div>
             </div>
         </div>
 
+        <!-- Entrega -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="font-semibold mb-4">📤 Entrega (Central)</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Central API URL</label>
+                    <input type="text" name="central_api_base_url" value="{{ s.central_api_base_url }}"
+                           placeholder="http://192.168.0.10:8081"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Central API Token</label>
+                    <input type="password" name="central_api_token" value="{{ s.central_api_token }}"
+                           placeholder="••••••"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Intervalo de entrega (s)</label>
+                    <input type="number" name="delivery_interval_seconds" value="{{ s.delivery_interval_seconds }}" min="30"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- MQTT -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="font-semibold mb-4 flex items-center gap-3">
+                📶 MQTT
+                <label class="flex items-center gap-2 text-sm font-normal text-gray-400 cursor-pointer">
+                    <input type="hidden" name="mqtt_enabled" value="false">
+                    <input type="checkbox" name="mqtt_enabled" value="true" {% if s.mqtt_enabled in ('true', 'True', '1') %}checked{% endif %}
+                           class="w-4 h-4 rounded">
+                    Habilitado
+                </label>
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Broker Host</label>
+                    <input type="text" name="mqtt_broker_host" value="{{ s.mqtt_broker_host }}"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Porta</label>
+                    <input type="number" name="mqtt_broker_port" value="{{ s.mqtt_broker_port }}" min="1" max="65535"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Username</label>
+                    <input type="text" name="mqtt_username" value="{{ s.mqtt_username }}"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Password</label>
+                    <input type="password" name="mqtt_password" value="{{ s.mqtt_password }}"
+                           placeholder="••••••"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Prefixo dos tópicos</label>
+                    <input type="text" name="mqtt_topic_prefix" value="{{ s.mqtt_topic_prefix }}"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">{{ desc.mqtt_topic_prefix }}geofissura/{device_id}/sensors</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processamento -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="font-semibold mb-4">🧠 Processamento</h3>
+            <div class="space-y-3">
+                <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer">
+                    <input type="hidden" name="processing_enabled" value="false">
+                    <input type="checkbox" name="processing_enabled" value="true" {% if s.processing_enabled in ('true', 'True', '1') %}checked{% endif %}
+                           class="w-4 h-4 rounded">
+                    Pipeline de visão habilitado
+                </label>
+                <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer">
+                    <input type="hidden" name="processing_auto_on_capture" value="false">
+                    <input type="checkbox" name="processing_auto_on_capture" value="true" {% if s.processing_auto_on_capture in ('true', 'True', '1') %}checked{% endif %}
+                           class="w-4 h-4 rounded">
+                    Processar automaticamente cada captura
+                </label>
+            </div>
+        </div>
+
         <!-- Actions -->
-        <div class="flex gap-3">
+        <div class="flex gap-3 pb-4">
             <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm font-medium transition-colors">
                 Salvar
@@ -156,11 +218,5 @@
             </a>
         </div>
     </form>
-
-    {% if saved %}
-    <div class="mt-4 bg-green-900/50 border border-green-700 text-green-300 px-4 py-3 rounded text-sm">
-        Configurações salvas com sucesso. Reinicie o serviço para aplicar mudanças no banco de dados.
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
