@@ -414,3 +414,113 @@ class TestEvidenceDirDefault:
         s = Settings()
         assert s.local_data_dir == "./data"
         assert not s.local_data_dir.startswith("/")
+
+
+class TestDiscoveryFlow:
+    """Testa o fluxo de discovery: scan ? selecionar ? criar device."""
+
+    def _get_client(self):
+        from fastapi.testclient import TestClient
+
+        from src.main import app
+
+        _create_admin()
+        client = TestClient(app)
+        _login(client)
+        return client
+
+    def test_discovery_page_renders(self):
+        client = self._get_client()
+        resp = client.get("/dashboard/discovery")
+        assert resp.status_code == 200
+        assert "Escanear Rede" in resp.text
+        assert "Configurar IP" in resp.text
+
+    def test_discovery_select_htmx_creates_device(self):
+        client = self._get_client()
+        resp = client.post(
+            "/dashboard/discovery/select",
+            data={
+                "camera_ip": "192.168.1.100",
+                "camera_hostname": "cam-test",
+                "camera_manufacturer": "Intelbras",
+                "camera_model": "VIPC-1230",
+                "device_type": "camera",
+                "task_type": "ppe",
+                "camera_username": "admin",
+                "camera_password": "pass",
+            },
+            headers={"HX-Request": "true"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["device_id"].startswith("GeoFissura_CAM_")
+        assert "discoveryDeviceAdded" in resp.headers.get("HX-Trigger", "")
+
+        db = TestSession()
+        dev = db.query(Device).filter(Device.device_id == body["device_id"]).first()
+        assert dev is not None
+        assert dev.device_type == "camera"
+        assert dev.task_type == "ppe"
+        assert dev.connection_config["ip"] == "192.168.1.100"
+        db.close()
+
+    def test_discovery_select_non_htmx_redirects(self):
+        client = self._get_client()
+        resp = client.post(
+            "/dashboard/discovery/select",
+            data={
+                "camera_ip": "192.168.1.101",
+                "camera_hostname": "cam-redirect",
+                "device_type": "sensor",
+                "task_type": "structural",
+                "camera_username": "admin",
+                "camera_password": "pass",
+            },
+            follow_redirects=False,
+        )
+        assert resp.status_code == 302
+        assert "?added=" in resp.headers["location"]
+
+    def test_discovery_sequential_ids(self):
+        client = self._get_client()
+        ids = set()
+        for ip_suffix in ("102", "103", "104"):
+            resp = client.post(
+                "/dashboard/discovery/select",
+                data={
+                    "camera_ip": f"192.168.1.{ip_suffix}",
+                    "camera_hostname": f"cam-{ip_suffix}",
+                    "device_type": "camera",
+                    "task_type": "fissure",
+                    "camera_username": "admin",
+                    "camera_password": "pass",
+                },
+                headers={"HX-Request": "true"},
+            )
+            ids.add(resp.json()["device_id"])
+        assert len(ids) == 3
+
+    def test_discovery_invalid_types_default(self):
+        client = self._get_client()
+        resp = client.post(
+            "/dashboard/discovery/select",
+            data={
+                "camera_ip": "192.168.1.200",
+                "camera_hostname": "cam-bad",
+                "device_type": "INVALID",
+                "task_type": "INVALID",
+                "camera_username": "admin",
+                "camera_password": "pass",
+            },
+            headers={"HX-Request": "true"},
+        )
+        assert resp.status_code == 200
+        db = TestSession()
+        dev = db.query(Device).order_by(Device.id.desc()).first()
+        assert dev is not None
+        assert dev.device_type == "camera"
+        assert dev.task_type == "fissure"
+        assert dev.connection_config["ip"] == "192.168.1.200"
+        db.close()

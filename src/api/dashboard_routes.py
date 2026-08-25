@@ -714,8 +714,25 @@ async def camera_capture(request: Request, db: Session = Depends(get_db)):
 
 # ── Discovery ────────────────────────────────────────────────
 
+def _next_device_id(db: Session, prefix: str = "GeoFissura_CAM_") -> str:
+    """Gera device_id sequencial tipo GeoFissura_CAM_000001."""
+    import re
+
+    rows = db.query(Device.device_id).filter(
+        Device.device_id.like(f"{prefix}%")
+    ).all()
+    max_num = 0
+    for (did,) in rows:
+        m = re.search(r"(\d+)$", did)
+        if m:
+            max_num = max(max_num, int(m.group(1)))
+    return f"{prefix}{max_num + 1:06d}"
+
+
+# ── Discovery ────────────────────────────────────────────────
+
 @router.get("/discovery", response_class=HTMLResponse)
-async def discovery_page(request: Request):
+async def discovery_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
         return redirect
@@ -725,11 +742,14 @@ async def discovery_page(request: Request):
         "page": "discovery",
         "cameras": [],
         "scanning": False,
+        "next_device_id": _next_device_id(db),
+        "device_types": DEVICE_TYPES,
+        "task_types": TASK_TYPES,
     })
 
 
 @router.post("/discovery/scan", response_class=HTMLResponse)
-async def discovery_scan(request: Request):
+async def discovery_scan(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
         return redirect
@@ -742,7 +762,9 @@ async def discovery_scan(request: Request):
     return _tmpl().TemplateResponse(request, "discovery_results.html", {
         "cameras": cameras_found,
         "scan_count": len(cameras_found),
-        "default_device_id": settings.camera_id,
+        "next_device_id": _next_device_id(db),
+        "device_types": DEVICE_TYPES,
+        "task_types": TASK_TYPES,
         "default_username": settings.camera_username,
         "default_password": settings.camera_password,
     })
@@ -759,19 +781,19 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
     camera_hostname = str(form.get("camera_hostname", ""))
     camera_manufacturer = str(form.get("camera_manufacturer", ""))
     camera_model = str(form.get("camera_model", ""))
-    device_id = str(form.get("device_id", settings.camera_id))
-    device_name = str(form.get("device_name", camera_model or camera_hostname or device_id))
+    device_type = str(form.get("device_type", "camera"))
+    task_type = str(form.get("task_type", "fissure"))
     camera_username = str(form.get("camera_username", settings.camera_username))
     camera_password = str(form.get("camera_password", settings.camera_password))
 
-    updates = {
-        "CAMERA_IP": camera_ip,
-        "CAMERA_USERNAME": camera_username,
-        "CAMERA_PASSWORD": camera_password,
-    }
-    settings.save_to_env(updates)
+    if device_type not in DEVICE_TYPES:
+        device_type = "camera"
+    if task_type not in TASK_TYPES:
+        task_type = "fissure"
 
-    existing = db.query(Device).filter(Device.device_id == device_id).first()
+    device_id = _next_device_id(db)
+    device_name = camera_model or camera_hostname or device_id
+
     device_config = {
         "ip": camera_ip,
         "hostname": camera_hostname,
@@ -783,26 +805,40 @@ async def discovery_select(request: Request, db: Session = Depends(get_db)):
         "stream_type": settings.camera_stream_type,
         "transport": settings.camera_rtsp_transport,
     }
-    if existing:
-        existing.name = device_name
-        existing.connection_config = device_config
-        existing.updated_at = datetime.now(UTC)
-        db.commit()
-    else:
-        device = Device(
-            device_id=device_id,
-            name=device_name,
-            device_type="camera",
-            task_type="fissure",
-            connection_type="rtsp",
-            connection_config=device_config,
-            capture_interval_ms=settings.camera_capture_interval_ms,
-            is_active=True,
-        )
-        db.add(device)
-        db.commit()
 
-    return RedirectResponse(url="/dashboard/discovery?selected=1", status_code=302)
+    device = Device(
+        device_id=device_id,
+        name=device_name,
+        device_type=device_type,
+        task_type=task_type,
+        connection_type="rtsp",
+        connection_config=device_config,
+        capture_interval_ms=settings.camera_capture_interval_ms,
+        is_active=True,
+    )
+    db.add(device)
+    db.commit()
+
+    from fastapi.responses import JSONResponse
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    if is_htmx:
+        return JSONResponse(
+            content={"ok": True, "device_id": device_id, "device_name": device_name},
+            headers={
+                "HX-Trigger": (
+                    '{"discoveryDeviceAdded": {"device_id": "'
+                    + device_id
+                    + '", "device_name": "'
+                    + device_name
+                    + '"}}'
+                )
+            },
+        )
+
+    return RedirectResponse(
+        url="/dashboard/discovery?added=" + device_id, status_code=302
+    )
 
 
 # ── Processing Results ──────────────────────────────────────

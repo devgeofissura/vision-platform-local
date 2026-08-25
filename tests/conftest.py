@@ -106,6 +106,7 @@ def _patch_sessions():
         mock_dash_settings.camera_hostname = "geofissuracam01"
         mock_dash_settings.camera_stream_type = "main"
         mock_dash_settings.camera_channel = 1
+        mock_dash_settings.camera_rtsp_transport = "tcp"
         mock_dash_settings.camera_capture_width = 1920
         mock_dash_settings.camera_capture_height = 1080
         mock_dash_settings.camera_capture_jpeg_quality = 90

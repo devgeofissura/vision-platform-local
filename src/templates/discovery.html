@@ -15,7 +15,7 @@
                 hx-on::before-request="this.disabled=true; this.classList.add('opacity-50')"
                 hx-on::after-settle="this.disabled=false; this.classList.remove('opacity-50')"
                 class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition">
-            🔍 Escanear Rede
+            Escanear Rede
         </button>
     </div>
 
@@ -46,29 +46,69 @@
     <!-- Results container -->
     <div id="scan-results"></div>
 
+    <!-- Toast (disparado pelo HTMX via HX-Trigger) -->
+    <div id="discovery-toast"
+         class="hidden fixed top-6 right-6 bg-green-900 border border-green-500 text-green-200 px-5 py-3 rounded-lg shadow-xl z-[999] transition-all duration-300 transform translate-x-full opacity-0">
+        <p class="font-semibold text-sm" id="toast-msg"></p>
+    </div>
+    <script>
+        document.body.addEventListener('discoveryDeviceAdded', function(evt) {
+            var d = evt.detail;
+            var el = document.getElementById('discovery-toast');
+            document.getElementById('toast-msg').textContent = d.device_id + ' adicionado com sucesso!';
+            el.classList.remove('hidden', 'translate-x-full', 'opacity-0');
+            el.classList.add('translate-x-0', 'opacity-100');
+            setTimeout(function() {
+                el.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(function() { el.classList.add('hidden'); }, 350);
+            }, 3000);
+        });
+    </script>
+
+    {% if request.query_params.get('added') %}
+    <div class="bg-green-900 border border-green-600 text-green-200 p-4 rounded-lg mt-4">
+        <p class="font-semibold">{{ request.query_params.get('added') }} adicionado com sucesso!</p>
+        <p class="text-sm">Verifique em <a href="/dashboard/devices" class="underline">Devices</a></p>
+    </div>
+    {% endif %}
+
     <!-- Manual IP -->
     <div class="bg-gray-800 p-4 rounded-lg mt-6">
         <h3 class="font-semibold mb-4">Configurar IP Manualmente</h3>
-        <form method="POST" action="/dashboard/discovery/select" class="flex items-end gap-4">
-            <div class="flex-1">
-                <label class="block text-sm text-gray-400 mb-1">IP da Câmera</label>
-                <input type="text" name="camera_ip" value="{{ settings.camera_ip if settings and settings.camera_ip else '' }}"
-                       placeholder="192.168.0.183"
-                       class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm">
+        <form method="POST" action="/dashboard/discovery/select" class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo</label>
+                    <select name="device_type"
+                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white">
+                        {% for dt in device_types %}
+                        <option value="{{ dt }}"{% if dt == 'camera' %} selected{% endif %}>{{ dt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tarefa</label>
+                    <select name="task_type"
+                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white">
+                        {% for tt in task_types %}
+                        <option value="{{ tt }}"{% if tt == 'fissure' %} selected{% endif %}>{{ tt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
-                Salvar IP
-            </button>
+            <div class="flex items-end gap-4">
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-400 mb-1">IP da Câmera</label>
+                    <input type="text" name="camera_ip" value=""
+                           placeholder="192.168.0.183"
+                           class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm">
+                </div>
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
+                    Adicionar
+                </button>
+            </div>
         </form>
     </div>
-
-    {% if request.query_params.get('selected') %}
-    <div class="bg-green-900 border border-green-600 text-green-200 p-4 rounded-lg mt-4">
-        <p class="font-semibold">IP configurado com sucesso!</p>
-        <p class="text-sm">Teste a captura em <a href="/dashboard/camera" class="underline">Câmera</a></p>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
-
