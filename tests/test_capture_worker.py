@@ -195,3 +195,64 @@ class TestCaptureWorkerStatus:
 class TestCaptureWorkerGetRoi:
     def test_get_roi_default(self, worker):
         assert worker._get_roi() is None
+
+
+class TestCaptureWorkerProcessingStatus:
+    def _capture(self, tmp_path, extra_settings=()):
+        db = TestSession()
+        db.add(SystemSettings(key="capture_evidence_dir", value=str(tmp_path)))
+        db.add(SystemSettings(key="capture_jpeg_quality", value="95"))
+        for k, v in extra_settings:
+            db.add(SystemSettings(key=k, value=v))
+        db.commit()
+        db.close()
+
+        frame = _fake_frame()
+        with patch("src.camera.capture_worker.settings") as s:
+            s.camera_rtsp_url = "rtsp://test"
+            s.camera_rtsp_transport = "tcp"
+            s.camera_connect_timeout_ms = 5000
+            s.camera_reconnect_interval_ms = 3000
+            s.local_id = "LOCAL-001"
+            s.camera_id = "CAM-001"
+            s.local_evidence_dir = str(tmp_path)
+            s.camera_capture_jpeg_quality = 95
+
+            w = CaptureWorker()
+            w.client.connect = MagicMock(return_value=True)
+            w.client._connected = True
+            w.client._cap = MagicMock()
+            w.client.capture_frame = MagicMock(return_value=frame)
+            w._get_roi = MagicMock(return_value=None)
+
+            with patch("src.camera.capture_worker.SessionLocal", TestSession):
+                return w.capture()
+
+    def test_processing_enabled_saves_pending(self, tmp_path):
+        result = self._capture(
+            tmp_path, [("processing_enabled", "true")]
+        )
+        assert result is not None
+        db = TestSession()
+        obs = db.query(Observation).filter_by(observation_id=result["observation_id"]).first()
+        assert obs.processing_status == "pending"
+        db.close()
+
+    def test_processing_disabled_saves_none(self, tmp_path):
+        result = self._capture(tmp_path)
+        assert result is not None
+        db = TestSession()
+        obs = db.query(Observation).filter_by(observation_id=result["observation_id"]).first()
+        assert obs.processing_status == "none"
+        db.close()
+
+    def test_auto_on_capture_disabled_saves_none(self, tmp_path):
+        result = self._capture(
+            tmp_path,
+            [("processing_enabled", "true"), ("processing_auto_on_capture", "false")],
+        )
+        assert result is not None
+        db = TestSession()
+        obs = db.query(Observation).filter_by(observation_id=result["observation_id"]).first()
+        assert obs.processing_status == "none"
+        db.close()

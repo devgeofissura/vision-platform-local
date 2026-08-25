@@ -11,6 +11,7 @@ from src.camera.discovery import OnvifDiscovery
 from src.camera.frame_validator import FrameValidator
 from src.camera.rtsp_client import RTSPClient
 from src.config.device_config import resolve_device_config
+from src.config.global_settings import get_setting_bool
 from src.config.settings import settings
 from src.storage.database import SessionLocal
 from src.storage.models import Device, Observation
@@ -141,6 +142,11 @@ class CaptureWorker:
     def _save_observation(self, data: dict) -> None:
         db = SessionLocal()
         try:
+            processing_status = "none"
+            if get_setting_bool("processing_enabled", False) and get_setting_bool(
+                "processing_auto_on_capture", True
+            ):
+                processing_status = "pending"
             record = Observation(
                 observation_id=data["observation_id"],
                 camera_id=data["camera_id"],
@@ -154,6 +160,7 @@ class CaptureWorker:
                 quality_issues=json.dumps(data["quality"]["issues"]),
                 algorithm_version=data["algorithm_version"],
                 delivery_status="pending",
+                processing_status=processing_status,
             )
             db.add(record)
             db.commit()
