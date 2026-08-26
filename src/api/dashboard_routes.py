@@ -1107,7 +1107,7 @@ async def crack_process(request: Request, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/crack/reference", response_class=HTMLResponse)
+@router.post("/crack/reference")
 async def crack_save_reference(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
