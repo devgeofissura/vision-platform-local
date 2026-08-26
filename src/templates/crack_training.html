@@ -1,0 +1,334 @@
+{% extends "base_local.html" %}
+{% block title %}Fissura — Treinamento{% endblock %}
+{% block content %}
+<div class="max-w-7xl">
+    <h2 class="text-2xl font-bold mb-6">Treinamento de Detecção de Fissuras</h2>
+
+    <!-- Camera selector -->
+    <div class="mb-6">
+        <label class="block text-sm text-gray-400 mb-2">Câmera</label>
+        <div class="flex flex-wrap gap-3">
+            {% for cam in cameras %}
+            <a href="/dashboard/crack?camera={{ cam.device_id }}"
+               class="block bg-gray-800 p-3 rounded-lg border-2 transition hover:border-blue-500 {% if cam.device_id == selected_id %}border-blue-500{% else %}border-gray-700{% endif %}">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full {% if cam.is_active %}bg-green-400{% else %}bg-red-400{% endif %}"></span>
+                    <span class="text-white font-mono text-sm">{{ cam.device_id }}</span>
+                </div>
+                <p class="text-xs text-gray-400">{{ cam.name }}</p>
+            </a>
+            {% endfor %}
+            {% if not cameras %}
+            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 text-gray-500">
+                Nenhuma câmera configurada — <a href="/dashboard/discovery" class="underline">descobrir câmeras</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if selected_id %}
+
+    <!-- Capture result/error -->
+    {% if capture_error %}
+    <div class="bg-red-900 border border-red-600 text-red-200 p-3 rounded-lg mb-4 text-sm">
+        Erro na captura: {{ capture_error }}
+    </div>
+    {% endif %}
+    {% if capture_result %}
+    <div class="bg-green-900 border border-green-600 text-green-200 p-3 rounded-lg mb-4 text-sm">
+        Captura OK — {{ capture_result.width }}x{{ capture_result.height }} — Score: {{ capture_result.quality.score }}
+    </div>
+    {% endif %}
+
+    <!-- Main content: two columns -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        <!-- Left: Live stream + capture -->
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Stream ao Vivo — {{ selected_id }}</h3>
+                <div class="flex gap-2">
+                    <button onclick="startStream()" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded">▶ Play</button>
+                    <button onclick="stopStream()" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded">⏹ Stop</button>
+                    <button id="btn-capture"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                            onclick="doCapture()">
+                        📸 Capturar
+                    </button>
+                </div>
+            </div>
+            <div class="bg-black rounded-lg overflow-hidden relative" style="min-height: 300px;">
+                <img id="live-stream" alt="Stream ao vivo" class="w-full" style="display: none;">
+                <div id="stream-placeholder" class="flex items-center justify-center h-72 text-gray-500">
+                    <div class="text-center">
+                        <p class="text-lg mb-2">Clique para iniciar</p>
+                        <button onclick="startStream()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                            ▶ Iniciar Monitoramento
+                        </button>
+                    </div>
+                </div>
+                <div id="stream-overlay" class="hidden absolute bottom-0 left-0 right-0 bg-black/60 p-3 text-sm">
+                    <div class="flex items-center gap-4">
+                        <span class="text-green-400 font-mono">● AO VIVO</span>
+                        <span class="text-gray-300" id="stream-time"></span>
+                        <span class="text-gray-400 text-xs">IP: {{ selected_id }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Analysis + save reference -->
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Análise</h3>
+                <button id="btn-process"
+                        class="bg-purple-600 hover:bg-purple-700 text-white text-sm py-1 px-3 rounded"
+                        onclick="doProcess()">
+                    🔍 Processar
+                </button>
+            </div>
+
+            <!-- Analysis image -->
+            <div class="bg-black rounded-lg overflow-hidden mb-4" style="min-height: 300px;">
+                <img id="analysis-image" alt="Imagem analisada" class="w-full" style="display: none;">
+                <div id="analysis-placeholder" class="flex items-center justify-center h-72 text-gray-500">
+                    <p class="text-sm">Capture uma imagem e clique em "Processar" para analisar</p>
+                </div>
+            </div>
+
+            <!-- Analysis result -->
+            <div id="analysis-result" class="hidden bg-gray-700 p-3 rounded-lg mb-4 text-sm">
+                <p class="text-gray-300" id="analysis-text"></p>
+            </div>
+
+            <!-- Save reference form -->
+            <form id="save-reference-form" onsubmit="saveReference(event)" class="border-t border-gray-700 pt-4">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3">Salvar como Referência</h4>
+                <input type="hidden" name="observation_id" id="ref-observation-id" value="">
+                <input type="hidden" name="camera_id" id="ref-camera-id" value="{{ selected_id }}">
+                <input type="hidden" name="analysis_json" id="ref-analysis-json" value="">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Nome</label>
+                        <input name="name" required placeholder="Ex: fissura_tipo_A"
+                               class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Instalação</label>
+                        <select name="installation_id" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            <option value="">— Selecionar —</option>
+                            {% for inst in installations %}
+                            <option value="{{ inst.installation_id }}">{{ inst.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs text-gray-400 mb-1">Descrição</label>
+                    <textarea name="description" rows="2" placeholder="Descreva a fissura de referência..."
+                              class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs text-gray-400 mb-1">Classificação</label>
+                    <select name="crack_type" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                        <option value="longitudinal">Longitudinal</option>
+                        <option value="transversal">Transversal</option>
+                        <option value="diagonal">Diagonal</option>
+                        <option value="mista">Mista</option>
+                        <option value="outra">Outra</option>
+                    </select>
+                </div>
+                <button type="submit" id="btn-save-ref"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-semibold">
+                    💾 Salvar Referência
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Installations list -->
+    <div class="bg-gray-800 p-4 rounded-lg">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Instalações Cadastradas</h3>
+            <a href="/dashboard/crack/installations"
+               class="text-blue-400 hover:text-blue-300 text-sm">Ver todas →</a>
+        </div>
+        {% if installations %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {% for inst in installations %}
+            <div class="bg-gray-700 p-3 rounded-lg border border-gray-600">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                    <span class="text-white font-semibold text-sm">{{ inst.name }}</span>
+                </div>
+                <p class="text-xs text-gray-400">{{ inst.location }}</p>
+                <p class="text-xs text-gray-500 font-mono mt-1">Câmera: {{ inst.camera_id }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-sm text-center py-4">Nenhuma instalação cadastrada</p>
+        {% endif %}
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+let streamImg = null;
+let currentAnalysis = null;
+
+async function doCapture() {
+    const btn = document.getElementById('btn-capture');
+    const cameraId = '{{ selected_id }}';
+    console.log('[CRACK-CAPTURE] Iniciando captura para', cameraId);
+    btn.disabled = true;
+    btn.textContent = '⏳ Capturando...';
+    btn.className = 'bg-yellow-600 text-white text-sm py-1 px-3 rounded';
+
+    const start = Date.now();
+    try {
+        const fd = new FormData();
+        fd.append('camera_id', cameraId);
+        console.log('[CRACK-CAPTURE] POST /dashboard/crack/capture');
+        const resp = await fetch('/dashboard/crack/capture', { method: 'POST', body: fd });
+        console.log('[CRACK-CAPTURE] Status:', resp.status, resp.statusText);
+        const data = await resp.json();
+        console.log('[CRACK-CAPTURE] Dados:', JSON.stringify(data));
+        console.log('[CRACK-CAPTURE] Tempo:', Date.now() - start, 'ms');
+
+        if (resp.ok && data.image_url) {
+            const analysisImg = document.getElementById('analysis-image');
+            const analysisPlaceholder = document.getElementById('analysis-placeholder');
+            analysisImg.src = data.image_url + '?t=' + Date.now();
+            analysisImg.style.display = 'block';
+            analysisPlaceholder.style.display = 'none';
+
+            document.getElementById('ref-observation-id').value = data.observation_id || '';
+        } else if (data.error) {
+            alert('Erro na captura: ' + data.error);
+        }
+    } catch (e) {
+        console.error('[CRACK-CAPTURE] Exceção:', e.message);
+        alert('Erro de conexão: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📸 Capturar';
+        btn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded';
+    }
+}
+
+async function doProcess() {
+    const btn = document.getElementById('btn-process');
+    const observationId = document.getElementById('ref-observation-id').value;
+    if (!observationId) {
+        alert('Capture uma imagem primeiro.');
+        return;
+    }
+
+    console.log('[CRACK-PROCESS] Processando observação', observationId);
+    btn.disabled = true;
+    btn.textContent = '⏳ Processando...';
+    btn.className = 'bg-purple-500 text-white text-sm py-1 px-3 rounded';
+
+    try {
+        const fd = new FormData();
+        fd.append('observation_id', observationId);
+        console.log('[CRACK-PROCESS] POST /dashboard/crack/process');
+        const resp = await fetch('/dashboard/crack/process', { method: 'POST', body: fd });
+        console.log('[CRACK-PROCESS] Status:', resp.status);
+        const data = await resp.json();
+        console.log('[CRACK-PROCESS] Resposta:', JSON.stringify(data).substring(0, 200));
+
+        if (resp.ok && data.overlay_image) {
+            const analysisImg = document.getElementById('analysis-image');
+            analysisImg.src = 'data:image/jpeg;base64,' + data.overlay_image;
+            analysisImg.style.display = 'block';
+            document.getElementById('analysis-placeholder').style.display = 'none';
+
+            const resultDiv = document.getElementById('analysis-result');
+            const resultText = document.getElementById('analysis-text');
+            resultDiv.classList.remove('hidden');
+            currentAnalysis = data.analysis || {};
+            resultText.textContent = data.summary || JSON.stringify(data.analysis || {}, null, 2);
+
+            document.getElementById('ref-analysis-json').value = JSON.stringify(data.analysis || {});
+        } else if (data.error) {
+            alert('Erro no processamento: ' + data.error);
+        }
+    } catch (e) {
+        console.error('[CRACK-PROCESS] Exceção:', e.message);
+        alert('Erro de conexão: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Processar';
+        btn.className = 'bg-purple-600 hover:bg-purple-700 text-white text-sm py-1 px-3 rounded';
+    }
+}
+
+async function saveReference(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-ref');
+    const form = document.getElementById('save-reference-form');
+    const fd = new FormData(form);
+
+    if (!fd.get('observation_id')) {
+        alert('Capture e processe uma imagem antes de salvar.');
+        return;
+    }
+
+    console.log('[CRACK-REF] Salvando referência...');
+    btn.disabled = true;
+    btn.textContent = '⏳ Salvando...';
+
+    try {
+        const resp = await fetch('/dashboard/crack/reference', { method: 'POST', body: fd });
+        const data = await resp.json();
+        console.log('[CRACK-REF] Resposta:', data);
+
+        if (resp.ok) {
+            alert('Referência salva com sucesso!');
+            form.reset();
+            document.getElementById('ref-observation-id').value = '';
+            document.getElementById('ref-camera-id').value = '{{ selected_id }}';
+        } else {
+            alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
+        }
+    } catch (e) {
+        console.error('[CRACK-REF] Exceção:', e.message);
+        alert('Erro de conexão: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Salvar Referência';
+    }
+}
+
+function startStream() {
+    const img = document.getElementById('live-stream');
+    const placeholder = document.getElementById('stream-placeholder');
+    const overlay = document.getElementById('stream-overlay');
+    img.src = '/api/v1/stream/{{ selected_id }}?token={{ camera_token }}';
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    overlay.classList.remove('hidden');
+    streamImg = img;
+    updateTime();
+}
+
+function stopStream() {
+    if (streamImg) {
+        streamImg.src = '';
+        streamImg.style.display = 'none';
+    }
+    document.getElementById('stream-placeholder').style.display = 'flex';
+    document.getElementById('stream-overlay').classList.add('hidden');
+}
+
+function updateTime() {
+    const el = document.getElementById('stream-time');
+    if (!el) return;
+    el.textContent = new Date().toLocaleTimeString('pt-BR');
+    if (streamImg && streamImg.src) setTimeout(updateTime, 1000);
+}
+</script>
+{% endblock %}

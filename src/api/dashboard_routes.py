@@ -17,6 +17,8 @@ from src.storage.models import (
     CONNECTION_TYPES,
     DEVICE_TYPES,
     TASK_TYPES,
+    CrackInstallation,
+    CrackReference,
     DeliveryLog,
     Device,
     Observation,
@@ -988,5 +990,255 @@ async def zone_delete(zone_id: int, db: Session = Depends(get_db)):
     zone = db.query(ZoneConfig).filter(ZoneConfig.id == zone_id).first()
     if zone:
         db.delete(zone)
+        db.commit()
+    return HTMLResponse("")
+
+
+# ── Crack Training ──────────────────────────────────────────
+
+@router.get("/crack", response_class=HTMLResponse)
+async def crack_training_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    cameras = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.created_at.desc()).all()
+
+    selected_id = request.query_params.get("camera", cameras[0].device_id if cameras else None)
+
+    installations = db.query(CrackInstallation).filter(
+        CrackInstallation.status == "active"
+    ).order_by(CrackInstallation.created_at.desc()).all()
+
+    return _tmpl().TemplateResponse(request, "crack_training.html", {
+        "user": user,
+        "page": "crack",
+        "cameras": cameras,
+        "selected_id": selected_id,
+        "camera_token": settings.local_api_token,
+        "installations": installations,
+    })
+
+
+@router.post("/crack/capture")
+async def crack_capture(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return {"error": "unauthorized"}, 401
+
+    form = await request.form()
+    camera_id = form.get("camera_id")
+
+    from src.camera.capture_worker import CaptureWorker
+
+    def _do_capture():
+        w = CaptureWorker(device_id=camera_id)
+        try:
+            r = w.capture()
+            return r, None
+        except Exception as e:
+            return None, str(e)
+        finally:
+            w.disconnect()
+
+    result, error = await asyncio.to_thread(_do_capture)
+    if result is None and error is None:
+        return {"error": "Câmera não disponível ou falha na captura"}, 500
+    if error:
+        return {"error": error}, 500
+
+    latest_image_url = None
+    if result and result.get("file_path"):
+        p = Path(result["file_path"])
+        evidence_root = Path(settings.local_evidence_dir)
+        try:
+            rel = p.relative_to(evidence_root)
+            latest_image_url = f"/evidence/{rel.as_posix()}"
+        except ValueError:
+            pass
+
+    return {
+        "observation_id": result.get("observation_id", ""),
+        "image_url": latest_image_url or "",
+        "width": result.get("width", 0),
+        "height": result.get("height", 0),
+        "quality": result.get("quality", {}),
+    }
+
+
+@router.post("/crack/process")
+async def crack_process(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return {"error": "unauthorized"}, 401
+
+    form = await request.form()
+    observation_id = form.get("observation_id")
+
+    obs = db.query(Observation).filter(Observation.observation_id == observation_id).first()
+    if not obs or not obs.file_path:
+        return {"error": "observation not found"}, 404
+
+    import base64
+
+    import cv2
+
+    from src.vision.crack_label_processor import CrackLabelProcessor
+
+    frame = cv2.imread(obs.file_path)
+    if frame is None:
+        return {"error": "cannot read image"}, 400
+
+    processor = CrackLabelProcessor()
+    analysis = processor.process(frame)
+    overlay_frame = processor.draw_overlay(frame, analysis)
+
+    _, jpeg = cv2.imencode(".jpg", overlay_frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    overlay_b64 = base64.b64encode(jpeg.tobytes()).decode("utf-8")
+
+    return {
+        "analysis": analysis.to_dict(),
+        "overlay_image": overlay_b64,
+        "summary": f"Marcadores: {len(analysis.markers)}/6, "
+                   f"Interseção: {'sim' if analysis.intersection else 'não'}, "
+                   f"Qualidade: {analysis.quality_score:.2f}",
+    }
+
+
+@router.post("/crack/reference", response_class=HTMLResponse)
+async def crack_save_reference(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    form = await request.form()
+    installation_id = str(form.get("installation_id", ""))
+    installation_name = str(form.get("name", ""))
+    installation_location = str(form.get("description", ""))
+    camera_id = str(form.get("camera_id", ""))
+    observation_id = str(form.get("observation_id", ""))
+    analysis_json = str(form.get("analysis_json", "{}"))
+
+    import uuid
+
+    try:
+        analysis_data = json.loads(analysis_json)
+    except (json.JSONDecodeError, TypeError):
+        analysis_data = {}
+
+    if not installation_id:
+        installation_id = f"CRK-{uuid.uuid4().hex[:8].upper()}"
+
+    existing = db.query(CrackInstallation).filter(
+        CrackInstallation.installation_id == installation_id
+    ).first()
+
+    if existing:
+        inst = existing
+    else:
+        inst = CrackInstallation(
+            installation_id=installation_id,
+            name=installation_name or f"Instalação {installation_id}",
+            location=installation_location,
+            camera_id=camera_id,
+            status="active",
+        )
+        db.add(inst)
+
+    ref_id = f"REF-{uuid.uuid4().hex[:8].upper()}"
+    ref = CrackReference(
+        reference_id=ref_id,
+        installation_id=installation_id,
+        image_observation_id=observation_id,
+        label_corners=analysis_data.get("label_corners"),
+        marker_points=analysis_data.get("markers"),
+        line_AB=analysis_data.get("line_AB"),
+        line_CD=analysis_data.get("line_CD"),
+        intersection=analysis_data.get("intersection"),
+        distances=analysis_data.get("distances"),
+        angles=analysis_data.get("angles"),
+        quality_score=analysis_data.get("quality_score", 0),
+        processing_version="1.0.0",
+        is_active=True,
+    )
+    db.add(ref)
+    db.commit()
+
+    return {"ok": True, "reference_id": ref_id, "installation_id": installation_id}
+
+
+@router.get("/crack/installations", response_class=HTMLResponse)
+async def crack_installations_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    installations = db.query(CrackInstallation).order_by(
+        CrackInstallation.created_at.desc()
+    ).all()
+
+    return _tmpl().TemplateResponse(request, "crack_installations.html", {
+        "user": user,
+        "page": "crack",
+        "installations": installations,
+    })
+
+
+@router.post("/crack/installations", response_class=HTMLResponse)
+async def crack_installation_create(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return HTMLResponse("")
+
+    form = await request.form()
+    name = str(form.get("name", "")).strip()
+    location = str(form.get("location", "")).strip()
+    camera_id = str(form.get("camera_id", "")).strip()
+
+    if not name or not camera_id:
+        return HTMLResponse('<tr><td colspan="7" class="text-red-400 px-4 py-2">Nome e Câmera obrigatórios</td></tr>')
+
+    import uuid
+    inst_id = f"CRK-{uuid.uuid4().hex[:8].upper()}"
+    inst = CrackInstallation(
+        installation_id=inst_id,
+        name=name,
+        location=location,
+        camera_id=camera_id,
+        status="active",
+    )
+    db.add(inst)
+    db.commit()
+
+    return HTMLResponse(f"""
+        <tr id="inst-{inst.installation_id}" class="border-t border-gray-700 hover:bg-gray-750">
+            <td class="px-4 py-3 font-mono text-xs text-blue-400">{inst.installation_id[:12]}...</td>
+            <td class="px-4 py-3">{inst.name}</td>
+            <td class="px-4 py-3 text-gray-400">{inst.location}</td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-400">{inst.camera_id}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">{inst.status}</span>
+            </td>
+            <td class="px-4 py-3 text-gray-400 text-xs">-</td>
+            <td class="px-4 py-3">
+                <button hx-delete="/dashboard/crack/installations/{inst.installation_id}"
+                        hx-confirm="Excluir instalação {inst.name}?"
+                        hx-target="#inst-{inst.installation_id}"
+                        hx-swap="outerHTML"
+                        class="text-red-400 hover:text-red-300 text-xs">Excluir</button>
+            </td>
+        </tr>
+    """)
+
+
+@router.delete("/crack/installations/{installation_id}")
+async def crack_installation_delete(installation_id: str, db: Session = Depends(get_db)):
+    inst = db.query(CrackInstallation).filter(
+        CrackInstallation.installation_id == installation_id
+    ).first()
+    if inst:
+        db.delete(inst)
         db.commit()
     return HTMLResponse("")

@@ -203,3 +203,77 @@ class SensorReading(Base):
             "recorded_at": self.recorded_at.isoformat() if self.recorded_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+CRACK_INSTALLATION_STATUSES = ["active", "inactive"]
+
+
+class CrackInstallation(Base):
+    __tablename__ = "crack_installations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    installation_id = Column(String(64), unique=True, nullable=False, index=True)
+    name = Column(String(128), nullable=False)
+    location = Column(String(256), nullable=True)
+    camera_id = Column(String(64), nullable=False, index=True)
+    status = Column(String(32), nullable=False, default="active")
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+
+    references = relationship("CrackReference", back_populates="installation", cascade="all, delete-orphan")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "installation_id": self.installation_id,
+            "name": self.name,
+            "location": self.location,
+            "camera_id": self.camera_id,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class CrackReference(Base):
+    __tablename__ = "crack_references"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    reference_id = Column(String(64), unique=True, nullable=False, index=True)
+    installation_id = Column(String(64), ForeignKey("crack_installations.installation_id"), nullable=False, index=True)
+    image_observation_id = Column(String(128), ForeignKey("observations.observation_id"), nullable=False, index=True)
+
+    label_corners = Column(JSON, nullable=True)
+    homography = Column(JSON, nullable=True)
+    marker_points = Column(JSON, nullable=True)
+    line_AB = Column(JSON, nullable=True)  # noqa: N815 — matches spec
+    line_CD = Column(JSON, nullable=True)  # noqa: N815 — matches spec
+    intersection = Column(JSON, nullable=True)
+    crack_geometry = Column(JSON, nullable=True)
+    distances = Column(JSON, nullable=True)
+    angles = Column(JSON, nullable=True)
+
+    quality_score = Column(Float, nullable=True)
+    processing_version = Column(String(32), nullable=False, default="1.0.0")
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    installation = relationship("CrackInstallation", back_populates="references")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "reference_id": self.reference_id,
+            "installation_id": self.installation_id,
+            "image_observation_id": self.image_observation_id,
+            "label_corners": self.label_corners,
+            "marker_points": self.marker_points,
+            "line_AB": self.line_AB,
+            "line_CD": self.line_CD,
+            "intersection": self.intersection,
+            "distances": self.distances,
+            "angles": self.angles,
+            "quality_score": self.quality_score,
+            "processing_version": self.processing_version,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

@@ -1,0 +1,101 @@
+{% extends "base_local.html" %}
+{% block title %}Fissura — Instalações{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Instalações de Fissura</h2>
+        <div class="flex gap-2">
+            <a href="/dashboard/crack"
+               class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">
+                🔬 Treinamento
+            </a>
+            <button onclick="document.getElementById('add-modal').classList.remove('hidden')"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                + Nova Instalação
+            </button>
+        </div>
+    </div>
+
+    <!-- Installations table -->
+    <div class="bg-gray-800 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-700">
+                <tr>
+                    <th class="px-4 py-3 text-left text-gray-300">ID</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Nome</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Localização</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Câmera</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Status</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Criado em</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="installations-list">
+                {% for inst in installations %}
+                <tr class="border-t border-gray-700 hover:bg-gray-750" id="inst-{{ inst.installation_id }}">
+                    <td class="px-4 py-3 font-mono text-xs text-blue-400">{{ inst.installation_id[:12] }}...</td>
+                    <td class="px-4 py-3">{{ inst.name }}</td>
+                    <td class="px-4 py-3 text-gray-400">{{ inst.location }}</td>
+                    <td class="px-4 py-3 font-mono text-xs text-gray-400">{{ inst.camera_id }}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-0.5 rounded text-xs
+                            {% if inst.status == 'active' %}bg-green-900 text-green-300
+                            {% elif inst.status == 'inactive' %}bg-gray-600 text-gray-400
+                            {% elif inst.status == 'maintenance' %}bg-yellow-900 text-yellow-300
+                            {% else %}bg-gray-600 text-gray-300{% endif %}">
+                            {{ inst.status }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-400 text-xs">{{ inst.created_at.strftime('%d/%m/%Y %H:%M') if inst.created_at else '-' }}</td>
+                    <td class="px-4 py-3">
+                        <button hx-delete="/dashboard/crack/installations/{{ inst.installation_id }}"
+                                hx-confirm="Excluir instalação {{ inst.name }}?"
+                                hx-target="#inst-{{ inst.installation_id }}"
+                                hx-swap="outerHTML"
+                                class="text-red-400 hover:text-red-300 text-xs">Excluir</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not installations %}
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                        Nenhuma instalação cadastrada. Clique em "+ Nova Instalação" para começar.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Installation Modal -->
+<div id="add-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
+        <h3 class="text-lg font-bold mb-4">Nova Instalação</h3>
+        <form hx-post="/dashboard/crack/installations" hx-target="#installations-list" hx-swap="beforeend">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Nome</label>
+                    <input name="name" required placeholder="Ex: Ponte Estaiada — Pilar Norte"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Localização</label>
+                    <input name="location" required placeholder="Ex: KM 45, BR-101"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Câmera (device_id)</label>
+                    <input name="camera_id" required placeholder="Ex: geofissuracam01"
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm font-mono">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="document.getElementById('add-modal').classList.add('hidden')"
+                        class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
