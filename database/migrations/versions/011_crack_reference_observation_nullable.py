@@ -8,8 +8,8 @@ Create Date: 2026-08-26
 import sqlalchemy as sa
 from alembic import op
 
-revision = "011"
-down_revision = "010"
+revision = "011_crack_reference_nullable"
+down_revision = "010_crack_installations"
 branch_labels = None
 depends_on = None
 
