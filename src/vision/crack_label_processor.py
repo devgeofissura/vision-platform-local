@@ -86,7 +86,7 @@ class CrackAnalysis:
         return {
             "label_corners": [c.to_list() for c in self.label_corners],
             "large_circle": self.large_circle,
-            "markers": [m.to_list() for m in self.markers],
+            "markers": [m.to_dict() for m in self.markers],
             "line_AB": self.line_AB.to_dict() if self.line_AB else None,
             "line_CD": self.line_CD.to_dict() if self.line_CD else None,
             "intersection": self.intersection.to_list() if self.intersection else None,
