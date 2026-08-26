@@ -382,7 +382,8 @@ class CrackLabelProcessor:
 
         segments = []
         for line in lines:
-            x1, y1, x2, y2 = line[0]
+            flat = line.ravel()
+            x1, y1, x2, y2 = int(flat[0]), int(flat[1]), int(flat[2]), int(flat[3])
             angle = abs(math.degrees(math.atan2(y2 - y1, x2 - x1)))
             length = math.hypot(x2 - x1, y2 - y1)
             if 15 < angle < 165 and length > min_line_len:
@@ -485,13 +486,14 @@ class CrackLabelProcessor:
 
         crack_lines = []
         for line in lines[:10]:
-            x1, y1, x2, y2 = line[0]
+            flat = line.ravel()
+            x1, y1, x2, y2 = int(flat[0]), int(flat[1]), int(flat[2]), int(flat[3])
             length = math.hypot(x2 - x1, y2 - y1)
             angle = abs(math.degrees(math.atan2(y2 - y1, x2 - x1)))
             crack_lines.append({
-                "points": [[x1, y1], [x2, y2]],
-                "length": round(length, 2),
-                "angle_deg": round(angle, 2),
+                "points": [[int(x1), int(y1)], [int(x2), int(y2)]],
+                "length": round(float(length), 2),
+                "angle_deg": round(float(angle), 2),
             })
 
         return crack_lines

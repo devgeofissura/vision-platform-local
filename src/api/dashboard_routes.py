@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,6 +29,7 @@ from src.storage.models import (
 )
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+logger = logging.getLogger(__name__)
 
 
 def _tmpl():
@@ -1082,29 +1084,34 @@ async def crack_process(request: Request, db: Session = Depends(get_db)):
         return {"error": "observation not found"}, 404
 
     import base64
+    import traceback
 
     import cv2
 
     from src.vision.crack_label_processor import CrackLabelProcessor
 
-    frame = cv2.imread(obs.file_path)
-    if frame is None:
-        return {"error": "cannot read image"}, 400
+    try:
+        frame = cv2.imread(obs.file_path)
+        if frame is None:
+            return {"error": "cannot read image"}, 400
 
-    processor = CrackLabelProcessor()
-    analysis = processor.process(frame)
-    overlay_frame = processor.draw_overlay(frame, analysis)
+        processor = CrackLabelProcessor()
+        analysis = processor.process(frame)
+        overlay_frame = processor.draw_overlay(frame, analysis)
 
-    _, jpeg = cv2.imencode(".jpg", overlay_frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
-    overlay_b64 = base64.b64encode(jpeg.tobytes()).decode("utf-8")
+        _, jpeg = cv2.imencode(".jpg", overlay_frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        overlay_b64 = base64.b64encode(jpeg.tobytes()).decode("utf-8")
 
-    return {
-        "analysis": analysis.to_dict(),
-        "overlay_image": overlay_b64,
-        "summary": f"Marcadores: {len(analysis.markers)}/6, "
-                   f"Interseção: {'sim' if analysis.intersection else 'não'}, "
-                   f"Qualidade: {analysis.quality_score:.2f}",
-    }
+        return {
+            "analysis": analysis.to_dict(),
+            "overlay_image": overlay_b64,
+            "summary": f"Marcadores: {len(analysis.markers)}/6, "
+                       f"Interseção: {'sim' if analysis.intersection else 'não'}, "
+                       f"Qualidade: {analysis.quality_score:.2f}",
+        }
+    except Exception as exc:
+        logger.error("crack/process error: %s\n%s", exc, traceback.format_exc())
+        return {"error": str(exc)}, 500
 
 
 @router.post("/crack/reference")
