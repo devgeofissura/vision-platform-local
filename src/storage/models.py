@@ -240,7 +240,7 @@ class CrackReference(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     reference_id = Column(String(64), unique=True, nullable=False, index=True)
     installation_id = Column(String(64), ForeignKey("crack_installations.installation_id"), nullable=False, index=True)
-    image_observation_id = Column(String(128), ForeignKey("observations.observation_id"), nullable=False, index=True)
+    image_observation_id = Column(String(128), nullable=True, index=True)
 
     label_corners = Column(JSON, nullable=True)
     homography = Column(JSON, nullable=True)

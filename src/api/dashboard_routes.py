@@ -1164,7 +1164,11 @@ async def crack_save_reference(request: Request, db: Session = Depends(get_db)):
         is_active=True,
     )
     db.add(ref)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        return {"error": f"Erro ao salvar referência: {exc}"}, 500
 
     return {"ok": True, "reference_id": ref_id, "installation_id": installation_id}
 
