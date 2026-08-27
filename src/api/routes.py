@@ -317,8 +317,14 @@ async def debug_camera(camera_id: str, x_api_token: str = Header(None)):
     }
 
 
-def _open_camera_stream(camera_id: str):
+def _open_camera_stream(camera_id: str, decoding_res: tuple[int, int] | None = None):
     """Validate token+device, build RTSP URL, open VideoCapture.
+
+    If `decoding_res` (width, height) is given, the FFmpeg decoder is asked
+    to decode directly at that size (CAP_PROP_FRAME_WIDTH/HEIGHT), which
+    reduces real decode cost — the main bottleneck on the Orange Pi — not
+    just the output resize. A defensive cv2.resize is also applied when the
+    decoder ignores the property.
 
     Raises HTTPException on error; returns an opened cv2.VideoCapture.
     """
@@ -348,6 +354,10 @@ def _open_camera_stream(camera_id: str):
     os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
     cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)
+
+    if decoding_res is not None:
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, decoding_res[0])
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, decoding_res[1])
 
     if not cap.isOpened():
         raise HTTPException(status_code=503, detail="Cannot connect to camera")
@@ -456,10 +466,14 @@ async def stream_camera_tracked(
 
     out_w, out_h = _parse_resolution(res)
 
+    # Decode the RTSP feed directly at/near the target size. This cuts real
+    # FFmpeg decode cost — the main bottleneck on the Orange Pi — instead of
+    # decoding full 1080p and downscaling afterward.
+    #
     # Two SEPARATE decoders: cv2.VideoCapture (FFmpeg) is not thread-safe,
     # so each thread must own its own VideoCapture to avoid
     # `async_lock failed` SIGABRT crashes when two threads read the same cap.
-    display_cap = _open_camera_stream(camera_id)
+    display_cap = _open_camera_stream(camera_id, decoding_res=(out_w, out_h))
 
     detector = PersonDetector({"conf": 0.4})
     tracker = CentroidTracker(max_disappeared=12, max_distance=150.0, min_iou=0.1)
@@ -473,7 +487,7 @@ async def stream_camera_tracked(
 
     def detection_loop():
         nonlocal det_cap
-        det_cap = _open_camera_stream(camera_id)
+        det_cap = _open_camera_stream(camera_id, decoding_res=(out_w, out_h))
         try:
             while not stop_event.is_set():
                 # Own decoder; grab/retrieve the freshest frame available.
