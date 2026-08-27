@@ -23,12 +23,23 @@
                     <option value="{{ cam.device_id }}">{{ cam.name }} ({{ cam.device_id }})</option>
                     {% endfor %}
                 </select>
+                <select class="res-selector bg-gray-900 text-white text-sm rounded border border-gray-700 px-2 py-1"
+                        data-slot="{{ slot }}" title="Resolução">
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="540p" selected>540p</option>
+                    <option value="360p">360p</option>
+                    <option value="720x540">720x540</option>
+                </select>
+            </div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500" data-lbl="{{ slot }}">—</span>
                 <span class="person-count text-gray-300 text-sm whitespace-nowrap" data-slot="{{ slot }}">0 pessoas</span>
             </div>
             <div class="bg-black rounded-lg overflow-hidden relative" style="aspect-ratio: 16/9;">
                 <img class="stream-img w-full h-full object-cover" data-slot="{{ slot }}" alt="Câmera {{ slot }}" style="display: none;">
                 <div class="stream-placeholder w-full h-full flex items-center justify-center text-gray-600">
-                    <span class="text-sm">Selecione uma câmera</span>
+                    <span class="text-sm">Selecione câmera e resolução</span>
                 </div>
             </div>
         </div>
@@ -44,7 +55,7 @@
 
 <script>
 const token = '{{ camera_token }}';
-const state = {};   // slot -> { cameraId, intervalId }
+const state = {};   // slot -> { cameraId, res, intervalId }
 
 const globalEl = document.getElementById('global-count-value');
 
@@ -62,21 +73,31 @@ function setCount(slot, count) {
     recalcGlobal();
 }
 
-async function startSlot(slot, cameraId) {
+function setLabel(slot, text) {
+    const el = document.querySelector(`[data-lbl="${slot}"]`);
+    if (el) el.textContent = text;
+}
+
+function streamUrl(cameraId, res) {
+    return `/api/v1/stream/${encodeURIComponent(cameraId)}/tracked?res=${encodeURIComponent(res)}&token=${token}`;
+}
+
+async function startSlot(slot, cameraId, res) {
     const img = document.querySelector(`.stream-img[data-slot="${slot}"]`);
     const placeholder = document.querySelector('.stream-placeholder[data-slot="' + slot + '"]');
     if (!img) return;
 
-    const url = `/api/v1/stream/${encodeURIComponent(cameraId)}/tracked?token=${token}`;
+    const url = streamUrl(cameraId, res);
     img.src = url;
     img.style.display = 'block';
     placeholder.style.display = 'none';
+    setLabel(slot, cameraId + ' · ' + res);
 
     // Poll count from JS tracking (approx): we cannot read pixels; leave
     // the count label as a live indicator that the stream is active.
     // Real count is drawn on the frame itself via the tracker overlay.
     if (state[slot] && state[slot].intervalId) clearInterval(state[slot].intervalId);
-    state[slot] = { cameraId };
+    state[slot] = { cameraId, res };
 }
 
 function stopSlot(slot) {
@@ -89,14 +110,25 @@ function stopSlot(slot) {
     if (state[slot] && state[slot].intervalId) clearInterval(state[slot].intervalId);
     state[slot] = null;
     setCount(slot, 0);
+    setLabel(slot, '—');
+}
+
+function applySlot(slot) {
+    const cameraId = document.querySelector(`.camera-selector[data-slot="${slot}"]`).value;
+    const res = document.querySelector(`.res-selector[data-slot="${slot}"]`).value;
+    if (state[slot]) stopSlot(slot);
+    if (cameraId) startSlot(slot, cameraId, res);
 }
 
 document.querySelectorAll('.camera-selector').forEach(select => {
+    select.addEventListener('change', () => applySlot(select.dataset.slot));
+});
+
+document.querySelectorAll('.res-selector').forEach(select => {
     select.addEventListener('change', () => {
         const slot = select.dataset.slot;
-        const value = select.value;
-        if (state[slot]) stopSlot(slot);
-        if (value) startSlot(slot, value);
+        // Reload stream with the new resolution when a camera is active.
+        if (state[slot] && state[slot].cameraId) applySlot(slot);
     });
 });
 </script>

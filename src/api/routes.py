@@ -354,6 +354,42 @@ def _open_camera_stream(camera_id: str):
     return cap
 
 
+_STREAM_RESOLUTIONS = {
+    "1080p": (1920, 1080),
+    "720p": (1280, 720),
+    "540p": (960, 540),
+    "360p": (640, 360),
+}
+
+
+def _parse_resolution(res: str) -> tuple[int, int]:
+    """Map a resolution label (1080p/720p/540p/360p or WxH) to (width, height).
+
+    Raises HTTPException(400) on unknown/negative values.
+    """
+    res = (res or "").strip().lower()
+    if res in _STREAM_RESOLUTIONS:
+        return _STREAM_RESOLUTIONS[res]
+
+    # Arbitrary WxH, e.g. "720x540" or "640x480".
+    if "x" in res:
+        parts = res.split("x")
+        if len(parts) == 2:
+            try:
+                w = int(parts[0])
+                h = int(parts[1])
+            except ValueError:
+                w = h = 0
+            if 0 < w <= 7680 and 0 < h <= 4320:
+                return w, h
+
+    raise HTTPException(
+        status_code=400,
+        detail=f"Invalid resolution '{res}'. Use one of "
+        f"{list(_STREAM_RESOLUTIONS)} or a WxH like 720x540.",
+    )
+
+
 @router.get("/api/v1/stream/{camera_id}")
 async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: str = Header(None)):
     api_token = token or x_api_token
@@ -384,7 +420,12 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
 
 
 @router.get("/api/v1/stream/{camera_id}/tracked")
-async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_token: str = Header(None)):
+async def stream_camera_tracked(
+    camera_id: str,
+    res: str = Query("1080p"),
+    token: str = Query(None),
+    x_api_token: str = Header(None),
+):
     """Live MJPEG stream with real-time person detection + tracking overlay.
 
     Each person is enclosed in a colored bounding box (distinct color per
@@ -395,6 +436,10 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
     backlog accumulated during inference) and draws the latest tracking
     result onto them, so the video stays fluid instead of stalling on each
     slow inference.
+
+    The `res` query param selects the output resolution: 1080p, 720p,
+    540p, 360p or 720x540 (any WxH). Lower resolutions reduce encode cost
+    for a higher streaming frame rate.
     """
     api_token = token or x_api_token
     if api_token != settings.local_api_token:
@@ -408,6 +453,8 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
 
     from src.vision.person_detector import PersonDetector
     from src.vision.person_tracker import CentroidTracker
+
+    out_w, out_h = _parse_resolution(res)
 
     # Two SEPARATE decoders: cv2.VideoCapture (FFmpeg) is not thread-safe,
     # so each thread must own its own VideoCapture to avoid
@@ -482,6 +529,14 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
                     tracked = dict(latest_tracked)
 
                 processed = tracker.draw(frame, tracked)
+
+                # Downscale to the selected output resolution (cheap here,
+                # done after overlay drawing so boxes are positioned on the
+                # native frame).
+                if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
+                    processed = cv2.resize(
+                        processed, (out_w, out_h), interpolation=cv2.INTER_AREA
+                    )
 
                 _, jpeg = cv2.imencode(".jpg", processed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 yield (b"--frame\r\n"
