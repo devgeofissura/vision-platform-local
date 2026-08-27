@@ -581,6 +581,10 @@ async def stream_camera_tracked(
                         tid: dict(info)
                         for tid, info in latest_tracked.items()
                     }
+                if tracked:
+                    logger.warning("DBG draw: tracked nao vazio, tid=%s bbox=%s",
+                                   list(tracked.keys()),
+                                   [info.get("bbox") for info in tracked.values()])
                 for info in tracked.values():
                     bbox = info.get("bbox")
                     if bbox and len(bbox) >= 4:
