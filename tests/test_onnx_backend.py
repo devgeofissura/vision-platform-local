@@ -115,6 +115,10 @@ class TestOnnxYoloDetector:
         model_path = "models/yolo11n.onnx"
         if not os.path.exists(model_path):
             pytest.skip("models/yolo11n.onnx não exportado neste ambiente")
+        import importlib.util
+
+        if importlib.util.find_spec("onnxruntime") is None:
+            pytest.skip("onnxruntime não instalado neste ambiente")
         image_path = os.path.join(os.environ.get("TEMP", "/tmp"), "bus.jpg")
         if not os.path.exists(image_path):
             pytest.skip("imagem de teste bus.jpg indisponível")

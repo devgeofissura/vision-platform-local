@@ -40,17 +40,20 @@ class CentroidTracker:
 
     def __init__(
         self,
-        max_disappeared: int = 12,
+        max_disappeared: int = 6,
         max_distance: float = 150.0,
         min_iou: float = 0.1,
+        min_hits: int = 2,
     ):
         self.max_disappeared = max_disappeared
         self.max_distance = max_distance
         self.min_iou = min_iou
+        self.min_hits = min_hits
         self._next_id = 1
         self.objects: dict[int, dict] = {}
         self.disappeared: dict[int, int] = {}
         self.colors: dict[int, tuple[int, int, int]] = {}
+        self.hit_streak: dict[int, int] = {}
 
     def _new_color(self) -> tuple[int, int, int]:
         idx = (self._next_id - 1) % len(COLOR_PALETTE)
@@ -67,6 +70,12 @@ class CentroidTracker:
         }
         self.disappeared[track_id] = 0
         self.colors[track_id] = self._new_color()
+        # A brand new track starts unconfirmed, so a single spurious
+        # detection (e.g. a false positive while the subject is moving
+        # fast) cannot inflate the person count with a ghost ID. As in
+        # SORT's `min_hits`, it only becomes visible after it has been
+        # detected consistently for `min_hits` consecutive frames.
+        self.hit_streak[track_id] = 1
         return track_id
 
     @staticmethod
@@ -116,44 +125,55 @@ class CentroidTracker:
 
             used_tracks = set()
             used_dets = set()
+            # Prefer the pair with the STRONGEST IoU (dominant cue), as in
+            # SORT. Because detections are sparse (~2s apart) on edge, a full
+            # body box still overlaps the previous one even when the centroid
+            # has moved significantly; matching on overlap first keeps the
+            # identity stable where a centroid-only match would switch IDs.
+            # Distance is used as a tie-breaker only.
             for _ in range(min(len(track_ids), len(detections))):
-                # Choose the pair with smallest distance weighting (distance is
-                # dominant; IoU used as a tie-breaker within the distance cap).
-                min_dist = np.inf
-                min_track = -1
-                min_det = -1
+                best_iou = -1.0
+                best_min_dist = np.inf
+                best_track = -1
+                best_det = -1
                 for i, tid in enumerate(track_ids):
                     if i in used_tracks:
                         continue
                     for j in range(len(detections)):
                         if j in used_dets:
                             continue
+                        iou = float(ious[i, j])
                         d = float(dists[i, j])
-                        if d < min_dist:
-                            min_dist = d
-                            min_track = i
-                            min_det = j
+                        # Select by highest IoU first; break ties by distance.
+                        if iou > best_iou + 1e-9 or (
+                            abs(iou - best_iou) <= 1e-9 and d < best_min_dist
+                        ):
+                            best_iou = iou
+                            best_min_dist = d
+                            best_track = i
+                            best_det = j
 
-                if min_track == -1 or min_det == -1:
+                if best_track == -1 or best_det == -1:
                     break
 
-                tid = track_ids[min_track]
-                iou = float(ious[min_track, min_det])
-                within_dist = min_dist <= self.max_distance
+                tid = track_ids[best_track]
+                iou = float(ious[best_track, best_det])
+                within_dist = best_min_dist <= self.max_distance
                 within_iou = iou >= self.min_iou
 
                 # Match if within distance OR overlapping enough.
                 if within_dist or within_iou:
                     matched_track_ids.add(tid)
-                    matched_det_indices.add(min_det)
-                    used_tracks.add(min_track)
-                    used_dets.add(min_det)
+                    matched_det_indices.add(best_det)
+                    used_tracks.add(best_track)
+                    used_dets.add(best_det)
                     self.objects[tid] = {
-                        "centroid": tuple(det_centroids[min_det]),
-                        "bbox": [float(v) for v in detections[min_det]["bbox"]],
-                        "confidence": float(detections[min_det].get("confidence", 1.0)),
+                        "centroid": tuple(det_centroids[best_det]),
+                        "bbox": [float(v) for v in detections[best_det]["bbox"]],
+                        "confidence": float(detections[best_det].get("confidence", 1.0)),
                     }
                     self.disappeared[tid] = 0
+                    self.hit_streak[tid] = self.hit_streak.get(tid, 0) + 1
                 else:
                     break
 
@@ -175,6 +195,7 @@ class CentroidTracker:
         self.objects.pop(track_id, None)
         self.disappeared.pop(track_id, None)
         self.colors.pop(track_id, None)
+        self.hit_streak.pop(track_id, None)
 
     def _compute_distances(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         # a: (N,2), b: (M,2) -> (N,M)
@@ -220,6 +241,7 @@ class CentroidTracker:
                 "color": self.colors.get(tid, COLOR_PALETTE[0]),
             }
             for tid in self.objects
+            if self.hit_streak.get(tid, 0) >= self.min_hits
         }
 
     def draw(self, frame: np.ndarray, tracked: dict[int, dict]) -> np.ndarray:

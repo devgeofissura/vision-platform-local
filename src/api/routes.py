@@ -486,7 +486,9 @@ async def stream_camera_tracked(
     display_cap = _open_camera_stream(camera_id)
 
     detector = PersonDetector({"conf": 0.4})
-    tracker = CentroidTracker(max_disappeared=12, max_distance=150.0, min_iou=0.1)
+    # max_distance starts at 0 (unset) and is scaled to the native frame
+    # width on the first detection, since detection is sparse (~2s apart).
+    tracker = CentroidTracker(max_disappeared=6, max_distance=0.0, min_iou=0.1, min_hits=2)
 
     # Latest tracking state (bboxes+colors per track) published by the
     # detection thread; consumed by the streaming loop to draw the overlay.
@@ -520,6 +522,17 @@ async def stream_camera_tracked(
                 if det_frame is None:
                     time.sleep(0.1)
                     continue
+
+                # Detection is sparse (~2s apart) on edge, so a person can
+                # move a lot between two inference cycles. Scale the centroid
+                # fallback distance to the native frame width: boxes that
+                # overlap are already matched by IoU; this fallback only
+                # covers a jump big enough that the new box no longer touches
+                # the previous one (e.g. the subject briefly stepped out of
+                # the frame region).
+                if not tracker.max_distance:
+                    h, w = det_frame.shape[:2]
+                    tracker.max_distance = 0.4 * w
 
                 detections = []
                 try:
