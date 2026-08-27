@@ -409,7 +409,10 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
     from src.vision.person_detector import PersonDetector
     from src.vision.person_tracker import CentroidTracker
 
-    cap = _open_camera_stream(camera_id)
+    # Two SEPARATE decoders: cv2.VideoCapture (FFmpeg) is not thread-safe,
+    # so each thread must own its own VideoCapture to avoid
+    # `async_lock failed` SIGABRT crashes when two threads read the same cap.
+    display_cap = _open_camera_stream(camera_id)
 
     detector = PersonDetector({"conf": 0.4})
     tracker = CentroidTracker(max_disappeared=12, max_distance=150.0, min_iou=0.1)
@@ -419,18 +422,18 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
     latest_tracked: dict = {}
     latest_lock = threading.Lock()
     stop_event = threading.Event()
+    det_cap = None
 
     def detection_loop():
+        nonlocal det_cap
+        det_cap = _open_camera_stream(camera_id)
         try:
             while not stop_event.is_set():
-                # Read the newest frame for detection purposes. cap.read()
-                # returns the most recent frame, discarding any stale ones,
-                # which is fine for an ~1 FPS tracker.
-                det_read = cap.grab()
-                if not det_read:
+                # Own decoder; grab/retrieve the freshest frame available.
+                if not det_cap.grab():
                     time.sleep(0.1)
                     continue
-                ret, det_frame = cap.retrieve()
+                ret, det_frame = det_cap.retrieve()
                 if not ret or det_frame is None:
                     time.sleep(0.1)
                     continue
@@ -455,6 +458,9 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
                     latest_tracked.update(tracked)
         except Exception as e:
             logger.error("tracked detection thread ended: %s", e)
+        finally:
+            if det_cap is not None:
+                det_cap.release()
 
     thr = threading.Thread(target=detection_loop, daemon=True)
     thr.start()
@@ -465,10 +471,10 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
                 # Fast-forward: drop the frames queued during the last
                 # inference so playback stays current, then grab one frame
                 # and draw the latest tracking overlay on it.
-                ok = cap.grab()
+                ok = display_cap.grab()
                 if not ok:
                     break
-                ret, frame = cap.retrieve()
+                ret, frame = display_cap.retrieve()
                 if not ret or frame is None:
                     break
 
@@ -483,8 +489,8 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
                 time.sleep(0.03)
         finally:
             stop_event.set()
-            thr.join(timeout=1.0)
-            cap.release()
+            thr.join(timeout=2.0)
+            display_cap.release()
 
     return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
 
