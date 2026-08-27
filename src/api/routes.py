@@ -518,8 +518,11 @@ async def stream_camera_tracked(
                     det_frame = None if snap is None else snap.copy()
 
                 if det_frame is None:
+                    logger.warning("DBG detect: latest_frame is None, skipping")
                     time.sleep(0.1)
                     continue
+
+                logger.warning("DBG detect: frame shape=%s", det_frame.shape)
 
                 detections = []
                 try:
@@ -538,6 +541,7 @@ async def stream_camera_tracked(
                     continue
 
                 tracked = tracker.update(detections)
+                logger.warning("DBG detect: ndet=%d ntracks=%d", len(detections), len(tracked))
                 with latest_lock:
                     latest_tracked.clear()
                     latest_tracked.update(tracked)
