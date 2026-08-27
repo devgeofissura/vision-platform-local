@@ -493,14 +493,12 @@ async def stream_camera_tracked(
 
     def detection_loop():
         nonlocal det_cap
-        # Detection decodes a fixed small frame (ONNX re-letterboxes to 640
-        # anyway), cutting the per-inference decode/copy cost further.
-        det_w, det_h = 640, 360
-        # Scale factors from the (smaller) detection frame to the display
-        # frame, so bboxes can be mapped back correctly before drawing.
-        sx = out_w / det_w
-        sy = out_h / det_h
-        det_cap = _open_camera_stream(camera_id, decoding_res=(det_w, det_h))
+        # Detection decodes via FFmpeg. NOTE: the Pi's OpenCV/FFmpeg build
+        # IGNORES CAP_PROP_FRAME_WIDTH/HEIGHT and always returns the full
+        # camera frame (1080p), so we must not rely on a fixed decode size.
+        # We detect on the real frame and scale bboxes from the REAL frame
+        # dimensions to the display resolution each cycle.
+        det_cap = _open_camera_stream(camera_id)
         last = 0.0
         try:
             while not stop_event.is_set():
@@ -521,12 +519,16 @@ async def stream_camera_tracked(
                     time.sleep(0.1)
                     continue
 
+                fh, fw = det_frame.shape[:2]
+                # Scale from the actual detection frame to the display frame.
+                sx = out_w / fw if fw else 1.0
+                sy = out_h / fh if fh else 1.0
+
                 detections = []
                 try:
                     for result in detector.detect(det_frame):
                         bbox = result.result_data.get("bbox")
                         if bbox:
-                            # Map bbox from detection coords to display coords.
                             x, y, w, h = bbox[:4]
                             scaled = [x * sx, y * sy, w * sx, h * sy]
                             detections.append({
