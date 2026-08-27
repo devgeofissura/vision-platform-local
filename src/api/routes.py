@@ -314,16 +314,12 @@ async def debug_camera(camera_id: str, x_api_token: str = Header(None)):
     }
 
 
-@router.get("/api/v1/stream/{camera_id}")
-async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: str = Header(None)):
-    api_token = token or x_api_token
-    if api_token != settings.local_api_token:
-        raise HTTPException(status_code=401, detail="Invalid token")
+def _open_camera_stream(camera_id: str):
+    """Validate token+device, build RTSP URL, open VideoCapture.
 
-    import time
-
+    Raises HTTPException on error; returns an opened cv2.VideoCapture.
+    """
     import cv2
-    from fastapi.responses import StreamingResponse
 
     db = SessionLocal()
     try:
@@ -352,6 +348,21 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
 
     if not cap.isOpened():
         raise HTTPException(status_code=503, detail="Cannot connect to camera")
+    return cap
+
+
+@router.get("/api/v1/stream/{camera_id}")
+async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: str = Header(None)):
+    api_token = token or x_api_token
+    if api_token != settings.local_api_token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    import time
+
+    import cv2
+    from fastapi.responses import StreamingResponse
+
+    cap = _open_camera_stream(camera_id)
 
     def generate():
         try:
@@ -363,6 +374,61 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
                 yield (b"--frame\r\n"
                        b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
                 time.sleep(0.05)
+        finally:
+            cap.release()
+
+    return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@router.get("/api/v1/stream/{camera_id}/tracked")
+async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_token: str = Header(None)):
+    """Live MJPEG stream with real-time person detection + tracking overlay.
+
+    Each person is enclosed in a colored bounding box (distinct color per
+    track) and a running count is drawn at the bottom of the frame.
+    """
+    api_token = token or x_api_token
+    if api_token != settings.local_api_token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    import time
+
+    import cv2
+    from fastapi.responses import StreamingResponse
+
+    from src.vision.person_detector import PersonDetector
+    from src.vision.person_tracker import CentroidTracker
+
+    cap = _open_camera_stream(camera_id)
+
+    detector = PersonDetector({"conf": 0.4})
+    tracker = CentroidTracker(max_disappeared=12, max_distance=150.0, min_iou=0.1)
+
+    def generate():
+        try:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                try:
+                    detections = []
+                    for result in detector.detect(frame):
+                        bbox = result.result_data.get("bbox")
+                        if bbox:
+                            detections.append({
+                                "bbox": bbox,
+                                "confidence": result.confidence,
+                            })
+                    tracked = tracker.update(detections)
+                    processed = tracker.draw(frame, tracked)
+                except Exception:
+                    processed = frame
+
+                _, jpeg = cv2.imencode(".jpg", processed, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                yield (b"--frame\r\n"
+                       b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
+                time.sleep(0.01)
         finally:
             cap.release()
 

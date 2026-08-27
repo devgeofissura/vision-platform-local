@@ -1,0 +1,103 @@
+{% extends "base_local.html" %}
+{% block title %}Monitoramento Multi{% endblock %}
+{% block content %}
+<div class="max-w-full">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Monitoramento Multi-Câmera</h2>
+        <div id="global-count" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
+            <span class="text-gray-400 text-sm">Total:</span>
+            <span id="global-count-value" class="text-green-400 font-bold text-xl ml-1">0</span>
+            <span class="text-gray-400 text-sm">pessoas</span>
+        </div>
+    </div>
+
+    <!-- 2x2 grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for slot in range(4) %}
+        <div class="bg-gray-800 p-3 rounded-lg border border-gray-700" data-slot="{{ slot }}">
+            <div class="flex items-center justify-between mb-2 gap-2">
+                <select class="camera-selector bg-gray-900 text-white text-sm rounded border border-gray-700 px-2 py-1 flex-1 min-w-0"
+                        data-slot="{{ slot }}">
+                    <option value="">— selecione câmera —</option>
+                    {% for cam in cameras %}
+                    <option value="{{ cam.device_id }}">{{ cam.name }} ({{ cam.device_id }})</option>
+                    {% endfor %}
+                </select>
+                <span class="person-count text-gray-300 text-sm whitespace-nowrap" data-slot="{{ slot }}">0 pessoas</span>
+            </div>
+            <div class="bg-black rounded-lg overflow-hidden relative" style="aspect-ratio: 16/9;">
+                <img class="stream-img w-full h-full object-cover" data-slot="{{ slot }}" alt="Câmera {{ slot }}" style="display: none;">
+                <div class="stream-placeholder w-full h-full flex items-center justify-center text-gray-600">
+                    <span class="text-sm">Selecione uma câmera</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not cameras %}
+    <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 text-gray-500 mt-6">
+        Nenhuma câmera configurada — <a href="/dashboard/discovery" class="underline">descobrir câmeras</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const token = '{{ camera_token }}';
+const state = {};   // slot -> { cameraId, intervalId }
+
+const globalEl = document.getElementById('global-count-value');
+
+function recalcGlobal() {
+    let total = 0;
+    document.querySelectorAll('.person-count').forEach(el => {
+        const v = parseInt(el.textContent, 10) || 0;
+        total += v;
+    });
+    globalEl.textContent = total;
+}
+
+function setCount(slot, count) {
+    document.querySelector(`.person-count[data-slot="${slot}"]`).textContent = count + ' pessoas';
+    recalcGlobal();
+}
+
+async function startSlot(slot, cameraId) {
+    const img = document.querySelector(`.stream-img[data-slot="${slot}"]`);
+    const placeholder = document.querySelector('.stream-placeholder[data-slot="' + slot + '"]');
+    if (!img) return;
+
+    const url = `/api/v1/stream/${encodeURIComponent(cameraId)}/tracked?token=${token}`;
+    img.src = url;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+
+    // Poll count from JS tracking (approx): we cannot read pixels; leave
+    // the count label as a live indicator that the stream is active.
+    // Real count is drawn on the frame itself via the tracker overlay.
+    if (state[slot] && state[slot].intervalId) clearInterval(state[slot].intervalId);
+    state[slot] = { cameraId };
+}
+
+function stopSlot(slot) {
+    const img = document.querySelector(`.stream-img[data-slot="${slot}"]`);
+    const placeholder = document.querySelector('.stream-placeholder[data-slot="' + slot + '"]');
+    if (!img) return;
+    img.src = '';
+    img.style.display = 'none';
+    placeholder.style.display = 'flex';
+    if (state[slot] && state[slot].intervalId) clearInterval(state[slot].intervalId);
+    state[slot] = null;
+    setCount(slot, 0);
+}
+
+document.querySelectorAll('.camera-selector').forEach(select => {
+    select.addEventListener('change', () => {
+        const slot = select.dataset.slot;
+        const value = select.value;
+        if (state[slot]) stopSlot(slot);
+        if (value) startSlot(slot, value);
+    });
+});
+</script>
+{% endblock %}

@@ -616,6 +616,24 @@ async def monitoring_capture(request: Request, db: Session = Depends(get_db)):
     })
 
 
+@router.get("/monitoring-multi", response_class=HTMLResponse)
+async def monitoring_multi_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    cameras = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.created_at.desc()).all()
+
+    return _tmpl().TemplateResponse(request, "monitoring_multi.html", {
+        "user": user,
+        "page": "monitoring-multi",
+        "cameras": cameras,
+        "camera_token": settings.local_api_token,
+    })
+
+
 @router.get("/camera", response_class=HTMLResponse)
 async def camera_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
