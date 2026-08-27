@@ -472,14 +472,17 @@ async def stream_camera_tracked(
     out_w, out_h = _parse_resolution(res)
     det_interval = 1.0 / max(det_fps, 0.05) if det_fps > 0 else float("inf")
 
-    # Decode the RTSP feed directly at/near the target size. This cuts real
-    # FFmpeg decode cost — the main bottleneck on the Orange Pi — instead of
-    # decoding full 1080p and downscaling afterward.
+    # The camera saturates when two RTSP connections (display + detection)
+    # are open at once, so we use a SINGLE VideoCapture for the stream and
+    # share the latest decoded frame with the detection thread. Because
+    # cv2.VideoCapture (FFmpeg) is not thread-safe, only `generate()` touches
+    # the cap; the detection thread only reads a protected snapshot.
     #
-    # Two SEPARATE decoders: cv2.VideoCapture (FFmpeg) is not thread-safe,
-    # so each thread must own its own VideoCapture to avoid
-    # `async_lock failed` SIGABRT crashes when two threads read the same cap.
-    display_cap = _open_camera_stream(camera_id, decoding_res=(out_w, out_h))
+    # NOTE: the Pi's OpenCV/FFmpeg build IGNORES CAP_PROP_FRAME_WIDTH/HEIGHT
+    # and always returns full 1080p, so we decode at full res and resize in
+    # `generate()`, then detect on the resized display frame (which keeps
+    # bboxes aligned without any extra coordinate mapping).
+    display_cap = _open_camera_stream(camera_id)
 
     detector = PersonDetector({"conf": 0.4})
     tracker = CentroidTracker(max_disappeared=12, max_distance=150.0, min_iou=0.1)
@@ -488,17 +491,15 @@ async def stream_camera_tracked(
     # detection thread; consumed by the streaming loop to draw the overlay.
     latest_tracked: dict = {}
     latest_lock = threading.Lock()
+
+    # Snapshot of the most recent display frame published by `generate()` and
+    # consumed by the detection thread.
+    frame_lock = threading.Lock()
+    latest_frame: object = None
+
     stop_event = threading.Event()
-    det_cap = None
 
     def detection_loop():
-        nonlocal det_cap
-        # Detection decodes via FFmpeg. NOTE: the Pi's OpenCV/FFmpeg build
-        # IGNORES CAP_PROP_FRAME_WIDTH/HEIGHT and always returns the full
-        # camera frame (1080p), so we must not rely on a fixed decode size.
-        # We detect on the real frame and scale bboxes from the REAL frame
-        # dimensions to the display resolution each cycle.
-        det_cap = _open_camera_stream(camera_id)
         last = 0.0
         try:
             while not stop_event.is_set():
@@ -510,29 +511,23 @@ async def stream_camera_tracked(
                     continue
                 last = now
 
-                # Own decoder; grab/retrieve the freshest frame available.
-                if not det_cap.grab():
-                    time.sleep(0.1)
-                    continue
-                ret, det_frame = det_cap.retrieve()
-                if not ret or det_frame is None:
-                    time.sleep(0.1)
-                    continue
+                with frame_lock:
+                    snap = latest_frame
+                    det_frame = None if snap is None else snap.copy()
 
-                fh, fw = det_frame.shape[:2]
-                # Scale from the actual detection frame to the display frame.
-                sx = out_w / fw if fw else 1.0
-                sy = out_h / fh if fh else 1.0
+                if det_frame is None:
+                    time.sleep(0.1)
+                    continue
 
                 detections = []
                 try:
                     for result in detector.detect(det_frame):
                         bbox = result.result_data.get("bbox")
                         if bbox:
-                            x, y, w, h = bbox[:4]
-                            scaled = [x * sx, y * sy, w * sx, h * sy]
+                            # Bbox is in display-frame coordinates because we
+                            # detect on the display-resolution snapshot.
                             detections.append({
-                                "bbox": scaled,
+                                "bbox": list(bbox[:4]),
                                 "confidence": result.confidence,
                             })
                 except Exception as e:
@@ -546,14 +541,12 @@ async def stream_camera_tracked(
                     latest_tracked.update(tracked)
         except Exception as e:
             logger.error("tracked detection thread ended: %s", e)
-        finally:
-            if det_cap is not None:
-                det_cap.release()
 
     thr = threading.Thread(target=detection_loop, daemon=True)
     thr.start()
 
     def generate():
+        nonlocal latest_frame
         try:
             while True:
                 # Fast-forward: drop the frames queued during the last
@@ -565,13 +558,16 @@ async def stream_camera_tracked(
                 if not ret or frame is None:
                     break
 
-                # Bboxes are computed in display coordinates (out_w x out_h),
-                # so bring the raw frame to that size BEFORE drawing to keep
-                # boxes aligned even if the decoder ignored the scaling prop.
+                # The Pi decoder ignores the scaling prop and returns full
+                # 1080p; resize to the display resolution here. Detection runs
+                # on this resized snapshot, so boxes stay aligned.
                 if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
                     frame = cv2.resize(
                         frame, (out_w, out_h), interpolation=cv2.INTER_AREA
                     )
+
+                with frame_lock:
+                    latest_frame = frame
 
                 with latest_lock:
                     tracked = dict(latest_tracked)
