@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from datetime import UTC, datetime
@@ -12,6 +13,8 @@ from src.config.settings import settings
 from src.storage.database import SessionLocal, get_db
 from src.storage.delivery_queue import process_delivery_queue
 from src.storage.models import Device, Observation, ProcessingResult, SensorReading, ZoneConfig
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -386,11 +389,18 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
 
     Each person is enclosed in a colored bounding box (distinct color per
     track) and a running count is drawn at the bottom of the frame.
+
+    Detection runs on a background thread (ONNX ~1s/frame on edge); the
+    streaming loop consumes RTSP frames in order (fast-forwarding over the
+    backlog accumulated during inference) and draws the latest tracking
+    result onto them, so the video stays fluid instead of stalling on each
+    slow inference.
     """
     api_token = token or x_api_token
     if api_token != settings.local_api_token:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    import threading
     import time
 
     import cv2
@@ -404,32 +414,76 @@ async def stream_camera_tracked(camera_id: str, token: str = Query(None), x_api_
     detector = PersonDetector({"conf": 0.4})
     tracker = CentroidTracker(max_disappeared=12, max_distance=150.0, min_iou=0.1)
 
-    def generate():
-        try:
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
+    # Latest tracking state (bboxes+colors per track) published by the
+    # detection thread; consumed by the streaming loop to draw the overlay.
+    latest_tracked: dict = {}
+    latest_lock = threading.Lock()
+    stop_event = threading.Event()
 
+    def detection_loop():
+        try:
+            while not stop_event.is_set():
+                # Read the newest frame for detection purposes. cap.read()
+                # returns the most recent frame, discarding any stale ones,
+                # which is fine for an ~1 FPS tracker.
+                det_read = cap.grab()
+                if not det_read:
+                    time.sleep(0.1)
+                    continue
+                ret, det_frame = cap.retrieve()
+                if not ret or det_frame is None:
+                    time.sleep(0.1)
+                    continue
+
+                detections = []
                 try:
-                    detections = []
-                    for result in detector.detect(frame):
+                    for result in detector.detect(det_frame):
                         bbox = result.result_data.get("bbox")
                         if bbox:
                             detections.append({
                                 "bbox": bbox,
                                 "confidence": result.confidence,
                             })
-                    tracked = tracker.update(detections)
-                    processed = tracker.draw(frame, tracked)
-                except Exception:
-                    processed = frame
+                except Exception as e:
+                    logger.error("tracked detect error: %s", e)
+                    time.sleep(0.2)
+                    continue
+
+                tracked = tracker.update(detections)
+                with latest_lock:
+                    latest_tracked.clear()
+                    latest_tracked.update(tracked)
+        except Exception as e:
+            logger.error("tracked detection thread ended: %s", e)
+
+    thr = threading.Thread(target=detection_loop, daemon=True)
+    thr.start()
+
+    def generate():
+        try:
+            while True:
+                # Fast-forward: drop the frames queued during the last
+                # inference so playback stays current, then grab one frame
+                # and draw the latest tracking overlay on it.
+                ok = cap.grab()
+                if not ok:
+                    break
+                ret, frame = cap.retrieve()
+                if not ret or frame is None:
+                    break
+
+                with latest_lock:
+                    tracked = dict(latest_tracked)
+
+                processed = tracker.draw(frame, tracked)
 
                 _, jpeg = cv2.imencode(".jpg", processed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 yield (b"--frame\r\n"
                        b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
-                time.sleep(0.01)
+                time.sleep(0.03)
         finally:
+            stop_event.set()
+            thr.join(timeout=1.0)
             cap.release()
 
     return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
