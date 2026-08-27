@@ -221,3 +221,8 @@ __marimo__/
 models/
 *.pt
 
+# Deploy setup state (contem SUDO_PASS; nunca committar)
+.setup_state
+deploy/.setup_done
+deploy/.setup_state
+
