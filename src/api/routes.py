@@ -478,10 +478,11 @@ async def stream_camera_tracked(
     # cv2.VideoCapture (FFmpeg) is not thread-safe, only `generate()` touches
     # the cap; the detection thread only reads a protected snapshot.
     #
-    # NOTE: the Pi's OpenCV/FFmpeg build IGNORES CAP_PROP_FRAME_WIDTH/HEIGHT
-    # and always returns full 1080p, so we decode at full res and resize in
-    # `generate()`, then detect on the resized display frame (which keeps
-    # bboxes aligned without any extra coordinate mapping).
+    # IMPORTANT: the Pi's OpenCV/FFmpeg build IGNORES CAP_PROP_FRAME_WIDTH/
+    # HEIGHT and always returns the full native frame (1080p). We detect and
+    # draw on that NATIVE frame (so small/distant people stay detectable) and
+    # downscale only at the very end to the output resolution. Detection and
+    # drawing share the native coordinate space, so boxes stay aligned.
     display_cap = _open_camera_stream(camera_id)
 
     detector = PersonDetector({"conf": 0.4})
@@ -489,10 +490,11 @@ async def stream_camera_tracked(
 
     # Latest tracking state (bboxes+colors per track) published by the
     # detection thread; consumed by the streaming loop to draw the overlay.
+    # Bboxes are in NATIVE-frame coordinates.
     latest_tracked: dict = {}
     latest_lock = threading.Lock()
 
-    # Snapshot of the most recent display frame published by `generate()` and
+    # Snapshot of the most recent native frame published by `generate()` and
     # consumed by the detection thread.
     frame_lock = threading.Lock()
     latest_frame: object = None
@@ -524,8 +526,8 @@ async def stream_camera_tracked(
                     for result in detector.detect(det_frame):
                         bbox = result.result_data.get("bbox")
                         if bbox:
-                            # Bbox is in display-frame coordinates because we
-                            # detect on the display-resolution snapshot.
+                            # Keep bbox in native-frame coordinates; the
+                            # streaming loop scales it to the output size.
                             detections.append({
                                 "bbox": list(bbox[:4]),
                                 "confidence": result.confidence,
@@ -558,19 +560,33 @@ async def stream_camera_tracked(
                 if not ret or frame is None:
                     break
 
-                # The Pi decoder ignores the scaling prop and returns full
-                # 1080p; resize to the display resolution here. Detection runs
-                # on this resized snapshot, so boxes stay aligned.
+                native_h, native_w = frame.shape[:2]
+                # Publish the NATIVE frame for detection (full res keeps small
+                # or distant people detectable regardless of display size).
+                with frame_lock:
+                    latest_frame = frame
+
+                # Scale bboxes from native coords to display coords, then draw
+                # on the display-size frame (cheap resize, done after overlay
+                # position is computed).
+                sx = out_w / native_w if native_w else 1.0
+                sy = out_h / native_h if native_h else 1.0
+
+                with latest_lock:
+                    tracked = {
+                        tid: dict(info)
+                        for tid, info in latest_tracked.items()
+                    }
+                for info in tracked.values():
+                    bbox = info.get("bbox")
+                    if bbox and len(bbox) >= 4:
+                        info["bbox"] = [bbox[0] * sx, bbox[1] * sy,
+                                        bbox[2] * sx, bbox[3] * sy]
+
                 if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
                     frame = cv2.resize(
                         frame, (out_w, out_h), interpolation=cv2.INTER_AREA
                     )
-
-                with frame_lock:
-                    latest_frame = frame
-
-                with latest_lock:
-                    tracked = dict(latest_tracked)
 
                 processed = tracker.draw(frame, tracked)
 
