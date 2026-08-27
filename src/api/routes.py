@@ -495,7 +495,12 @@ async def stream_camera_tracked(
         nonlocal det_cap
         # Detection decodes a fixed small frame (ONNX re-letterboxes to 640
         # anyway), cutting the per-inference decode/copy cost further.
-        det_cap = _open_camera_stream(camera_id, decoding_res=(640, 360))
+        det_w, det_h = 640, 360
+        # Scale factors from the (smaller) detection frame to the display
+        # frame, so bboxes can be mapped back correctly before drawing.
+        sx = out_w / det_w
+        sy = out_h / det_h
+        det_cap = _open_camera_stream(camera_id, decoding_res=(det_w, det_h))
         last = 0.0
         try:
             while not stop_event.is_set():
@@ -521,8 +526,11 @@ async def stream_camera_tracked(
                     for result in detector.detect(det_frame):
                         bbox = result.result_data.get("bbox")
                         if bbox:
+                            # Map bbox from detection coords to display coords.
+                            x, y, w, h = bbox[:4]
+                            scaled = [x * sx, y * sy, w * sx, h * sy]
                             detections.append({
-                                "bbox": bbox,
+                                "bbox": scaled,
                                 "confidence": result.confidence,
                             })
                 except Exception as e:
@@ -547,8 +555,7 @@ async def stream_camera_tracked(
         try:
             while True:
                 # Fast-forward: drop the frames queued during the last
-                # inference so playback stays current, then grab one frame
-                # and draw the latest tracking overlay on it.
+                # inference so playback stays current, then grab one frame.
                 ok = display_cap.grab()
                 if not ok:
                     break
@@ -556,18 +563,18 @@ async def stream_camera_tracked(
                 if not ret or frame is None:
                     break
 
+                # Bboxes are computed in display coordinates (out_w x out_h),
+                # so bring the raw frame to that size BEFORE drawing to keep
+                # boxes aligned even if the decoder ignored the scaling prop.
+                if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
+                    frame = cv2.resize(
+                        frame, (out_w, out_h), interpolation=cv2.INTER_AREA
+                    )
+
                 with latest_lock:
                     tracked = dict(latest_tracked)
 
                 processed = tracker.draw(frame, tracked)
-
-                # Downscale to the selected output resolution (cheap here,
-                # done after overlay drawing so boxes are positioned on the
-                # native frame).
-                if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
-                    processed = cv2.resize(
-                        processed, (out_w, out_h), interpolation=cv2.INTER_AREA
-                    )
 
                 _, jpeg = cv2.imencode(".jpg", processed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 yield (b"--frame\r\n"
