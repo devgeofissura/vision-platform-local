@@ -31,6 +31,12 @@
                     <option value="360p">360p</option>
                     <option value="720x540">720x540</option>
                 </select>
+                <select class="fps-selector bg-gray-900 text-white text-sm rounded border border-gray-700 px-2 py-1"
+                        data-slot="{{ slot }}" title="Taxa de detecção (menor = mais fluido)">
+                    <option value="0.5" selected>Detecção 0.5/s</option>
+                    <option value="1">Detecção 1/s</option>
+                    <option value="0.2">Detecção 0.2/s</option>
+                </select>
             </div>
             <div class="flex items-center justify-between mb-2">
                 <span class="text-xs text-gray-500" data-lbl="{{ slot }}">—</span>
@@ -55,7 +61,7 @@
 
 <script>
 const token = '{{ camera_token }}';
-const state = {};   // slot -> { cameraId, res, intervalId }
+const state = {};   // slot -> { cameraId, res, detFps, intervalId }
 
 const globalEl = document.getElementById('global-count-value');
 
@@ -78,26 +84,26 @@ function setLabel(slot, text) {
     if (el) el.textContent = text;
 }
 
-function streamUrl(cameraId, res) {
-    return `/api/v1/stream/${encodeURIComponent(cameraId)}/tracked?res=${encodeURIComponent(res)}&token=${token}`;
+function streamUrl(cameraId, res, detFps) {
+    return `/api/v1/stream/${encodeURIComponent(cameraId)}/tracked?res=${encodeURIComponent(res)}&det_fps=${encodeURIComponent(detFps)}&token=${token}`;
 }
 
-async function startSlot(slot, cameraId, res) {
+async function startSlot(slot, cameraId, res, detFps) {
     const img = document.querySelector(`.stream-img[data-slot="${slot}"]`);
     const placeholder = document.querySelector('.stream-placeholder[data-slot="' + slot + '"]');
     if (!img) return;
 
-    const url = streamUrl(cameraId, res);
+    const url = streamUrl(cameraId, res, detFps);
     img.src = url;
     img.style.display = 'block';
     placeholder.style.display = 'none';
-    setLabel(slot, cameraId + ' · ' + res);
+    setLabel(slot, cameraId + ' · ' + res + ' · det ' + detFps + '/s');
 
     // Poll count from JS tracking (approx): we cannot read pixels; leave
     // the count label as a live indicator that the stream is active.
     // Real count is drawn on the frame itself via the tracker overlay.
     if (state[slot] && state[slot].intervalId) clearInterval(state[slot].intervalId);
-    state[slot] = { cameraId, res };
+    state[slot] = { cameraId, res, detFps };
 }
 
 function stopSlot(slot) {
@@ -116,8 +122,15 @@ function stopSlot(slot) {
 function applySlot(slot) {
     const cameraId = document.querySelector(`.camera-selector[data-slot="${slot}"]`).value;
     const res = document.querySelector(`.res-selector[data-slot="${slot}"]`).value;
+    const detFps = document.querySelector(`.fps-selector[data-slot="${slot}"]`).value;
     if (state[slot]) stopSlot(slot);
-    if (cameraId) startSlot(slot, cameraId, res);
+    if (cameraId) startSlot(slot, cameraId, res, detFps);
+}
+
+function reloadOnChange(slot) {
+    // Reload the stream when any per-panel option changes while a camera
+    // is active; only the camera id needs to be present.
+    if (state[slot] && state[slot].cameraId) applySlot(slot);
 }
 
 document.querySelectorAll('.camera-selector').forEach(select => {
@@ -125,11 +138,11 @@ document.querySelectorAll('.camera-selector').forEach(select => {
 });
 
 document.querySelectorAll('.res-selector').forEach(select => {
-    select.addEventListener('change', () => {
-        const slot = select.dataset.slot;
-        // Reload stream with the new resolution when a camera is active.
-        if (state[slot] && state[slot].cameraId) applySlot(slot);
-    });
+    select.addEventListener('change', () => reloadOnChange(select.dataset.slot));
+});
+
+document.querySelectorAll('.fps-selector').forEach(select => {
+    select.addEventListener('change', () => reloadOnChange(select.dataset.slot));
 });
 </script>
 {% endblock %}

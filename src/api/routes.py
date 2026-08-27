@@ -433,6 +433,7 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
 async def stream_camera_tracked(
     camera_id: str,
     res: str = Query("1080p"),
+    det_fps: float = Query(0.5),
     token: str = Query(None),
     x_api_token: str = Header(None),
 ):
@@ -441,15 +442,19 @@ async def stream_camera_tracked(
     Each person is enclosed in a colored bounding box (distinct color per
     track) and a running count is drawn at the bottom of the frame.
 
-    Detection runs on a background thread (ONNX ~1s/frame on edge); the
-    streaming loop consumes RTSP frames in order (fast-forwarding over the
-    backlog accumulated during inference) and draws the latest tracking
-    result onto them, so the video stays fluid instead of stalling on each
-    slow inference.
+    Detection runs on a background thread; the streaming loop consumes RTSP
+    frames in order (fast-forwarding over the backlog accumulated during
+    inference) and draws the latest tracking result onto them, so the video
+    stays fluid instead of stalling on each slow inference.
 
     The `res` query param selects the output resolution: 1080p, 720p,
-    540p, 360p or 720x540 (any WxH). Lower resolutions reduce encode cost
-    for a higher streaming frame rate.
+    540p, 360p or 720x540 (any WxH). Lower resolutions reduce decode/encode
+    cost for a higher streaming frame rate.
+
+    The `det_fps` query param caps the ONNX inference rate (default 0.5 =>
+    one detection every 2s). Because inference is the heavy CPU consumer on
+    edge, throttling it frees processor time for fluid streaming; tracking
+    still interpolates between detections.
     """
     api_token = token or x_api_token
     if api_token != settings.local_api_token:
@@ -465,6 +470,7 @@ async def stream_camera_tracked(
     from src.vision.person_tracker import CentroidTracker
 
     out_w, out_h = _parse_resolution(res)
+    det_interval = 1.0 / max(det_fps, 0.05) if det_fps > 0 else float("inf")
 
     # Decode the RTSP feed directly at/near the target size. This cuts real
     # FFmpeg decode cost — the main bottleneck on the Orange Pi — instead of
@@ -487,9 +493,20 @@ async def stream_camera_tracked(
 
     def detection_loop():
         nonlocal det_cap
-        det_cap = _open_camera_stream(camera_id, decoding_res=(out_w, out_h))
+        # Detection decodes a fixed small frame (ONNX re-letterboxes to 640
+        # anyway), cutting the per-inference decode/copy cost further.
+        det_cap = _open_camera_stream(camera_id, decoding_res=(640, 360))
+        last = 0.0
         try:
             while not stop_event.is_set():
+                # Throttle inference to det_interval to spare CPU for the
+                # streaming loop on the resource-limited Orange Pi.
+                now = time.monotonic()
+                if now - last < det_interval:
+                    time.sleep(0.05)
+                    continue
+                last = now
+
                 # Own decoder; grab/retrieve the freshest frame available.
                 if not det_cap.grab():
                     time.sleep(0.1)
