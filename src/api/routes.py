@@ -448,44 +448,53 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
     return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 
-@router.get("/api/v1/stream/{camera_id}/tracked")
-async def stream_camera_tracked(
+LIVE_TASK_TYPES = ["person_tracking", "fabric_quality", "fissure", "ppe", "plate"]
+
+
+@router.get("/api/v1/stream/{camera_id}/vision")
+async def stream_camera_vision(
     camera_id: str,
+    task_type: str = Query("person_tracking"),
     res: str = Query("480p"),
     det_fps: float = Query(0.5),
     token: str = Query(None),
     x_api_token: str = Header(None),
 ):
-    """Live MJPEG stream with real-time person detection + tracking overlay.
+    """Live MJPEG stream running a selected computer-vision task.
 
-    Each person is enclosed in a colored bounding box (distinct color per
-    track) and a running count is drawn at the bottom of the frame.
+    Each slot picks its own ``task_type`` so a single page can, e.g., run
+    fabric defect detection on one camera while person tracking runs on
+    another. Available types: ``person_tracking`` (colored tracks + count),
+    ``fabric_quality``, ``fissure``, ``ppe`` and ``plate`` (typed bounding
+    boxes + severity/count overlay).
 
     Detection runs on a background thread; the streaming loop consumes RTSP
     frames in order (fast-forwarding over the backlog accumulated during
-    inference) and draws the latest tracking result onto them, so the video
-    stays fluid instead of stalling on each slow inference.
+    inference) and draws the latest result onto them, so the video stays
+    fluid instead of stalling on each slow inference.
 
     The preview consumes the low-res extra stream (`subtype=1`, ~704x480),
     which decodes ~3.7x faster than the main 1080p stream on the Orange Pi —
     this is what keeps the live view fluid. Evidence capture (CaptureWorker)
     keeps the full-res main stream. Detection and drawing share the native
     (sub) coordinate space; the `res` query param selects the final output
-    resolution (default 480p, the native sub size — keeps aspect ratio and
-    avoids a costly/upscaling resize).
+    resolution (default 480p, the native sub size).
 
     The `res` query param selects the output resolution: 1080p, 720p,
     540p, 480p, 360p or 720x540 (any WxH). Lower resolutions reduce
     decode/encode cost for a higher streaming frame rate.
 
-    The `det_fps` query param caps the ONNX inference rate (default 0.5 =>
-    one detection every 2s). Because inference is the heavy CPU consumer on
-    edge, throttling it frees processor time for fluid streaming; tracking
-    still interpolates between detections.
+    The `det_fps` query param caps the inference rate (default 0.5 => one
+    inference every 2s). Because inference is the heavy CPU consumer on edge,
+    throttling it frees processor time for fluid streaming; tracking still
+    interpolates between detections.
     """
     api_token = token or x_api_token
     if api_token != settings.local_api_token:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+    if task_type not in LIVE_TASK_TYPES:
+        raise HTTPException(status_code=400, detail=f"Unknown task_type: {task_type}")
 
     import threading
     import time
@@ -514,15 +523,23 @@ async def stream_camera_tracked(
     # native sub frame and downscale only at the very end to `res`.
     display_cap = _open_camera_stream(camera_id, force_stream_type="sub")
 
-    detector = PersonDetector({"conf": 0.4})
-    # max_distance starts at 0 (unset) and is scaled to the native frame
-    # width on the first detection, since detection is sparse (~2s apart).
-    tracker = CentroidTracker(max_disappeared=6, max_distance=0.0, min_iou=0.1, min_hits=2)
+    use_tracking = task_type == "person_tracking"
+    if use_tracking:
+        detector = PersonDetector({"conf": 0.4})
+        # max_distance starts at 0 (unset) and is scaled to the native frame
+        # width on the first detection, since detection is sparse (~2s apart).
+        tracker = CentroidTracker(max_disappeared=6, max_distance=0.0, min_iou=0.1, min_hits=2)
+    else:
+        from src.vision.pipeline import VisionPipeline
 
-    # Latest tracking state (bboxes+colors per track) published by the
-    # detection thread; consumed by the streaming loop to draw the overlay.
-    # Bboxes are in NATIVE-frame coordinates.
+        detector = VisionPipeline(task_type, {"conf": 0.3})
+
+    # Latest overlay state published by the detection thread and consumed by
+    # the streaming loop. For person_tracking it holds {track_id: {...}}; for
+    # detection tasks it holds a list of ProcessingResult. Bboxes are in
+    # NATIVE-frame coordinates.
     latest_tracked: dict = {}
+    latest_results: list = []
     latest_lock = threading.Lock()
 
     # Snapshot of the most recent native frame published by `generate()` and
@@ -536,22 +553,23 @@ async def stream_camera_tracked(
         last = 0.0
         prev_gray = None
         # Mean absolute pixel difference below which the scene is treated as
-        # static, so the expensive ONNX inference is skipped (motion gate).
+        # static, so the expensive inference is skipped (motion gate).
         # The camera is tripod-mounted; sensor noise sits well under this.
         motion_threshold = float(getattr(settings, "tracked_motion_threshold", 2.0))
         try:
             while not stop_event.is_set():
-                # Cheap: coast every tracked box forward one prediction step
-                # so the overlay moves smoothly between sparse detections.
-                # `predict` advances by real elapsed time (monotonic), so the
-                # throttled detector correcting afterward doesn't compound it.
-                tracker.predict()
-
-                # Publish the coasted state so the streaming loop draws the
-                # box flowing toward the *predicted* position, not a stale one.
-                with latest_lock:
-                    latest_tracked.clear()
-                    latest_tracked.update(tracker.snapshot())
+                if use_tracking:
+                    # Cheap: coast every tracked box forward one prediction
+                    # step so the overlay flows between sparse detections.
+                    # `predict` advances by real elapsed time (monotonic), so
+                    # the throttled detector correcting afterward doesn't
+                    # compound it.
+                    tracker.predict()
+                    # Publish coasted state so the stream draws the box flowing
+                    # toward the *predicted* position, not a stale one.
+                    with latest_lock:
+                        latest_tracked.clear()
+                        latest_tracked.update(tracker.snapshot())
 
                 now = time.monotonic()
                 if now - last < det_interval:
@@ -574,14 +592,13 @@ async def stream_camera_tracked(
                 # covers a jump big enough that the new box no longer touches
                 # the previous one (e.g. the subject briefly stepped out of
                 # the frame region).
-                if not tracker.max_distance:
+                if use_tracking and not tracker.max_distance:
                     h, w = det_frame.shape[:2]
                     tracker.max_distance = 0.4 * w
 
-                # Motion gate: skip ONNX on a static scene (e.g. an empty
-                # slab being watched for cracks). A changed-pixel mean below
-                # the threshold means nothing moved, so the last tracked state
-                # carries the frame and no inference is spent.
+                # Motion gate: skip inference on a static scene. A changed-
+                # pixel mean below the threshold means nothing moved, so the
+                # last overlay carries the frame and no inference is spent.
                 gray = cv2.cvtColor(det_frame, cv2.COLOR_BGR2GRAY)
                 if prev_gray is not None:
                     diff = cv2.absdiff(gray, prev_gray)
@@ -589,28 +606,35 @@ async def stream_camera_tracked(
                         continue
                 prev_gray = gray
 
-                detections = []
                 try:
-                    for result in detector.detect(det_frame):
-                        bbox = result.result_data.get("bbox")
-                        if bbox:
-                            # Keep bbox in native-frame coordinates; the
-                            # streaming loop scales it to the output size.
-                            detections.append({
-                                "bbox": list(bbox[:4]),
-                                "confidence": result.confidence,
-                            })
+                    if use_tracking:
+                        detections = []
+                        for result in detector.detect(det_frame):
+                            bbox = result.result_data.get("bbox")
+                            if bbox:
+                                # Keep bbox in native-frame coordinates; the
+                                # streaming loop scales it to the output size.
+                                detections.append({
+                                    "bbox": list(bbox[:4]),
+                                    "confidence": result.confidence,
+                                })
+                        tracked = tracker.update(detections, det_frame)
+                        with latest_lock:
+                            latest_tracked.clear()
+                            latest_tracked.update(tracked)
+                    else:
+                        results = detector.process(det_frame)
+                        with latest_lock:
+                            latest_results[:] = [
+                                r for r in results
+                                if r.result_data and r.result_data.get("bbox")
+                            ]
                 except Exception as e:
-                    logger.error("tracked detect error: %s", e)
+                    logger.error("vision detect error: %s", e)
                     time.sleep(0.2)
                     continue
-
-                tracked = tracker.update(detections, det_frame)
-                with latest_lock:
-                    latest_tracked.clear()
-                    latest_tracked.update(tracked)
         except Exception as e:
-            logger.error("tracked detection thread ended: %s", e)
+            logger.error("vision detection thread ended: %s", e)
 
     thr = threading.Thread(target=detection_loop, daemon=True)
     thr.start()
@@ -640,23 +664,42 @@ async def stream_camera_tracked(
                 sx = out_w / native_w if native_w else 1.0
                 sy = out_h / native_h if native_h else 1.0
 
-                with latest_lock:
-                    tracked = {
-                        tid: dict(info)
-                        for tid, info in latest_tracked.items()
-                    }
-                for info in tracked.values():
-                    bbox = info.get("bbox")
-                    if bbox and len(bbox) >= 4:
-                        info["bbox"] = [bbox[0] * sx, bbox[1] * sy,
-                                        bbox[2] * sx, bbox[3] * sy]
+                if use_tracking:
+                    with latest_lock:
+                        tracked = {
+                            tid: dict(info)
+                            for tid, info in latest_tracked.items()
+                        }
+                    for info in tracked.values():
+                        bbox = info.get("bbox")
+                        if bbox and len(bbox) >= 4:
+                            info["bbox"] = [bbox[0] * sx, bbox[1] * sy,
+                                            bbox[2] * sx, bbox[3] * sy]
 
-                if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
-                    frame = cv2.resize(
-                        frame, (out_w, out_h), interpolation=cv2.INTER_AREA
-                    )
+                    if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
+                        frame = cv2.resize(
+                            frame, (out_w, out_h), interpolation=cv2.INTER_AREA
+                        )
+                    processed = tracker.draw(frame, tracked)
+                else:
+                    with latest_lock:
+                        det_results = [
+                            r for r in latest_results
+                        ]
+                    for r in det_results:
+                        bbox = r.result_data.get("bbox")
+                        if bbox and len(bbox) >= 4:
+                            r.result_data["bbox"] = [
+                                bbox[0] * sx, bbox[1] * sy,
+                                bbox[2] * sx, bbox[3] * sy,
+                            ]
 
-                processed = tracker.draw(frame, tracked)
+                    if (out_w, out_h) != (frame.shape[1], frame.shape[0]):
+                        frame = cv2.resize(
+                            frame, (out_w, out_h), interpolation=cv2.INTER_AREA
+                        )
+                    from src.vision.overlay import draw_detection_results
+                    processed = draw_detection_results(frame, det_results)
 
                 _, jpeg = cv2.imencode(".jpg", processed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 yield (b"--frame\r\n"
@@ -668,6 +711,25 @@ async def stream_camera_tracked(
             display_cap.release()
 
     return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@router.get("/api/v1/stream/{camera_id}/tracked")
+async def stream_camera_tracked(
+    camera_id: str,
+    res: str = Query("480p"),
+    det_fps: float = Query(0.5),
+    token: str = Query(None),
+    x_api_token: str = Header(None),
+):
+    """Backward-compatible alias for person tracking (/vision?task_type=person_tracking)."""
+    return await stream_camera_vision(
+        camera_id=camera_id,
+        task_type="person_tracking",
+        res=res,
+        det_fps=det_fps,
+        token=token,
+        x_api_token=x_api_token,
+    )
 
 
 @router.get("/api/v1/processing/results")

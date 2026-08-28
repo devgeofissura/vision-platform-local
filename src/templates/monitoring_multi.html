@@ -7,7 +7,7 @@
         <div id="global-count" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
             <span class="text-gray-400 text-sm">Total:</span>
             <span id="global-count-value" class="text-green-400 font-bold text-xl ml-1">0</span>
-            <span class="text-gray-400 text-sm">pessoas</span>
+            <span class="text-gray-400 text-sm">itens</span>
         </div>
     </div>
 
@@ -22,6 +22,14 @@
                     {% for cam in cameras %}
                     <option value="{{ cam.device_id }}">{{ cam.name }} ({{ cam.device_id }})</option>
                     {% endfor %}
+                </select>
+                <select class="vision-selector bg-gray-900 text-white text-sm rounded border border-gray-700 px-2 py-1"
+                        data-slot="{{ slot }}" title="Visão computacional">
+                    <option value="person_tracking">Pessoas</option>
+                    <option value="fabric_quality">Tecido</option>
+                    <option value="fissure">Fissura</option>
+                    <option value="ppe">EPI</option>
+                    <option value="plate">Placa</option>
                 </select>
                 <select class="res-selector bg-gray-900 text-white text-sm rounded border border-gray-700 px-2 py-1"
                         data-slot="{{ slot }}" title="Resolução">
@@ -62,7 +70,7 @@
 
 <script>
 const token = '{{ camera_token }}';
-const state = {};   // slot -> { cameraId, res, detFps, intervalId }
+const state = {};   // slot -> { cameraId, taskType, res, detFps, intervalId }
 
 const globalEl = document.getElementById('global-count-value');
 
@@ -76,7 +84,9 @@ function recalcGlobal() {
 }
 
 function setCount(slot, count) {
-    document.querySelector(`.person-count[data-slot="${slot}"]`).textContent = count + ' pessoas';
+    const s = state[slot];
+    const label = s && s.countNoun ? s.countNoun : 'itens';
+    document.querySelector(`.person-count[data-slot="${slot}"]`).textContent = count + ' ' + label;
     recalcGlobal();
 }
 
@@ -85,26 +95,38 @@ function setLabel(slot, text) {
     if (el) el.textContent = text;
 }
 
-function streamUrl(cameraId, res, detFps) {
-    return `/api/v1/stream/${encodeURIComponent(cameraId)}/tracked?res=${encodeURIComponent(res)}&det_fps=${encodeURIComponent(detFps)}&token=${token}`;
+function countNoun(taskType) {
+    if (taskType === 'person_tracking') return 'pessoas';
+    if (taskType === 'fabric_quality') return 'defeitos';
+    if (taskType === 'fissure') return 'fissuras';
+    if (taskType === 'ppe') return 'ocorrências';
+    if (taskType === 'plate') return 'placas';
+    return 'itens';
 }
 
-async function startSlot(slot, cameraId, res, detFps) {
+function streamUrl(cameraId, taskType, res, detFps) {
+    return `/api/v1/stream/${encodeURIComponent(cameraId)}/vision?task_type=${encodeURIComponent(taskType)}&res=${encodeURIComponent(res)}&det_fps=${encodeURIComponent(detFps)}&token=${token}`;
+}
+
+async function startSlot(slot, cameraId, taskType, res, detFps) {
     const img = document.querySelector(`.stream-img[data-slot="${slot}"]`);
     const placeholder = document.querySelector('.stream-placeholder[data-slot="' + slot + '"]');
     if (!img) return;
 
-    const url = streamUrl(cameraId, res, detFps);
+    const url = streamUrl(cameraId, taskType, res, detFps);
     img.src = url;
     img.style.display = 'block';
     placeholder.style.display = 'none';
-    setLabel(slot, cameraId + ' · ' + res + ' · det ' + detFps + '/s');
+    setLabel(slot, cameraId + ' · ' + taskType + ' · ' + res + ' · det ' + detFps + '/s');
 
     // Poll count from JS tracking (approx): we cannot read pixels; leave
     // the count label as a live indicator that the stream is active.
     // Real count is drawn on the frame itself via the tracker overlay.
     if (state[slot] && state[slot].intervalId) clearInterval(state[slot].intervalId);
-    state[slot] = { cameraId, res, detFps };
+    const noun = countNoun(taskType);
+    state[slot] = { cameraId, taskType, res, detFps, countNoun: noun };
+    const c = document.querySelector(`.person-count[data-slot="${slot}"]`);
+    if (c) c.textContent = '0 ' + noun;
 }
 
 function stopSlot(slot) {
@@ -122,10 +144,11 @@ function stopSlot(slot) {
 
 function applySlot(slot) {
     const cameraId = document.querySelector(`.camera-selector[data-slot="${slot}"]`).value;
+    const taskType = document.querySelector(`.vision-selector[data-slot="${slot}"]`).value;
     const res = document.querySelector(`.res-selector[data-slot="${slot}"]`).value;
     const detFps = document.querySelector(`.fps-selector[data-slot="${slot}"]`).value;
     if (state[slot]) stopSlot(slot);
-    if (cameraId) startSlot(slot, cameraId, res, detFps);
+    if (cameraId) startSlot(slot, cameraId, taskType, res, detFps);
 }
 
 function reloadOnChange(slot) {
@@ -136,6 +159,10 @@ function reloadOnChange(slot) {
 
 document.querySelectorAll('.camera-selector').forEach(select => {
     select.addEventListener('change', () => applySlot(select.dataset.slot));
+});
+
+document.querySelectorAll('.vision-selector').forEach(select => {
+    select.addEventListener('change', () => reloadOnChange(select.dataset.slot));
 });
 
 document.querySelectorAll('.res-selector').forEach(select => {

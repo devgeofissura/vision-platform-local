@@ -1,0 +1,330 @@
+{% extends "base_local.html" %}
+{% block title %}Tecido — Treinamento{% endblock %}
+{% block content %}
+<div class="max-w-7xl">
+    <h2 class="text-2xl font-bold mb-6">Treinamento de Detecção de Defeitos de Tecido</h2>
+
+    <!-- Camera selector -->
+    <div class="mb-6">
+        <label class="block text-sm text-gray-400 mb-2">Câmera</label>
+        <div class="flex flex-wrap gap-3">
+            {% for cam in cameras %}
+            <a href="/dashboard/fabric?camera={{ cam.device_id }}"
+               class="block bg-gray-800 p-3 rounded-lg border-2 transition hover:border-orange-500 {% if cam.device_id == selected_id %}border-orange-500{% else %}border-gray-700{% endif %}">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full {% if cam.is_active %}bg-green-400{% else %}bg-red-400{% endif %}"></span>
+                    <span class="text-white font-mono text-sm">{{ cam.device_id }}</span>
+                </div>
+                <p class="text-xs text-gray-400">{{ cam.name }}</p>
+            </a>
+            {% endfor %}
+            {% if not cameras %}
+            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 text-gray-500">
+                Nenhuma câmera configurada — <a href="/dashboard/discovery" class="underline">descobrir câmeras</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if selected_id %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        <!-- Left: Live stream + capture -->
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Stream ao Vivo (Detecção de Tecido) — {{ selected_id }}</h3>
+                <div class="flex gap-2">
+                    <button onclick="startStream()" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded">▶ Play</button>
+                    <button onclick="stopStream()" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded">⏹ Stop</button>
+                    <button id="btn-capture"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded"
+                            onclick="doCapture()">
+                        📸 Capturar
+                    </button>
+                </div>
+            </div>
+            <div class="bg-black rounded-lg overflow-hidden relative" style="min-height: 300px;">
+                <img id="live-stream" alt="Stream ao vivo" class="w-full" style="display: none;">
+                <div id="stream-placeholder" class="flex items-center justify-center h-72 text-gray-500">
+                    <div class="text-center">
+                        <p class="text-lg mb-2">Clique para iniciar</p>
+                        <button onclick="startStream()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg">
+                            ▶ Iniciar Monitoramento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Detect + annotate -->
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Detecção de Defeitos</h3>
+                <button id="btn-detect"
+                        class="bg-purple-600 hover:bg-purple-700 text-white text-sm py-1 px-3 rounded"
+                        onclick="doDetect()">
+                    🔍 Detectar
+                </button>
+            </div>
+
+            <div class="bg-black rounded-lg overflow-hidden mb-4" style="min-height: 300px;">
+                <img id="detect-image" alt="Imagem com defeitos" class="w-full" style="display: none;">
+                <div id="detect-placeholder" class="flex items-center justify-center h-72 text-gray-500">
+                    <p class="text-sm">Capture uma imagem e clique em "Detectar"</p>
+                </div>
+            </div>
+
+            <div id="detect-result" class="hidden bg-gray-700 p-3 rounded-lg mb-4 text-sm">
+                <p class="text-gray-300" id="detect-text"></p>
+            </div>
+
+            <!-- Annotate form -->
+            <form id="annotate-form" onsubmit="saveAnnotation(event)" class="border-t border-gray-700 pt-4">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3">Confirmar / Anotar Defeito</h4>
+                <input type="hidden" name="observation_id" id="ann-observation-id" value="">
+                <input type="hidden" name="camera_id" id="ann-camera-id" value="{{ selected_id }}">
+                <input type="hidden" name="bbox" id="ann-bbox" value="">
+                <input type="hidden" name="confidence" id="ann-confidence" value="">
+                <input type="hidden" name="image_width" id="ann-width" value="">
+                <input type="hidden" name="image_height" id="ann-height" value="">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Tipo de defeito</label>
+                        <select name="defect_type" id="ann-defect" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            {% for dt in defect_types %}
+                            <option value="{{ dt }}">{{ dt }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Severidade</label>
+                        <select name="severity" id="ann-severity" class="w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" id="btn-ann"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-semibold">
+                    💾 Salvar Anotação
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Annotations list -->
+    <div class="bg-gray-800 p-4 rounded-lg">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Anotações Confirmadas</h3>
+            <span class="text-gray-400 text-xs">{{ annotations|length }} registros</span>
+        </div>
+        {% if annotations %}
+        <div class="overflow-x-auto">
+            <table id="annotate-table" class="w-full text-left">
+                <thead>
+                    <tr class="text-xs text-gray-400 border-b border-gray-700">
+                        <th class="px-4 py-2">ID</th>
+                        <th class="px-4 py-2">Defeito</th>
+                        <th class="px-4 py-2">Severidade</th>
+                        <th class="px-4 py-2">BBox</th>
+                        <th class="px-4 py-2">Confiança</th>
+                        <th class="px-4 py-2">Câmera</th>
+                        <th class="px-4 py-2">Data</th>
+                        <th class="px-4 py-2"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ann in annotations %}
+                    <tr id="ann-{{ ann.annotation_id }}" class="border-t border-gray-700 hover:bg-gray-750">
+                        <td class="px-4 py-3 font-mono text-xs text-orange-400">{{ ann.annotation_id[:12] }}...</td>
+                        <td class="px-4 py-3">{{ ann.defect_type }}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded text-xs bg-yellow-900 text-yellow-300">{{ ann.severity }}</span>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs text-gray-400">{{ ann.bbox }}</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">{{ "%.2f"|format(ann.confidence) if ann.confidence else '-' }}</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">{{ ann.camera_id }}</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">{{ ann.created_at.strftime('%d/%m %H:%M') if ann.created_at else '-' }}</td>
+                        <td class="px-4 py-3">
+                            <button hx-delete="/dashboard/fabric/annotations/{{ ann.annotation_id }}"
+                                    hx-confirm="Excluir anotação?"
+                                    hx-target="#ann-{{ ann.annotation_id }}"
+                                    hx-swap="outerHTML"
+                                    class="text-red-400 hover:text-red-300 text-xs">Excluir</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-sm text-center py-4">Nenhuma anotação — capture, detecte e confirme defeitos para construir o dataset</p>
+        {% endif %}
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+let streamImg = null;
+let currentDetections = [];
+
+async function doCapture() {
+    const btn = document.getElementById('btn-capture');
+    const cameraId = '{{ selected_id }}';
+    console.log('[FABRIC-CAPTURE] Iniciando captura para', cameraId);
+    btn.disabled = true;
+    btn.textContent = '⏳ Capturando...';
+    btn.className = 'bg-yellow-600 text-white text-sm py-1 px-3 rounded';
+
+    const start = Date.now();
+    try {
+        const fd = new FormData();
+        fd.append('camera_id', cameraId);
+        const resp = await fetch('/dashboard/fabric/capture', { method: 'POST', body: fd });
+        const data = await resp.json();
+        console.log('[FABRIC-CAPTURE] Status:', resp.status, 'Tempo:', Date.now() - start, 'ms');
+
+        if (resp.ok && data.image_url) {
+            const detectImg = document.getElementById('detect-image');
+            const detectPlaceholder = document.getElementById('detect-placeholder');
+            detectImg.src = data.image_url + '?t=' + Date.now();
+            detectImg.style.display = 'block';
+            detectPlaceholder.style.display = 'none';
+
+            document.getElementById('ann-observation-id').value = data.observation_id || '';
+            document.getElementById('ann-width').value = data.width || '';
+            document.getElementById('ann-height').value = data.height || '';
+            currentDetections = [];
+        } else if (data.error) {
+            alert('Erro na captura: ' + data.error);
+        }
+    } catch (e) {
+        console.error('[FABRIC-CAPTURE] Exceção:', e.message);
+        alert('Erro de conexão: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📸 Capturar';
+        btn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded';
+    }
+}
+
+async function doDetect() {
+    const btn = document.getElementById('btn-detect');
+    const observationId = document.getElementById('ann-observation-id').value;
+    if (!observationId) {
+        alert('Capture uma imagem primeiro.');
+        return;
+    }
+
+    console.log('[FABRIC-DETECT] Detectando defeitos na observação', observationId);
+    btn.disabled = true;
+    btn.textContent = '⏳ Detectando...';
+    btn.className = 'bg-purple-500 text-white text-sm py-1 px-3 rounded';
+
+    try {
+        const fd = new FormData();
+        fd.append('observation_id', observationId);
+        const resp = await fetch('/dashboard/fabric/detect', { method: 'POST', body: fd });
+        const data = await resp.json();
+        console.log('[FABRIC-DETECT] Status:', resp.status);
+
+        if (resp.ok && data.overlay_image) {
+            const detectImg = document.getElementById('detect-image');
+            detectImg.src = 'data:image/jpeg;base64,' + data.overlay_image;
+            detectImg.style.display = 'block';
+            document.getElementById('detect-placeholder').style.display = 'none';
+
+            currentDetections = data.detections || [];
+            const resultDiv = document.getElementById('detect-result');
+            const resultText = document.getElementById('detect-text');
+            resultDiv.classList.remove('hidden');
+            const noun = currentDetections.length === 1 ? 'defeito encontrado' : 'defeitos encontrados';
+            resultText.textContent = currentDetections.length
+                ? `${currentDetections.length} ${noun} — clique em "Salvar" para anotar cada um`
+                : 'Nenhum defeito detectado — ajuste ou anote manualmente o tipo abaixo.';
+
+            // Prep: if exactly one detection, prefill the form for quick confirm.
+            if (currentDetections.length === 1) {
+                const d = currentDetections[0];
+                document.getElementById('ann-defect').value = d.defect_type || 'hole';
+                document.getElementById('ann-severity').value = d.severity || 'low';
+                document.getElementById('ann-bbox').value = JSON.stringify(d.bbox || []);
+                document.getElementById('ann-confidence').value = d.confidence != null ? d.confidence : '';
+            } else if (currentDetections.length > 0) {
+                const d = currentDetections[0];
+                document.getElementById('ann-defect').value = d.defect_type || 'hole';
+                document.getElementById('ann-severity').value = d.severity || 'low';
+            }
+        } else if (data.error) {
+            alert('Erro na detecção: ' + data.error);
+        }
+    } catch (e) {
+        console.error('[FABRIC-DETECT] Exceção:', e.message);
+        alert('Erro de conexão: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Detectar';
+        btn.className = 'bg-purple-600 hover:bg-purple-700 text-white text-sm py-1 px-3 rounded';
+    }
+}
+
+async function saveAnnotation(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-ann');
+    const form = document.getElementById('annotate-form');
+    const fd = new FormData(form);
+
+    if (!fd.get('observation_id')) {
+        alert('Capture e detecte uma imagem antes de salvar.');
+        return;
+    }
+
+    console.log('[FABRIC-ANN] Salvando anotação...');
+    btn.disabled = true;
+    btn.textContent = '⏳ Salvando...';
+
+    try {
+        const resp = await fetch('/dashboard/fabric/annotations', { method: 'POST', body: fd });
+        const html = await resp.text();
+        console.log('[FABRIC-ANN] Status:', resp.status);
+        if (resp.ok && html.includes('<tr')) {
+            const tbody = document.querySelector('#annotate-table tbody');
+            if (tbody) tbody.insertAdjacentHTML('afterbegin', html);
+            form.reset();
+            document.getElementById('ann-observation-id').value = '';
+            document.getElementById('ann-camera-id').value = '{{ selected_id }}';
+            document.getElementById('ann-bbox').value = '';
+        } else {
+            alert('Erro ao salvar anotação: ' + html);
+        }
+    } catch (err) {
+        console.error('[FABRIC-ANN] Exceção:', err.message);
+        alert('Erro de conexão: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Salvar Anotação';
+    }
+}
+
+function startStream() {
+    const img = document.getElementById('live-stream');
+    const placeholder = document.getElementById('stream-placeholder');
+    const cameraId = '{{ selected_id }}';
+    img.src = '/api/v1/stream/' + encodeURIComponent(cameraId) + '/vision?task_type=fabric_quality&res=480p&det_fps=0.5&token={{ camera_token }}';
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    streamImg = img;
+}
+
+function stopStream() {
+    if (streamImg) {
+        streamImg.src = '';
+        streamImg.style.display = 'none';
+    }
+    document.getElementById('stream-placeholder').style.display = 'flex';
+}
+</script>
+{% endblock %}

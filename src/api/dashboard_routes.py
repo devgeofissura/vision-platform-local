@@ -7,7 +7,7 @@ from pathlib import Path
 
 import psutil
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from src.auth.dependencies import get_current_user
@@ -22,6 +22,7 @@ from src.storage.models import (
     CrackReference,
     DeliveryLog,
     Device,
+    FabricAnnotation,
     Observation,
     ProcessingResult,
     SensorReading,
@@ -1046,7 +1047,7 @@ async def crack_training_page(request: Request, db: Session = Depends(get_db)):
 async def crack_capture(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
-        return {"error": "unauthorized"}, 401
+        return JSONResponse(status_code=401, content={"error": "unauthorized"})
 
     form = await request.form()
     camera_id = form.get("camera_id")
@@ -1065,9 +1066,9 @@ async def crack_capture(request: Request, db: Session = Depends(get_db)):
 
     result, error = await asyncio.to_thread(_do_capture)
     if result is None and error is None:
-        return {"error": "Câmera não disponível ou falha na captura"}, 500
+        return JSONResponse(status_code=500, content={"error": "Câmera não disponível ou falha na captura"})
     if error:
-        return {"error": error}, 500
+        return JSONResponse(status_code=500, content={"error": error})
 
     latest_image_url = None
     if result and result.get("file_path"):
@@ -1092,14 +1093,14 @@ async def crack_capture(request: Request, db: Session = Depends(get_db)):
 async def crack_process(request: Request, db: Session = Depends(get_db)):
     user, redirect = _require(request)
     if redirect:
-        return {"error": "unauthorized"}, 401
+        return JSONResponse(status_code=401, content={"error": "unauthorized"})
 
     form = await request.form()
     observation_id = form.get("observation_id")
 
     obs = db.query(Observation).filter(Observation.observation_id == observation_id).first()
     if not obs or not obs.file_path:
-        return {"error": "observation not found"}, 404
+        return JSONResponse(status_code=404, content={"error": "observation not found"})
 
     import base64
     import traceback
@@ -1111,7 +1112,7 @@ async def crack_process(request: Request, db: Session = Depends(get_db)):
     try:
         frame = cv2.imread(obs.file_path)
         if frame is None:
-            return {"error": "cannot read image"}, 400
+            return JSONResponse(status_code=400, content={"error": "cannot read image"})
 
         processor = CrackLabelProcessor()
         analysis = processor.process(frame)
@@ -1129,7 +1130,7 @@ async def crack_process(request: Request, db: Session = Depends(get_db)):
         }
     except Exception as exc:
         logger.error("crack/process error: %s\n%s", exc, traceback.format_exc())
-        return {"error": str(exc)}, 500
+        return JSONResponse(status_code=500, content={"error": str(exc)})
 
 
 @router.post("/crack/reference")
@@ -1193,7 +1194,7 @@ async def crack_save_reference(request: Request, db: Session = Depends(get_db)):
         db.commit()
     except Exception as exc:
         db.rollback()
-        return {"error": f"Erro ao salvar referência: {exc}"}, 500
+        return JSONResponse(status_code=500, content={"error": f"Erro ao salvar referência: {exc}"})
 
     return {"ok": True, "reference_id": ref_id, "installation_id": installation_id}
 
@@ -1269,5 +1270,216 @@ async def crack_installation_delete(installation_id: str, db: Session = Depends(
     ).first()
     if inst:
         db.delete(inst)
+        db.commit()
+    return HTMLResponse("")
+
+
+# ── Fabric Training ─────────────────────────────────────────
+
+@router.get("/fabric", response_class=HTMLResponse)
+async def fabric_training_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return redirect
+
+    cameras = db.query(Device).filter(
+        Device.device_type == "camera", Device.is_active
+    ).order_by(Device.created_at.desc()).all()
+
+    selected_id = request.query_params.get("camera", cameras[0].device_id if cameras else None)
+
+    annotations = db.query(FabricAnnotation).order_by(
+        FabricAnnotation.created_at.desc()
+    ).limit(100).all()
+
+    from src.vision.fabric_defect_detector import DEFECT_CLASSES
+
+    defect_types = list(DEFECT_CLASSES.values())
+
+    return _tmpl().TemplateResponse(request, "fabric_training.html", {
+        "user": user,
+        "page": "fabric",
+        "cameras": cameras,
+        "selected_id": selected_id,
+        "camera_token": settings.local_api_token,
+        "annotations": annotations,
+        "defect_types": defect_types,
+    })
+
+
+@router.post("/fabric/capture")
+async def fabric_capture(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return JSONResponse(status_code=401, content={"error": "unauthorized"})
+
+    form = await request.form()
+    camera_id = form.get("camera_id")
+
+    from src.camera.capture_worker import CaptureWorker
+
+    def _do_capture():
+        w = CaptureWorker(device_id=camera_id)
+        try:
+            return w.capture(), None
+        except Exception as e:
+            return None, str(e)
+        finally:
+            w.disconnect()
+
+    result, error = await asyncio.to_thread(_do_capture)
+    if result is None and error is None:
+        return JSONResponse(status_code=500, content={"error": "Câmera não disponível ou falha na captura"})
+    if error:
+        return JSONResponse(status_code=500, content={"error": error})
+
+    latest_image_url = None
+    if result and result.get("file_path"):
+        p = Path(result["file_path"])
+        evidence_root = Path(settings.local_evidence_dir)
+        try:
+            rel = p.relative_to(evidence_root)
+            latest_image_url = f"/evidence/{rel.as_posix()}"
+        except ValueError:
+            pass
+
+    return {
+        "observation_id": result.get("observation_id", ""),
+        "image_url": latest_image_url or "",
+        "width": result.get("width", 0),
+        "height": result.get("height", 0),
+        "quality": result.get("quality", {}),
+    }
+
+
+@router.post("/fabric/detect")
+async def fabric_detect(request: Request, db: Session = Depends(get_db)) -> dict:
+    user, redirect = _require(request)
+    if redirect:
+        return JSONResponse(status_code=401, content={"error": "unauthorized"})
+
+    form = await request.form()
+    observation_id = form.get("observation_id") or ""
+
+    obs = db.query(Observation).filter(Observation.observation_id == observation_id).first()
+    if not obs or not obs.file_path:
+        return JSONResponse(status_code=404, content={"error": "observation not found"})
+
+    import base64
+    import traceback
+
+    import cv2
+
+    from src.vision.fabric_defect_detector import FabricDefectDetector
+    from src.vision.overlay import draw_detection_results
+
+    try:
+        frame = cv2.imread(obs.file_path)
+        if frame is None:
+            return JSONResponse(status_code=400, content={"error": "cannot read image"})
+
+        detector = FabricDefectDetector(config={"conf": 0.3})
+        results = detector.detect(frame)
+        h, w = frame.shape[:2]
+        detections = []
+        for r in results:
+            data = r.result_data or {}
+            detections.append({
+                "defect_type": data.get("defect_type", "defect"),
+                "severity": data.get("severity", "low"),
+                "bbox": list(data.get("bbox", [])[:4]),
+                "confidence": round(r.confidence, 3) if r.confidence is not None else None,
+            })
+
+        overlay_frame = draw_detection_results(frame.copy(), results)
+        _, jpeg = cv2.imencode(".jpg", overlay_frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        overlay_b64 = base64.b64encode(jpeg.tobytes()).decode("utf-8")
+
+        return {
+            "detections": detections,
+            "frame_width": w,
+            "frame_height": h,
+            "source": "classical",
+            "overlay_image": overlay_b64,
+        }
+    except Exception as exc:
+        logger.error("fabric/detect error: %s\n%s", exc, traceback.format_exc())
+        return JSONResponse(status_code=500, content={"error": str(exc)})
+
+
+@router.post("/fabric/annotations", response_class=HTMLResponse)
+async def fabric_annotation_create(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _require(request)
+    if redirect:
+        return HTMLResponse("")
+
+    form = await request.form()
+    observation_id = str(form.get("observation_id", ""))
+    camera_id = str(form.get("camera_id", "")).strip()
+    defect_type = str(form.get("defect_type", "hole")).strip() or "hole"
+    severity = str(form.get("severity", "low")).strip() or "low"
+    confidence = form.get("confidence", "")
+    width = form.get("image_width", "")
+    height = form.get("image_height", "")
+    bbox_raw = str(form.get("bbox", ""))
+    source = str(form.get("source", "classical")).strip() or "classical"
+
+    try:
+        bbox = json.loads(bbox_raw) if bbox_raw else None
+    except json.JSONDecodeError:
+        bbox = None
+
+    import uuid
+    ann_id = f"FA-{uuid.uuid4().hex[:8].upper()}"
+    ann = FabricAnnotation(
+        annotation_id=ann_id,
+        observation_id=observation_id or None,
+        camera_id=camera_id,
+        defect_type=defect_type,
+        severity=severity,
+        bbox=bbox,
+        confidence=float(confidence) if confidence else None,
+        image_width=int(width) if width else None,
+        image_height=int(height) if height else None,
+        source=source,
+    )
+    db.add(ann)
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.error("fabric annotate error: %s", exc)
+        return HTMLResponse('<tr><td class="text-red-400 px-4 py-2">Erro ao salvar</td></tr>')
+
+    return HTMLResponse(f"""
+        <tr id="ann-{ann.annotation_id}" class="border-t border-gray-700 hover:bg-gray-750">
+            <td class="px-4 py-3 font-mono text-xs text-blue-400">{ann.annotation_id[:12]}...</td>
+            <td class="px-4 py-3">{ann.defect_type}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded text-xs bg-yellow-900 text-yellow-300">{ann.severity}</span>
+            </td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-400">{ann.bbox}</td>
+            <td class="px-4 py-3 text-gray-400 text-xs">
+                {f"{ann.confidence:.2f}" if ann.confidence else '-'}
+            </td>
+            <td class="px-4 py-3 text-gray-400 text-xs">{ann.camera_id}</td>
+            <td class="px-4 py-3">
+                <button hx-delete="/dashboard/fabric/annotations/{ann.annotation_id}"
+                        hx-confirm="Excluir anotação?"
+                        hx-target="#ann-{ann.annotation_id}"
+                        hx-swap="outerHTML"
+                        class="text-red-400 hover:text-red-300 text-xs">Excluir</button>
+            </td>
+        </tr>
+    """)
+
+
+@router.delete("/fabric/annotations/{annotation_id}")
+async def fabric_annotation_delete(annotation_id: str, db: Session = Depends(get_db)):
+    ann = db.query(FabricAnnotation).filter(
+        FabricAnnotation.annotation_id == annotation_id
+    ).first()
+    if ann:
+        db.delete(ann)
         db.commit()
     return HTMLResponse("")

@@ -277,3 +277,44 @@ class CrackReference(Base):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+# Fabric defect annotations collected during the camera-based "training" of
+# fabric defects. Each row is one confirmed defect box (type + severity) found
+# on a captured fabric image, used to build a reference dataset for detection.
+class FabricAnnotation(Base):
+    __tablename__ = "fabric_annotations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    annotation_id = Column(String(64), unique=True, nullable=False, index=True)
+    observation_id = Column(String(128), nullable=True, index=True)
+    camera_id = Column(String(64), nullable=False, index=True)
+    defect_type = Column(String(32), nullable=False, default="hole")
+    severity = Column(String(16), nullable=True, default="low")
+
+    # Box [x, y, w, h] in the ORIGINAL captured image coordinates.
+    bbox = Column(JSON, nullable=True)
+    confidence = Column(Float, nullable=True)
+    image_width = Column(Integer, nullable=True)
+    image_height = Column(Integer, nullable=True)
+    source = Column(String(16), nullable=True, default="classical")
+
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "annotation_id": self.annotation_id,
+            "observation_id": self.observation_id,
+            "camera_id": self.camera_id,
+            "defect_type": self.defect_type,
+            "severity": self.severity,
+            "bbox": self.bbox,
+            "confidence": self.confidence,
+            "image_width": self.image_width,
+            "image_height": self.image_height,
+            "source": self.source,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
