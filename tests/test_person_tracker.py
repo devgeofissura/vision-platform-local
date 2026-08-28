@@ -5,7 +5,7 @@ from src.vision.person_tracker import COLOR_PALETTE, TRACKER_VERSION, CentroidTr
 
 class TestCentroidTracker:
     def test_version(self):
-        assert TRACKER_VERSION == "0.1.0"
+        assert TRACKER_VERSION == "0.2.0"
 
     def test_new_tracks_registered(self):
         tracker = CentroidTracker(min_hits=1)
@@ -200,3 +200,112 @@ class TestCentroidTrackerMatches:
         # Move within max_distance but no IoU overlap.
         tracked = tracker.update([{"bbox": [150, 100, 40, 80], "confidence": 0.9}])
         assert len(tracked) == 1
+
+
+class TestKalmanPredict:
+    """Kalman prediction coasts the box with its velocity between sparse
+    detections, so the overlay keeps moving smoothly and stems ID-switch."""
+
+    def test_predict_moves_box_along_velocity(self):
+        tracker = CentroidTracker(min_hits=1, max_distance=0)
+        # Two consistent detections establish a rightward velocity.
+        tracker.update([{"bbox": [100, 100, 50, 100], "confidence": 0.9}])
+        tracker.update([{"bbox": [130, 100, 50, 100], "confidence": 0.9}])
+        cx_before = next(iter(tracker.objects.values()))["centroid"][0]
+        # Coast a prediction step even without a new detection.
+        tracker.predict(dt=1.0)
+        cx_after = next(iter(tracker.objects.values()))["centroid"][0]
+        # Velocity (rightward) should carry the centroid further right.
+        assert cx_after >= cx_before
+
+    def test_kalman_smoothes_jump_and_keeps_same_id(self):
+        # Even a large single-frame jump stays the same track (PenguinSORT/
+        # sparse-motion robustness) as long as it matches one of the stages.
+        tracker = CentroidTracker(min_hits=1, max_distance=400)
+        tracker.update([{"bbox": [100, 100, 60, 140], "confidence": 0.9}])
+        tracked = tracker.update([{"bbox": [140, 100, 60, 140], "confidence": 0.9}])
+        assert len(tracked) == 1
+
+    def test_far_detection_not_matched_by_kalman(self):
+        # A distant, non-overlapping detection is read as a new object even
+        # though a Kalman velocity model exists.
+        tracker = CentroidTracker(min_hits=1, max_distance=80)
+        tracker.update([{"bbox": [10, 10, 50, 100], "confidence": 0.9}])
+        tracker.update([{"bbox": [30, 10, 50, 100], "confidence": 0.9}])
+        tracked = tracker.update([{"bbox": [900, 900, 50, 100], "confidence": 0.9}])
+        assert len(tracked) == 2
+
+
+class TestMultiStageAssociation:
+    """Staged IoU thresholds let a match be locked by a strong overlap first,
+    then rescued by progressively weaker cues (PineSORT pattern)."""
+
+    def test_mid_iou_stage_still_matches(self):
+        tracker = CentroidTracker(min_hits=1, max_distance=0)
+        tracker.update([{"bbox": [100, 100, 60, 140], "confidence": 0.9}])
+        # Moderate overlap that clears stage-2 (0.15) but not stage-1 (0.30).
+        tracked = tracker.update([{"bbox": [120, 100, 60, 140], "confidence": 0.9}])
+        assert len(tracked) == 1
+
+    def test_weak_iou_stage_matches_fast_move(self):
+        tracker = CentroidTracker(min_hits=1, max_distance=0)
+        tracker.update([{"bbox": [100, 100, 40, 80], "confidence": 0.9}])
+        # Small box jumped far but still slightly overlaps (stage-3, 0.05).
+        tracked = tracker.update([{"bbox": [135, 100, 40, 80], "confidence": 0.9}])
+        assert len(tracked) == 1
+
+    def test_no_overlap_no_distance_no_match(self):
+        tracker = CentroidTracker(min_hits=1, max_distance=0)
+        tracker.update([{"bbox": [100, 100, 40, 80], "confidence": 0.9}])
+        tracked = tracker.update([{"bbox": [300, 300, 40, 80], "confidence": 0.9}])
+        # No IoU overlap and distance fallback disabled -> two tracks.
+        assert len(tracked) == 2
+
+
+class TestAppearanceRescue:
+    """A lightweight HSV template rescues a LOST track that has no geometric
+    overlap, without a per-frame re-ID encoder (womprat pattern)."""
+
+    def _make_tracker(self):
+        return CentroidTracker(min_hits=1, max_distance=20)
+
+    def test_lost_track_rescued_by_appearance(self):
+        tracker = self._make_tracker()
+        # A bright red box that the tracker can remember.
+        frame_red = np.zeros((300, 400, 3), dtype=np.uint8)
+        frame_red[:, :] = (0, 0, 255)
+        tracker.update(
+            [{"bbox": [50, 50, 60, 100], "confidence": 0.9}], frame=frame_red
+        )
+
+        # Person briefly disappears (one empty frame) -> track is now "lost".
+        tracker.update([])
+
+        # Comes back at a basically non-overlapping spot, but same colors.
+        later = np.zeros((300, 400, 3), dtype=np.uint8)
+        later[:, :] = (0, 0, 255)
+        later[:, :] = (5, 3, 250)
+        tracker.update(
+            [{"bbox": [200, 210, 60, 100], "confidence": 0.9}], frame=later
+        )
+
+        # The lost track should be rescued by appearance -> still 1 person.
+        assert len(tracker.objects) == 1
+
+    def test_different_appearance_not_rescued(self):
+        tracker = self._make_tracker()
+        frame_red = np.zeros((300, 400, 3), dtype=np.uint8)
+        frame_red[:, :] = (0, 0, 255)
+        tracker.update(
+            [{"bbox": [50, 50, 60, 100], "confidence": 0.9}], frame=frame_red
+        )
+        tracker.update([])
+
+        # The re-detection is a different color (blue) -> not the same person.
+        frame_blue = np.zeros((300, 400, 3), dtype=np.uint8)
+        frame_blue[:, :] = (255, 0, 0)
+        tracker.update(
+            [{"bbox": [200, 210, 60, 100], "confidence": 0.9}], frame=frame_blue
+        )
+        # New detection becomes a separate object.
+        assert len(tracker.objects) == 2

@@ -534,13 +534,28 @@ async def stream_camera_tracked(
 
     def detection_loop():
         last = 0.0
+        prev_gray = None
+        # Mean absolute pixel difference below which the scene is treated as
+        # static, so the expensive ONNX inference is skipped (motion gate).
+        # The camera is tripod-mounted; sensor noise sits well under this.
+        motion_threshold = float(getattr(settings, "tracked_motion_threshold", 2.0))
         try:
             while not stop_event.is_set():
-                # Throttle inference to det_interval to spare CPU for the
-                # streaming loop on the resource-limited Orange Pi.
+                # Cheap: coast every tracked box forward one prediction step
+                # so the overlay moves smoothly between sparse detections.
+                # `predict` advances by real elapsed time (monotonic), so the
+                # throttled detector correcting afterward doesn't compound it.
+                tracker.predict()
+
+                # Publish the coasted state so the streaming loop draws the
+                # box flowing toward the *predicted* position, not a stale one.
+                with latest_lock:
+                    latest_tracked.clear()
+                    latest_tracked.update(tracker.snapshot())
+
                 now = time.monotonic()
                 if now - last < det_interval:
-                    time.sleep(0.05)
+                    time.sleep(0.02)
                     continue
                 last = now
 
@@ -549,7 +564,7 @@ async def stream_camera_tracked(
                     det_frame = None if snap is None else snap.copy()
 
                 if det_frame is None:
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     continue
 
                 # Detection is sparse (~2s apart) on edge, so a person can
@@ -562,6 +577,17 @@ async def stream_camera_tracked(
                 if not tracker.max_distance:
                     h, w = det_frame.shape[:2]
                     tracker.max_distance = 0.4 * w
+
+                # Motion gate: skip ONNX on a static scene (e.g. an empty
+                # slab being watched for cracks). A changed-pixel mean below
+                # the threshold means nothing moved, so the last tracked state
+                # carries the frame and no inference is spent.
+                gray = cv2.cvtColor(det_frame, cv2.COLOR_BGR2GRAY)
+                if prev_gray is not None:
+                    diff = cv2.absdiff(gray, prev_gray)
+                    if cv2.mean(diff)[0] < motion_threshold:
+                        continue
+                prev_gray = gray
 
                 detections = []
                 try:
@@ -579,7 +605,7 @@ async def stream_camera_tracked(
                     time.sleep(0.2)
                     continue
 
-                tracked = tracker.update(detections)
+                tracked = tracker.update(detections, det_frame)
                 with latest_lock:
                     latest_tracked.clear()
                     latest_tracked.update(tracked)

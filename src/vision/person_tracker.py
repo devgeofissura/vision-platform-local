@@ -1,18 +1,28 @@
-"""Person centroid tracker with IO + overlap matching (pure OpenCV/NumPy).
+"""Person centroid tracker with Kalman prediction + multi-stage matching.
 
-Works without ultralytics — suitable for the ONNX fallback path.
-Tracks people across frames and draws bounding boxes with a distinct
-color per track, plus a running count overlay.
+Pure OpenCV/NumPy (works without ultralytics, suitable for the ONNX
+fallback path). Tracks people across frames and draws distinct-color boxes
+plus a running count. Built on lessons from SORT, Deep-SORT and PineSORT:
+
+- Constant-velocity Kalman filter per track predicts the next centroid/box
+  so identity survives motion between sparse detections (the ID-switching fix
+  for ~2s-apart inference on the Orange Pi).
+- Multi-stage association (high IoU -> mid IoU -> low IoU -> distance) so
+  fast-moving or partially-occluded subjects keep one ID (PineSORT pattern).
+- Lightweight appearance (HSV histogram in the box) is used *only* when a
+  track is currently lost (disappeared > 0), to re-associate it cheaply
+  without the cost of a per-frame re-ID encoder (womprat/Deep-SORT hybrid).
 """
 
 import logging
+import time
 
 import cv2
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
-TRACKER_VERSION = "0.1.0"
+TRACKER_VERSION = "0.2.0"
 
 # 12 distinct BGR colors so multiple people never share a color.
 COLOR_PALETTE = [
@@ -30,12 +40,106 @@ COLOR_PALETTE = [
     (0, 255, 128),    # mint
 ]
 
+# IoU thresholds for the staged association (high -> mid -> low). A lower
+# threshold keeps matching when the box moved a lot between sparse frames.
+_ASSOCIATION_IOU_STAGES = [0.30, 0.15, 0.05]
+
+# Squares of the process-noised velocity (px/frame^2). Tuned so predicted
+# boxes do not run away while a track coasts for a few seconds.
+_KF_DT_DEFAULT = 1.0
+_KF_POS_PROCESS = 1e-2
+_KF_VEL_PROCESS = 1e-1
+_KF_MEAS_NOISE = 1e-1
+
+# State order: [cx, cy, w, h, vx, vy, vw, vh]
+_KF_MEAS = 4
+_KF_STATE = 8
+
+
+def _kf_h() -> np.ndarray:
+    h_mat = np.zeros((_KF_MEAS, _KF_STATE), dtype=np.float32)
+    for idx in range(_KF_MEAS):
+        h_mat[idx, idx] = 1.0
+    return h_mat
+
+
+def _kf_f(dt: float) -> np.ndarray:
+    f_mat = np.eye(_KF_STATE, dtype=np.float32)
+    # position += velocity * dt
+    for idx in range(_KF_MEAS):
+        f_mat[idx, idx + _KF_MEAS] = dt
+    return f_mat
+
+
+class _KalmanBox:
+    """Minimal constant-velocity Kalman filter over (cx, cy, w, h)."""
+
+    __slots__ = ("x", "P", "H", "last_dt")
+
+    def __init__(self, bbox):
+        cx, cy, w, h = _cx_cy_wh(bbox)
+        w = max(w, 1.0)
+        h = max(h, 1.0)
+        self.x = np.array(
+            [cx, cy, w, h, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+        self.P = np.eye(_KF_STATE, dtype=np.float32) * 10.0
+        self.P[_KF_MEAS:, _KF_MEAS:] *= 100.0  # uncertainty on velocity
+        self.H = _kf_h()
+        self.last_dt = _KF_DT_DEFAULT
+
+    def predict(self, dt: float) -> None:
+        dt = max(dt, 1e-3)
+        f_mat = _kf_f(dt)
+        self.x = f_mat @ self.x
+        q_mat = np.eye(_KF_STATE, dtype=np.float32)
+        for i in range(_KF_MEAS):
+            q_mat[i, i] = _KF_POS_PROCESS
+        for i in range(_KF_MEAS, _KF_STATE):
+            q_mat[i, i] = _KF_VEL_PROCESS * (dt * dt)
+        self.P = f_mat @ self.P @ f_mat.T + q_mat
+        self.last_dt = dt
+
+    def correct(self, bbox) -> None:
+        z = np.array(_cx_cy_wh(bbox), dtype=np.float32)
+        r_mat = np.eye(_KF_MEAS, dtype=np.float32) * _KF_MEAS_NOISE
+        hp = self.H @ self.P
+        s_mat = hp @ self.H.T + r_mat
+        k_mat = self.P @ self.H.T @ np.linalg.inv(s_mat)
+        y = z - self.H @ self.x
+        self.x = self.x + k_mat @ y
+        ident = np.eye(_KF_STATE, dtype=np.float32)
+        self.P = (ident - k_mat @ self.H) @ self.P
+
+    def bbox(self) -> list:
+        cx, cy, w, h = self.x[0], self.x[1], self.x[2], self.x[3]
+        return [float(cx - w / 2), float(cy - h / 2), float(w), float(h)]
+
+    @property
+    def centroid(self) -> tuple:
+        return float(self.x[0]), float(self.x[1])
+
+
+def _cx_cy_wh(bbox) -> tuple:
+    x, y, w, h = bbox[:4]
+    return float(x + w / 2), float(y + h / 2), float(w), float(h)
+
+
+def _clip_bbox(bbox, w, h) -> list:
+    x, y, bw, bh = bbox[:4]
+    x = max(0.0, float(x))
+    y = max(0.0, float(y))
+    bw = min(max(1.0, float(bw)), w - x)
+    bh = min(max(1.0, float(bh)), h - y)
+    return [x, y, bw, bh]
+
 
 class CentroidTracker:
-    """Simple centroid-based tracker that matches detections across frames.
+    """Centroid tracker with a Kalman model and staged association.
 
-    Matching uses a combination of centroid Euclidean distance and bbox
-    overlap (IoU) so tracks survive when a person partially occludes.
+    Matching runs in stages from strong (IoU) to weak (centroid distance)
+    cues so tracks survive motion, occlusion and missed detections without
+    switching IDs. A lightweight visual template is consulted only to rescue
+    tracks that are currently lost.
     """
 
     def __init__(
@@ -54,131 +158,201 @@ class CentroidTracker:
         self.disappeared: dict[int, int] = {}
         self.colors: dict[int, tuple[int, int, int]] = {}
         self.hit_streak: dict[int, int] = {}
+        self._kf: dict[int, _KalmanBox] = {}
+        self._templates: dict[int, np.ndarray] = {}
+        self._last_time: float | None = None
 
     def _new_color(self) -> tuple[int, int, int]:
         idx = (self._next_id - 1) % len(COLOR_PALETTE)
         return COLOR_PALETTE[idx]
 
-    def _register(self, bbox: list, confidence: float) -> int:
+    def _register(self, bbox: list, confidence: float, frame=None) -> int:
         track_id = self._next_id
         self._next_id += 1
-        cx, cy = self._centroid(bbox)
+        kf = _KalmanBox(bbox)
+        self._kf[track_id] = kf
         self.objects[track_id] = {
-            "centroid": (float(cx), float(cy)),
-            "bbox": [float(v) for v in bbox],
+            "centroid": kf.centroid,
+            "bbox": kf.bbox(),
             "confidence": float(confidence),
         }
         self.disappeared[track_id] = 0
         self.colors[track_id] = self._new_color()
-        # A brand new track starts unconfirmed, so a single spurious
-        # detection (e.g. a false positive while the subject is moving
-        # fast) cannot inflate the person count with a ghost ID. As in
-        # SORT's `min_hits`, it only becomes visible after it has been
-        # detected consistently for `min_hits` consecutive frames.
+        if frame is not None:
+            self._templates[track_id] = _template(frame, bbox)
         self.hit_streak[track_id] = 1
         return track_id
 
     @staticmethod
     def _centroid(bbox: list) -> tuple[float, float]:
-        x, y, w, h = bbox[:4]
-        return float(x + w / 2), float(y + h / 2)
+        return _cx_cy_wh(bbox)[:2]
 
-    def update(self, detections: list[dict]) -> dict[int, dict]:
+    def predict(self, dt: float | None = None) -> None:
+        """Advance every track one Kalman step (no new measurements).
+
+        Called by the streaming loop on every displayed frame so boxes coast
+        with their velocity between the sparse detector runs.
+        """
+        now = time.monotonic()
+        span = _KF_DT_DEFAULT
+        if dt is not None:
+            span = max(float(dt), 1e-3)
+        elif self._last_time is not None:
+            span = max(now - self._last_time, 1e-3)
+        self._last_time = now
+
+        for tid in list(self.objects):
+            kf = self._kf.get(tid)
+            if kf is None:
+                continue
+            kf.predict(span)
+            self.objects[tid]["centroid"] = kf.centroid
+            self.objects[tid]["bbox"] = kf.bbox()
+
+    def update(
+        self,
+        detections: list[dict],
+        frame: np.ndarray | None = None,
+    ) -> dict[int, dict]:
         """Update tracker state with new detections.
 
         Args:
             detections: list of dicts with keys:
                         - bbox: [x1, y1, width, height]
                         - confidence: float
+            frame: optional BGR frame (native coords) used to build/compare
+                   lightweight appearance templates for lost-track rescue.
 
         Returns:
             dict of {track_id: {"centroid", "bbox", "confidence", "color"}}
         """
-        # Empty detections -> mark all as disappeared.
-        if not detections:
-            for track_id in list(self.disappeared):
-                self.disappeared[track_id] += 1
-                if self.disappeared[track_id] > self.max_disappeared:
-                    self._deregister(track_id)
-            return self._snapshot()
+        if detections:
+            self.predict()
 
-        # Existing tracks centroids.
-        track_ids = list(self.objects.keys())
-        track_centroids = np.array(
-            [self.objects[tid]["centroid"] for tid in track_ids],
-            dtype=np.float32,
-        ) if track_ids else np.zeros((0, 2), dtype=np.float32)
+        active_ids = [tid for tid in self.objects
+                      if self.disappeared.get(tid, 0) == 0]
+        lost_ids = [tid for tid in self.objects
+                    if self.disappeared.get(tid, 0) > 0]
 
-        # New detections centroids.
-        det_centroids = np.array(
-            [self._centroid(d["bbox"]) for d in detections],
-            dtype=np.float32,
-        )
+        # Each matched track maps to the detection index that corrected its
+        # Kalman filter.
+        matched_track_ids: set[int] = set()
+        matched_det_indices: set[int] = set()
 
-        matched_track_ids = set()
-        matched_det_indices = set()
+        det_boxes = [list(d["bbox"][:4]) for d in detections]
 
-        if track_centroids.shape[0] > 0 and det_centroids.shape[0] > 0:
-            # Distance + IoU scoring.
-            dists = self._compute_distances(track_centroids, det_centroids)
-            ious = self._compute_ious(self.objects, detections)
-
-            used_tracks = set()
-            used_dets = set()
-            # Prefer the pair with the STRONGEST IoU (dominant cue), as in
-            # SORT. Because detections are sparse (~2s apart) on edge, a full
-            # body box still overlaps the previous one even when the centroid
-            # has moved significantly; matching on overlap first keeps the
-            # identity stable where a centroid-only match would switch IDs.
-            # Distance is used as a tie-breaker only.
-            for _ in range(min(len(track_ids), len(detections))):
-                best_iou = -1.0
-                best_min_dist = np.inf
-                best_track = -1
-                best_det = -1
-                for i, tid in enumerate(track_ids):
-                    if i in used_tracks:
+        # Stage 1-3: geometric matching of ACTIVE tracks via staged IoU.
+        # Stronger overlap thresholds are tried first (PineSORT pattern) so a
+        # clear, high-IoU match is locked before weaker cues get a chance.
+        track_to_det: dict[int, int] = {}
+        if active_ids:
+            used_tracks: set[int] = set()
+            used_dets: set[int] = set()
+            for stage_iou in _ASSOCIATION_IOU_STAGES:
+                threshold = stage_iou
+                rem_tracks = [tid for tid in active_ids if tid not in used_tracks]
+                rem_dets = [j for j in range(len(det_boxes)) if j not in used_dets]
+                if not rem_tracks or not rem_dets:
+                    continue
+                ious = self._compute_ious_boxes(
+                    [self.objects[tid]["bbox"] for tid in rem_tracks],
+                    [det_boxes[j] for j in rem_dets],
+                )
+                order = np.dstack(
+                    np.unravel_index(np.argsort(-ious.ravel(), kind="stable"),
+                                     ious.shape)
+                )[0]
+                for ii, jj in order:
+                    if ious[ii, jj] < threshold:
                         continue
-                    for j in range(len(detections)):
-                        if j in used_dets:
-                            continue
-                        iou = float(ious[i, j])
-                        d = float(dists[i, j])
-                        # Select by highest IoU first; break ties by distance.
-                        if iou > best_iou + 1e-9 or (
-                            abs(iou - best_iou) <= 1e-9 and d < best_min_dist
-                        ):
-                            best_iou = iou
-                            best_min_dist = d
-                            best_track = i
-                            best_det = j
-
-                if best_track == -1 or best_det == -1:
-                    break
-
-                tid = track_ids[best_track]
-                iou = float(ious[best_track, best_det])
-                within_dist = best_min_dist <= self.max_distance
-                within_iou = iou >= self.min_iou
-
-                # Match if within distance OR overlapping enough.
-                if within_dist or within_iou:
+                    tid = rem_tracks[ii]
+                    det_j = rem_dets[jj]
+                    used_tracks.add(tid)
+                    used_dets.add(det_j)
                     matched_track_ids.add(tid)
-                    matched_det_indices.add(best_det)
-                    used_tracks.add(best_track)
-                    used_dets.add(best_det)
-                    self.objects[tid] = {
-                        "centroid": tuple(det_centroids[best_det]),
-                        "bbox": [float(v) for v in detections[best_det]["bbox"]],
-                        "confidence": float(detections[best_det].get("confidence", 1.0)),
-                    }
-                    self.disappeared[tid] = 0
-                    self.hit_streak[tid] = self.hit_streak.get(tid, 0) + 1
-                else:
-                    break
+                    matched_det_indices.add(det_j)
+                    track_to_det[tid] = det_j
 
-        # Deregister unmatched tracks (they disappeared this frame).
-        for tid in track_ids:
+            # Stage 4: centroid-distance fallback for leftover active pairs.
+            rem_tracks = [tid for tid in active_ids if tid not in used_tracks]
+            rem_dets = [j for j in range(len(det_boxes)) if j not in used_dets]
+            if rem_tracks and rem_dets and self.max_distance > 0:
+                centroids_t = np.array(
+                    [self.objects[tid]["centroid"] for tid in rem_tracks],
+                    dtype=np.float32,
+                )
+                centroids_d = np.array(
+                    [self._centroid(det_boxes[j]) for j in rem_dets],
+                    dtype=np.float32,
+                )
+                dists = np.linalg.norm(
+                    centroids_t[:, None, :] - centroids_d[None, :, :], axis=2
+                )
+                order = np.dstack(
+                    np.unravel_index(np.argsort(dists.ravel(), kind="stable"),
+                                     dists.shape)
+                )[0]
+                for ii, jj in order:
+                    if dists[ii, jj] > self.max_distance:
+                        continue
+                    tid = rem_tracks[ii]
+                    det_j = rem_dets[jj]
+                    used_tracks.add(tid)
+                    used_dets.add(det_j)
+                    matched_track_ids.add(tid)
+                    matched_det_indices.add(det_j)
+                    track_to_det[tid] = det_j
+
+        # Stage 5: appearance rescue for LOST tracks (no geometric match).
+        if lost_ids and frame is not None:
+            available_dets = [j for j in range(len(det_boxes))
+                              if j not in matched_det_indices]
+            for tid in lost_ids:
+                if tid in matched_track_ids:
+                    continue
+                if self._templates.get(tid) is None:
+                    continue
+                best_sim = -1.0
+                best_j = -1
+                for j in available_dets:
+                    sim = _template_sim(
+                        self._templates[tid],
+                        _template(frame, det_boxes[j]),
+                    )
+                    if sim > best_sim:
+                        best_sim = sim
+                        best_j = j
+                if best_j >= 0 and best_sim >= 0.6:
+                    matched_track_ids.add(tid)
+                    matched_det_indices.add(best_j)
+                    track_to_det[tid] = best_j
+                    available_dets.remove(best_j)
+
+        # Correct Kalman with the matched measurement.
+        for tid in matched_track_ids:
+            j = track_to_det[tid]
+            kf = self._kf.get(tid)
+            if kf is not None:
+                kf.correct(det_boxes[j])
+                self.objects[tid] = {
+                    "centroid": kf.centroid,
+                    "bbox": kf.bbox(),
+                    "confidence": float(detections[j].get("confidence", 1.0)),
+                }
+            else:
+                self.objects[tid] = {
+                    "centroid": self._centroid(det_boxes[j]),
+                    "bbox": det_boxes[j],
+                    "confidence": float(detections[j].get("confidence", 1.0)),
+                }
+            self.disappeared[tid] = 0
+            self.hit_streak[tid] = self.hit_streak.get(tid, 0) + 1
+            # Refresh the appearance template with the freshest look.
+            if frame is not None:
+                self._templates[tid] = _template(frame, det_boxes[j])
+
+        # Deregister / coast unmatched tracks.
+        for tid in list(self.objects):
             if tid not in matched_track_ids:
                 self.disappeared[tid] += 1
                 if self.disappeared[tid] > self.max_disappeared:
@@ -187,38 +361,25 @@ class CentroidTracker:
         # Register unmatched new detections.
         for j, det in enumerate(detections):
             if j not in matched_det_indices:
-                self._register(det["bbox"], det.get("confidence", 1.0))
+                self._register(det["bbox"], det.get("confidence", 1.0), frame)
 
         return self._snapshot()
 
-    def _deregister(self, track_id: int) -> None:
-        self.objects.pop(track_id, None)
-        self.disappeared.pop(track_id, None)
-        self.colors.pop(track_id, None)
-        self.hit_streak.pop(track_id, None)
-
-    def _compute_distances(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        # a: (N,2), b: (M,2) -> (N,M)
-        return np.linalg.norm(a[:, None, :] - b[None, :, :], axis=2)
+    def _compute_ious_boxes(self, boxes_a: list, boxes_b: list) -> np.ndarray:
+        a = np.array(boxes_a, dtype=np.float32).reshape(-1, 4)
+        b = np.array(boxes_b, dtype=np.float32).reshape(-1, 4)
+        n, m = a.shape[0], b.shape[0]
+        ious = np.zeros((n, m), dtype=np.float32)
+        for i in range(n):
+            for j in range(m):
+                ious[i, j] = self._iou(a[i], b[j])
+        return ious
 
     def _compute_ious(self, objects: dict, detections: list[dict]) -> np.ndarray:
-        track_bboxes = np.array(
+        return self._compute_ious_boxes(
             [objects[tid]["bbox"] for tid in objects],
-            dtype=np.float32,
-        ) if objects else np.zeros((0, 4), dtype=np.float32)
-        det_bboxes = np.array(
             [d["bbox"] for d in detections],
-            dtype=np.float32,
         )
-        n_track = track_bboxes.shape[0]
-        n_det = det_bboxes.shape[0]
-        ious = np.zeros((n_track, n_det), dtype=np.float32)
-        if n_track == 0 or n_det == 0:
-            return ious
-        for i in range(n_track):
-            for j in range(n_det):
-                ious[i, j] = self._iou(track_bboxes[i], det_bboxes[j])
-        return ious
 
     @staticmethod
     def _iou(a: np.ndarray, b: np.ndarray) -> float:
@@ -232,6 +393,14 @@ class CentroidTracker:
         union = float(a[2] * a[3]) + float(b[2] * b[3]) - inter
         return inter / union if union > 0 else 0.0
 
+    def _deregister(self, track_id: int) -> None:
+        self.objects.pop(track_id, None)
+        self.disappeared.pop(track_id, None)
+        self.colors.pop(track_id, None)
+        self.hit_streak.pop(track_id, None)
+        self._kf.pop(track_id, None)
+        self._templates.pop(track_id, None)
+
     def _snapshot(self) -> dict[int, dict]:
         return {
             tid: {
@@ -244,16 +413,16 @@ class CentroidTracker:
             if self.hit_streak.get(tid, 0) >= self.min_hits
         }
 
-    def draw(self, frame: np.ndarray, tracked: dict[int, dict]) -> np.ndarray:
-        """Draw bounding boxes, labels and a person-count overlay.
+    def snapshot(self) -> dict[int, dict]:
+        """Public accessor for the current visible (confirmed) tracks.
 
-        Args:
-            frame: BGR image to draw on.
-            tracked: dict from update().
-
-        Returns:
-            Frame with overlays drawn.
+        Used by the detection thread to publish smooth, coasted state to the
+        streaming loop between sparse detections.
         """
+        return self._snapshot()
+
+    def draw(self, frame: np.ndarray, tracked: dict[int, dict]) -> np.ndarray:
+        """Draw bounding boxes, labels and a person-count overlay."""
         overlay = frame.copy()
         h, w = overlay.shape[:2]
 
@@ -285,7 +454,6 @@ class CentroidTracker:
 
         count = len(tracked)
 
-        # Bottom count bar.
         bar_w = 220
         bar_h = 44
         bx = (w - bar_w) // 2
@@ -306,3 +474,26 @@ class CentroidTracker:
         )
 
         return overlay
+
+
+def _template(frame: np.ndarray, bbox) -> np.ndarray:
+    """HSV color histogram (normalized) inside the box — a cheap appearance
+    descriptor robust to small scale changes and motion."""
+    h, w = frame.shape[:2]
+    x, y, bw, bh = _clip_bbox(bbox, w, h)
+    patch = frame[int(y):int(y + bh), int(x):int(x + bw)]
+    if patch.size == 0:
+        return np.zeros((16,), dtype=np.float32)
+    try:
+        hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+    except cv2.error:
+        return np.zeros((16,), dtype=np.float32)
+    hist = cv2.calcHist([hsv], [0, 1], None, [8, 8], [0, 180, 0, 256])
+    cv2.normalize(hist, hist, norm_type=cv2.NORM_L1)
+    return hist.astype(np.float32).ravel()
+
+
+def _template_sim(a: np.ndarray, b: np.ndarray) -> float:
+    if a.shape != b.shape or a.size == 0:
+        return -1.0
+    return float(np.sum(np.minimum(a, b)))
