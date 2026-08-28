@@ -317,14 +317,27 @@ async def debug_camera(camera_id: str, x_api_token: str = Header(None)):
     }
 
 
-def _open_camera_stream(camera_id: str, decoding_res: tuple[int, int] | None = None):
+def _open_camera_stream(
+    camera_id: str,
+    decoding_res: tuple[int, int] | None = None,
+    force_stream_type: str | None = None,
+):
     """Validate token+device, build RTSP URL, open VideoCapture.
+
+    `force_stream_type` — "main" or "sub" — overrides the device's configured
+    stream type for this capture. Preview endpoints pass "sub" (subtype=1, the
+    low-res extra stream) because it decodes ~3.7x faster on the Orange Pi
+    (704x480) than the main 1080p stream, keeping the live view fluid while
+    evidence capture keeps using the full-res main stream.
 
     If `decoding_res` (width, height) is given, the FFmpeg decoder is asked
     to decode directly at that size (CAP_PROP_FRAME_WIDTH/HEIGHT), which
-    reduces real decode cost — the main bottleneck on the Orange Pi — not
-    just the output resize. A defensive cv2.resize is also applied when the
-    decoder ignores the property.
+    reduces real decode cost. A defensive cv2.resize is also applied when the
+    decoder ignores the property (note: the Pi's build ignores it).
+
+    IMPORTANT: CAP_PROP_CONVERT_RGB must stay default (1). The detectors and
+    the JPEG encoder expect BGR frames; disabling conversion would hand over
+    raw YUV and break inference/encoding.
 
     Raises HTTPException on error; returns an opened cv2.VideoCapture.
     """
@@ -341,7 +354,7 @@ def _open_camera_stream(camera_id: str, decoding_res: tuple[int, int] | None = N
         username = config.get("username", settings.camera_username)
         password = config.get("password", settings.camera_password)
         channel = config.get("channel", settings.camera_channel)
-        stream_type = config.get("stream_type", settings.camera_stream_type)
+        stream_type = force_stream_type or config.get("stream_type", settings.camera_stream_type)
         stream_value = "0" if stream_type == "main" else "1"
 
         if not ip:
@@ -354,6 +367,9 @@ def _open_camera_stream(camera_id: str, decoding_res: tuple[int, int] | None = N
     os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
     cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)
+    # Drop queued frames so a burst in the buffer never makes the live view
+    # lag behind real-time; we always fast-forward to the newest frame anyway.
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     if decoding_res is not None:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, decoding_res[0])
@@ -368,6 +384,7 @@ _STREAM_RESOLUTIONS = {
     "1080p": (1920, 1080),
     "720p": (1280, 720),
     "540p": (960, 540),
+    "480p": (704, 480),
     "360p": (640, 360),
 }
 
@@ -411,7 +428,9 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
     import cv2
     from fastapi.responses import StreamingResponse
 
-    cap = _open_camera_stream(camera_id)
+    # Live preview uses the low-res extra stream (sub) for fluid playback.
+    # Evidence capture (CaptureWorker) keeps using the main 1080p stream.
+    cap = _open_camera_stream(camera_id, force_stream_type="sub")
 
     def generate():
         try:
@@ -432,7 +451,7 @@ async def stream_camera(camera_id: str, token: str = Query(None), x_api_token: s
 @router.get("/api/v1/stream/{camera_id}/tracked")
 async def stream_camera_tracked(
     camera_id: str,
-    res: str = Query("1080p"),
+    res: str = Query("480p"),
     det_fps: float = Query(0.5),
     token: str = Query(None),
     x_api_token: str = Header(None),
@@ -447,9 +466,17 @@ async def stream_camera_tracked(
     inference) and draws the latest tracking result onto them, so the video
     stays fluid instead of stalling on each slow inference.
 
+    The preview consumes the low-res extra stream (`subtype=1`, ~704x480),
+    which decodes ~3.7x faster than the main 1080p stream on the Orange Pi —
+    this is what keeps the live view fluid. Evidence capture (CaptureWorker)
+    keeps the full-res main stream. Detection and drawing share the native
+    (sub) coordinate space; the `res` query param selects the final output
+    resolution (default 480p, the native sub size — keeps aspect ratio and
+    avoids a costly/upscaling resize).
+
     The `res` query param selects the output resolution: 1080p, 720p,
-    540p, 360p or 720x540 (any WxH). Lower resolutions reduce decode/encode
-    cost for a higher streaming frame rate.
+    540p, 480p, 360p or 720x540 (any WxH). Lower resolutions reduce
+    decode/encode cost for a higher streaming frame rate.
 
     The `det_fps` query param caps the ONNX inference rate (default 0.5 =>
     one detection every 2s). Because inference is the heavy CPU consumer on
@@ -478,12 +505,14 @@ async def stream_camera_tracked(
     # cv2.VideoCapture (FFmpeg) is not thread-safe, only `generate()` touches
     # the cap; the detection thread only reads a protected snapshot.
     #
-    # IMPORTANT: the Pi's OpenCV/FFmpeg build IGNORES CAP_PROP_FRAME_WIDTH/
-    # HEIGHT and always returns the full native frame (1080p). We detect and
-    # draw on that NATIVE frame (so small/distant people stay detectable) and
-    # downscale only at the very end to the output resolution. Detection and
-    # drawing share the native coordinate space, so boxes stay aligned.
-    display_cap = _open_camera_stream(camera_id)
+    # We read the low-res extra stream (sub, ~704x480) for the live preview:
+    # it decodes ~3.7x faster than main 1080p on the Pi, and our benchmark
+    # confirmed detection/matching work equally well there (the main person
+    # is detected robustly in both; only a marginal distant person oscillates
+    # near the conf threshold in either stream). The Pi's OpenCV/FFmpeg build
+    # also IGNORES CAP_PROP_FRAME_WIDTH/HEIGHT, so we detect/draw on the
+    # native sub frame and downscale only at the very end to `res`.
+    display_cap = _open_camera_stream(camera_id, force_stream_type="sub")
 
     detector = PersonDetector({"conf": 0.4})
     # max_distance starts at 0 (unset) and is scaled to the native frame
