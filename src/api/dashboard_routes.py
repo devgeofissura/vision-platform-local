@@ -454,6 +454,11 @@ SETTING_FORM_KEYS = [
     # Processamento
     "processing_enabled",
     "processing_auto_on_capture",
+    # Inspeção de tecido
+    "fabric_width_cm",
+    "fabric_feed_rate_m_min",
+    "fabric_pass_meters",
+    "fabric_point_threshold",
 ]
 
 
@@ -1370,30 +1375,60 @@ async def fabric_detect(request: Request, db: Session = Depends(get_db)) -> dict
 
     import cv2
 
-    from src.vision.fabric_defect_detector import FabricDefectDetector
-    from src.vision.overlay import draw_detection_results
-
     try:
         frame = cv2.imread(obs.file_path)
         if frame is None:
             return JSONResponse(status_code=400, content={"error": "cannot read image"})
 
-        detector = FabricDefectDetector(config={"conf": 0.3})
+        from src.config.global_settings import get_setting_float
+        from src.vision.fabric_defect_detector import FabricDefectDetector
+        from src.vision.fabric_metrics import (
+            FabricCalibrator,
+            measure_defects,
+            points_per_100m2,
+            total_points,
+        )
+        from src.vision.overlay import draw_detection_results
+
+        fabric_width_cm = get_setting_float("fabric_width_cm", default=150.0, db=db)
+        pass_meters = get_setting_float("fabric_pass_meters", default=100.0, db=db)
+        threshold = get_setting_float("fabric_point_threshold", default=24.0, db=db)
+
+        detector = FabricDefectDetector(config={
+            "conf": 0.3,
+            "fabric_width_cm": fabric_width_cm,
+        })
         results = detector.detect(frame)
         h, w = frame.shape[:2]
+
+        calibrator = FabricCalibrator(
+            fabric_width_cm=fabric_width_cm,
+            fabric_width_px=float(w),
+        )
+        measured = measure_defects(results, calibrator, frame_width_px=w)
+
         detections = []
-        for r in results:
+        for r, m in zip(results, measured):
             data = r.result_data or {}
             detections.append({
                 "defect_type": data.get("defect_type", "defect"),
-                "severity": data.get("severity", "low"),
+                "severity": m.severity,
                 "bbox": list(data.get("bbox", [])[:4]),
                 "confidence": round(r.confidence, 3) if r.confidence is not None else None,
+                "length_cm": m.length_cm,
+                "width_cm": m.width_cm,
+                "area_cm2": m.area_cm2,
+                "points": m.points,
             })
 
         overlay_frame = draw_detection_results(frame.copy(), results)
         _, jpeg = cv2.imencode(".jpg", overlay_frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
         overlay_b64 = base64.b64encode(jpeg.tobytes()).decode("utf-8")
+
+        total_pts = total_points(measured)
+        inspected_len = min(pass_meters, 9999.0)
+        pts_per_100 = points_per_100m2(total_pts, inspected_len, fabric_width_cm)
+        accepted = pts_per_100 <= threshold
 
         return {
             "detections": detections,
@@ -1401,6 +1436,13 @@ async def fabric_detect(request: Request, db: Session = Depends(get_db)) -> dict
             "frame_height": h,
             "source": "classical",
             "overlay_image": overlay_b64,
+            "calibrated": calibrator.calibrated,
+            "fabric_width_cm": fabric_width_cm,
+            "total_points": total_pts,
+            "points_per_100m2": pts_per_100,
+            "threshold": threshold,
+            "pass_meters": pass_meters,
+            "accepted": accepted,
         }
     except Exception as exc:
         logger.error("fabric/detect error: %s\n%s", exc, traceback.format_exc())

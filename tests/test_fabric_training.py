@@ -177,7 +177,8 @@ class TestFabricDetect:
         data = resp.json()
         assert len(data["detections"]) == 1
         assert data["detections"][0]["defect_type"] == "hole"
-        assert data["detections"][0]["severity"] == "medium"
+        # hole always scores 4 points -> high severity (4-Point System)
+        assert data["detections"][0]["severity"] == "high"
         assert "overlay_image" in data
 
     def test_detect_missing_observation_404(self, client):
@@ -188,6 +189,44 @@ class TestFabricDetect:
     def test_detect_requires_auth(self, client):
         resp = client.post("/dashboard/fabric/detect", data={"observation_id": "x"})
         assert resp.status_code == 401
+
+    def test_detect_returns_4point_metrics(self, client, tmp_path):
+        _create_camera()
+        img = _make_image(tmp_path)
+        _create_observation(img)
+        _login(client)
+
+        fake_result = ProcessingResult(
+            result_type="fabric_defect",
+            model_name="fabric-fallback",
+            model_version="1.0.0",
+            confidence=0.87,
+            result_data={"defect_type": "hole", "bbox": [10, 10, 100, 50]},
+        )
+
+        class _FakeDetector:
+            def detect(self, frame):
+                return [fake_result]
+
+        with patch(
+            "src.vision.fabric_defect_detector.FabricDefectDetector",
+            return_value=_FakeDetector(),
+        ):
+            resp = client.post("/dashboard/fabric/detect", data={"observation_id": "obs_fab_001"})
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["calibrated"] is True
+        assert data["fabric_width_cm"] == 150.0
+        # hole -> always 4 points
+        assert data["total_points"] == 4.0
+        assert data["points_per_100m2"] > 0
+        # 4 pts over 100m of 150cm-wide (1500mm) fabric = 2.67 pts/100m2 <= 24 -> accepted
+        assert data["accepted"] is True
+        det = data["detections"][0]
+        assert det["points"] == 4
+        assert det["length_cm"] > 0
+        assert det["area_cm2"] > 0
 
 
 # ── Annotations ──

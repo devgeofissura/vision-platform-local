@@ -77,6 +77,26 @@
 
             <div id="detect-result" class="hidden bg-gray-700 p-3 rounded-lg mb-4 text-sm">
                 <p class="text-gray-300" id="detect-text"></p>
+                <div id="metric-box" class="hidden mt-3 border-t border-gray-600 pt-3 text-xs">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-gray-800 rounded p-2">
+                            <p class="text-gray-500">Pontos totais</p>
+                            <p class="text-lg font-semibold text-orange-400" id="m-total-points">-</p>
+                        </div>
+                        <div class="bg-gray-800 rounded p-2">
+                            <p class="text-gray-500">Pontos / 100 m²</p>
+                            <p class="text-lg font-semibold" id="m-p100">-</p>
+                        </div>
+                        <div class="bg-gray-800 rounded p-2 col-span-2">
+                            <p class="text-gray-500">Veredito (Sistema de 4 Pontos · ASTM D5430)</p>
+                            <p class="text-lg font-semibold" id="m-verdict">-</p>
+                        </div>
+                        <div class="bg-gray-800 rounded p-2 col-span-2">
+                            <p class="text-gray-500">Largura do tecido</p>
+                            <p class="text-sm" id="m-width">-</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Annotate form -->
@@ -245,6 +265,25 @@ async function doDetect() {
             resultText.textContent = currentDetections.length
                 ? `${currentDetections.length} ${noun} — clique em "Salvar" para anotar cada um`
                 : 'Nenhum defeito detectado — ajuste ou anote manualmente o tipo abaixo.';
+
+            // Metrics (4-Point System) when present.
+            const metricBox = document.getElementById('metric-box');
+            if (data.total_points != null) {
+                document.getElementById('m-total-points').textContent = data.total_points;
+                document.getElementById('m-p100').textContent = data.points_per_100m2 + ' / ' + data.threshold;
+                const verdictEl = document.getElementById('m-verdict');
+                const threshold = parseFloat(data.threshold || 0);
+                const p100 = parseFloat(data.points_per_100m2 || 0);
+                verdictEl.textContent = data.accepted
+                    ? `APROVADO (${p100} ≤ ${threshold})`
+                    : `REPROVADO (${p100} > ${threshold})`;
+                verdictEl.className = 'text-lg font-semibold ' + (data.accepted ? 'text-green-400' : 'text-red-400');
+                document.getElementById('m-width').textContent =
+                    (data.calibrated ? data.fabric_width_cm + ' cm' : 'não calibrado — largura ausente');
+                metricBox.classList.remove('hidden');
+            } else {
+                metricBox.classList.add('hidden');
+            }
 
             // Prep: if exactly one detection, prefill the form for quick confirm.
             if (currentDetections.length === 1) {

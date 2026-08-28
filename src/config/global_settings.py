@@ -41,6 +41,11 @@ _DEFAULT_SPECS: dict[str, tuple[str, str]] = {
     # Processamento
     "processing_enabled": ("false", "Habilitar processamento de visão"),
     "processing_auto_on_capture": ("true", "Processar automaticamente ao capturar"),
+    # Inspeção de tecido
+    "fabric_width_cm": ("150", "Largura do tecido (cm, ourela a ourela) para medição de defeitos"),
+    "fabric_feed_rate_m_min": ("20", "Velocidade de inspeção do tecido (m/min) para estimar metragem"),
+    "fabric_pass_meters": ("100", "Comprimento de lote (metros) para pontuação por 100 m²"),
+    "fabric_point_threshold": ("24", "Limite de aceitação (pontos por 100 m², ASTM D5430)"),
 }
 
 DEFAULT_SETTINGS: dict[str, str] = {k: spec[0] for k, spec in _DEFAULT_SPECS.items()}

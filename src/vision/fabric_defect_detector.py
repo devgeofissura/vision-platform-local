@@ -7,11 +7,13 @@ from src.vision.base import BaseDetector, ProcessingResult
 
 logger = logging.getLogger(__name__)
 
+# Classes from the open-source YOLOv8 textile defect model
+# (mashaalzulfikar/Edge-Inference-Textile-Anomaly-Localisation-System).
 DEFECT_CLASSES = {
-    0: "hole",
-    1: "stain",
-    2: "line",
-    3: "knot",
+    0: "stain",
+    1: "abrasion",
+    2: "tear",
+    3: "hole",
 }
 
 DEFECT_SEVERITY_THRESHOLDS = {
@@ -43,8 +45,35 @@ class FabricDefectDetector(BaseDetector):
     def detect(self, frame: np.ndarray) -> list[ProcessingResult]:
         self.load()
         if self._model is not None:
-            return self._detect_yolo(frame)
-        return self._detect_classical(frame)
+            results = self._detect_yolo(frame)
+        else:
+            results = self._detect_classical(frame)
+        self._attach_measurements(results, frame)
+        return results
+
+    def _attach_measurements(self, results: list, frame: np.ndarray) -> None:
+        """Add real-dimension (cm) and 4-Point score for every defect box."""
+        try:
+            from src.vision.fabric_metrics import (
+                FabricCalibrator,
+                measure_defects,
+            )
+
+            frame_w = frame.shape[1]
+            fabric_width_cm = float(self.config.get("fabric_width_cm", 0) or 0)
+            calibrator = FabricCalibrator(
+                fabric_width_cm=fabric_width_cm,
+                fabric_width_px=float(frame_w),
+            )
+            measured = measure_defects(results, calibrator, frame_width_px=frame_w)
+            for res, meas in zip(results, measured):
+                data = res.result_data
+                data["length_cm"] = meas.length_cm
+                data["width_cm"] = meas.width_cm
+                data["area_cm2"] = meas.area_cm2
+                data["points"] = meas.points
+        except Exception:
+            pass
 
     def _detect_yolo(self, frame: np.ndarray) -> list[ProcessingResult]:
         results = self._model(frame, verbose=False, conf=self.config.get("conf", 0.3))
@@ -98,7 +127,7 @@ class FabricDefectDetector(BaseDetector):
             x, y, w, h = cv2.boundingRect(cnt)
             aspect = w / float(h) if h > 0 else 1.0
             if aspect > 8:
-                defect_type = "line"
+                defect_type = "tear"
             elif area > 2000:
                 defect_type = "hole"
             else:

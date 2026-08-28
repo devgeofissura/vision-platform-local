@@ -212,6 +212,37 @@
             </div>
         </div>
 
+        <!-- Inspeção de Tecido -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="font-semibold mb-4">🧵 Inspeção de Tecido</h3>
+            <div class="space-y-3">
+                <label class="block">
+                    <span class="text-xs text-gray-400">Largura do tecido (cm, ourela a ourela)</span>
+                    <input type="number" name="fabric_width_cm" step="0.1" min="0"
+                           value="{{ s.fabric_width_cm or '150' }}"
+                           class="mt-1 w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </label>
+                <label class="block">
+                    <span class="text-xs text-gray-400">Velocidade de inspeção (m/min) — metragem estimada</span>
+                    <input type="number" name="fabric_feed_rate_m_min" step="0.1" min="0"
+                           value="{{ s.fabric_feed_rate_m_min or '20' }}"
+                           class="mt-1 w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </label>
+                <label class="block">
+                    <span class="text-xs text-gray-400">Comprimento do lote (metros) para pontuação por 100 m²</span>
+                    <input type="number" name="fabric_pass_meters" step="0.1" min="1"
+                           value="{{ s.fabric_pass_meters or '100' }}"
+                           class="mt-1 w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </label>
+                <label class="block">
+                    <span class="text-xs text-gray-400">Limite de aceitação (pontos por 100 m², ASTM D5430)</span>
+                    <input type="number" name="fabric_point_threshold" step="1" min="1"
+                           value="{{ s.fabric_point_threshold or '24' }}"
+                           class="mt-1 w-full bg-gray-700 text-white px-3 py-2 rounded text-sm">
+                </label>
+            </div>
+        </div>
+
         <!-- Actions -->
         <div class="flex gap-3 pb-4">
             <button type="submit"
